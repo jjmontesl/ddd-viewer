@@ -1,0 +1,175 @@
+{
+  "messages": {
+    "email": "Se requiere correo electrónico válido",
+    "required": "Este campo es obligatorio",
+    "password": "Se requiere contraseña",
+    "min": "Este campo debe tener no menos de {length} caracteres",
+    "url": "Debe ser una URL válida",
+    "confirmed": "Las contraseñas deben coincidir"
+  },
+  "errors": {
+    "BAD_TOKEN": "Token malo",
+    "WRONG_PASSWORD": "Contraseña errada",
+    "USER_DOES_NOT_EXIST": "Usuario no existe",
+    "PASSWORDS_DONT_MATCH": "Las contraseñas no coinciden",
+    "PASSWORD_TOO_SHORT_MIN_5": "Contraseña muy corta, mínimo 5 caracteres",
+    "BLOCKED_USER": "Demasiados intentos fallidos, usuario bloqueado temporalmente",
+    "SERVER_TIMEOUT_CONNECTION_ERROR": "El servidor no está respondiendo, error de conexión",
+    "404": "404 Página no encontrada",
+    "EMAIL_IS_NOT_VALID": "E-mail no válido",
+    "IS_EMPTY": "Campos vacíos",
+    "ERROR": "Error",
+    "MISSING": "Campos faltantes",
+    "NOT_FOUND_OR_ALREADY_VERIFIED": "No encontrado o ya fue verificado",
+    "NOT_FOUND_OR_ALREADY_USED": "No encontrado o ya fue usado",
+    "NOT_FOUND": "No encontrado",
+    "UNAUTHORIZED": "No autorizado",
+    "EMAIL_ALREADY_EXISTS": "E-mail ya existe",
+    "ID_MALFORMED": "ID malformado",
+    "ERROR_WITH_FILTER": "Error con el filtro",
+    "CITY_ALREADY_EXISTS": "Ciudad ya existe"
+  },
+  "common": {
+    "DELETE": "Eliminar",
+    "CANCEL": "Cancelar",
+    "WARNING": "Advertencia",
+    "DO_YOU_REALLY_WANT_TO_DELETE_THIS_ITEM": "¿Realmente deseas eliminar este registro?",
+    "CLOSE": "Cerrar",
+    "SAVED_SUCCESSFULLY": "Guardado exitosamente",
+    "DELETED_SUCCESSFULLY": "Eliminado exitosamente",
+    "CREATED": "Fecha de Creación",
+    "UPDATED": "Fecha de Actualización",
+    "GO_BACK": "Volver"
+  },
+  "loading": {
+    "PLEASE_WAIT": "Por favor espere..."
+  },
+  "footer": {
+    "MADE_WITH": "Hecho con",
+    "BY": "por"
+  },
+  "menuItems": {
+    "HOME": "Inicio",
+    "ABOUT": "Acerca",
+    "MY_PROFILE": "Mi Perfil",
+    "SIGNUP": "Registro",
+    "LOGIN": "Ingresar",
+    "LOGOUT": "Salir"
+  },
+  "adminItems": {
+    "ADMIN": "Admin",
+    "CITIES": "Ciudades",
+    "USERS": "Usuarios"
+  },
+  "roles": {
+    "ADMIN": "Administrador",
+    "USER": "Usuario"
+  },
+  "dataTable": {
+    "NEW_ITEM": "Nuevo Item",
+    "EDIT_ITEM": "Editar Item",
+    "CANCEL": "Cancelar",
+    "SAVE": "Guardar",
+    "EDIT": "Editar",
+    "DELETE": "Eliminar",
+    "RESET": "Reiniciar",
+    "ACTIONS": "Acciones",
+    "ROWS_PER_PAGE": "Elementos por página",
+    "NO_DATA": "No hay datos",
+    "NO_RESULTS": "No hay resultados",
+    "OF": "de",
+    "SEARCH": "Buscar"
+  },
+  "cities": {
+    "TITLE": "Ciudades",
+    "headers": {
+      "NAME": "Nombre"
+    }
+  },
+  "users": {
+    "TITLE": "Usuarios",
+    "headers": {
+      "NAME": "Nombre",
+      "EMAIL": "E-mail",
+      "ROLE": "Rol",
+      "VERIFIED": "Verificado",
+      "CITY": "Ciudad",
+      "COUNTRY": "País",
+      "PHONE": "Teléfono"
+    },
+    "PASSWORD": "Contraseña",
+    "CONFIRM_PASSWORD": "Confirmar Contraseña"
+  },
+  "landing": {
+    "TITLE": "Página de aterrizaje",
+    "DESCRIPTION": "Esta página está disponible públicamente",
+    "BUY_ME_A_COFFEE": "Cómprame un café",
+    "BUY_ME_A_COFFEE_DESCRIPTION": "Estoy haciendo lo mejor para proveer una buena experiencia cuando uses mis aplicaciones, así que si te gusta lo que estoy haciendo y quieres decir \"¡gracias!\", por favor haz click en el botón y cómprame un café.",
+    "DESCRIPTION_VUE": "Este proyecto fue creado para ayudar a que otros desarrolladores web construyan una app básica en VueJS.",
+    "DESCRIPTION_API": "Este demo está enlazado a una API hecha con Node.js express.js MongoDB JWT, que muestra cómo este proyecto de frontend puede ser enlazado con una API.",
+    "API_DOCUMENTATION": "Documentación API",
+    "FRONTEND_DOCUMENTATION": "Documentación frontend"
+  },
+  "home": {
+    "TITLE": "Inicio Protegido",
+    "GREETING": "Bienvenido(a) %{0}",
+    "DESCRIPTION": "Esta página está disponible únicamente de forma privada cuando el usuario ingresa con sus credenciales",
+    "VERIFY_YOUR_ACCOUNT": "IMPORTANTE: Verifica tu cuenta",
+    "VERIFY_YOUR_ACCOUNT_DESCRIPTION": "Debes verificar tu cuenta haciendo click en el enlace enviado a tu E-mail para que puedas disfrutar de todas las características de nuestra aplicación",
+    "CLOSE": "Cerrar"
+  },
+  "about": {
+    "TITLE": "Acerca de...",
+    "DESCRIPTION": "Esta página está disponible públicamente."
+  },
+  "login": {
+    "TITLE": "Ingresar",
+    "DESCRIPTION": "Este es un demo. La base de datos se purga cada 30 minutos. Cualquier cambio que se realice se perderá luego de este tiempo.<br />E-mail: admin@admin.com <br />Password: 12345",
+    "EMAIL": "E-mail",
+    "PASSWORD": "Contraseña",
+    "LOGIN": "Ingresar",
+    "FORGOT_PASSWORD": "¿Olvidaste tu contraseña?"
+  },
+  "forgotPassword": {
+    "TITLE": "Olvidé mi contraseña",
+    "EMAIL": "E-mail",
+    "DESCRIPTION": "Ingresa tu E-mail para que podamos enviarte un mensaje con instrucciones para recuperar tu contraseña",
+    "RECOVER": "Recuperar",
+    "RESET_EMAIL_SENT": "Hemos enviado un mensaje a %{0} con instrucciones para recuperar tu contraseña"
+  },
+  "resetPassword": {
+    "TITLE": "Cambiar Contraseña",
+    "PASSWORD": "Contraseña",
+    "CONFIRM_PASSWORD": "Confirmar Contraseña",
+    "CHANGE_PASSWORD": "Cambiar Contraseña",
+    "PASSWORD_CHANGED": "Contraseña cambiada exitosamente"
+  },
+  "signup": {
+    "TITLE": "Registro",
+    "NAME": "Nombre",
+    "EMAIL": "E-mail",
+    "PASSWORD": "Contraseña",
+    "CONFIRM_PASSWORD": "Confirmar Contraseña",
+    "SIGN_ME_UP": "Registrarme"
+  },
+  "verify": {
+    "TITLE": "Verificación de E-mail",
+    "EMAIL_VERIFIED": "E-mail verificado exitosamente"
+  },
+  "myProfile": {
+    "TITLE": "Mi Perfil",
+    "CHANGE_MY_PASSWORD": "Cambiar Mi Contraseña",
+    "CURRENT_PASSWORD": "Contraseña Actual",
+    "NEW_PASSWORD": "Nueva Contraseña",
+    "CONFIRM_NEW_PASSWORD": "Confirmar Nueva Contraseña",
+    "PASSWORD_CHANGED": "Contraseña cambiada exitosamente",
+    "NAME": "Nombre",
+    "EMAIL": "E-mail",
+    "PHONE": "Teléfono",
+    "CITY": "Ciudad",
+    "NO_RESULTS_FOUND": "No se encontraron resultados",
+    "COUNTRY": "País",
+    "SAVE": "Guardar",
+    "PROFILE_SAVED_SUCCESSFULLY": "Perfil guardado exitosamente"
+  }
+}
