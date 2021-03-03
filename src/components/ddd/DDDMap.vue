@@ -34,7 +34,13 @@ export default {
   },
 
   props: [
-      'viewerState',
+      //'viewerState',
+  ],
+  computed: {
+      //'viewerState': function() {return this.getViewerState();}
+  },
+  inject: [
+      'getViewerState'
   ],
 
   methods: {
@@ -76,7 +82,9 @@ export default {
           }
 
           const that = this;
-          that.$emit('dddPosition', that.positionWGS84(), this.map.getView().getZoom());
+          //that.$emit('dddPosition', that.positionWGS84(), this.map.getView().getZoom());
+          this.getViewerState().positionWGS84 = that.positionWGS84();
+          this.getViewerState().positionTileZoomLevel = this.map.getView().getZoom();
 
           this.map.once('rendercomplete', function () {
 
@@ -145,61 +153,66 @@ export default {
 
     const that = this;
 
-    setTimeout(() => {
-        //const el = that.$el.querySelector('.ddd-map');
-        //el.style.height = "calc(100%)";
+    //const el = that.$el.querySelector('.ddd-map');
+    //el.style.height = "calc(100%)";
 
-        const scaleLine = new ScaleLine({
-              units: 'metric',
-        });
+    const scaleLine = new ScaleLine({
+          units: 'metric',
+    });
 
-        that.map = new Map({
-          controls: defaultControls().extend([scaleLine]),
-          layers: [
-            new TileLayer({
-              source: new OSM({
-              }),
-              maxZoom: 19
-            }),
-            /*
-            new TileLayer({
-                 source: new XYZ({
-                     url: 'http://localhost:8000/cache/ddd_http/{z}/{x}/{y}.png',
-                 }),
-                maxZoom: 17,
-            }),
-            */
-            new TileLayer({
-              source: new TileDebug({
-              }),
-              minZoom: 16,
-              maxZoom: 17
-            }) ],
-          target: 'ddd-map',
-          view: new View({
-            center: olProj.transform(that.viewerState.positionWGS84, 'EPSG:4326', 'EPSG:3857'),
-            zoom: that.viewerState.positionTileZoomLevel,
-            maxZoom: 18,
+    that.map = new Map({
+      controls: defaultControls().extend([scaleLine]),
+      layers: [
+        new TileLayer({
+          source: new OSM({
           }),
-        });
+          maxZoom: 19
+        }),
+        /*
+        new TileLayer({
+             source: new XYZ({
+                 url: 'http://localhost:8000/cache/ddd_http/{z}/{x}/{y}.png',
+             }),
+            maxZoom: 17,
+        }),
+        */
+        new TileLayer({
+          source: new TileDebug({
+          }),
+          minZoom: 16,
+          maxZoom: 17
+        }) ],
+      target: 'ddd-map',
+      view: new View({
+        center: olProj.transform(that.getViewerState().positionWGS84, 'EPSG:4326', 'EPSG:3857'),
+        zoom: that.getViewerState().positionTileZoomLevel,
+        maxZoom: 18,
+      }),
+    });
 
-        const map = that.map;
+    const map = that.map;
 
-        // Events
-        map.on('singleclick', that.click);
-        map.on("moveend", that.move);
-        window.addEventListener('resize', that.resize);
+    // Events
+    map.on('singleclick', that.click);
+    map.on("moveend", that.move);
+    window.addEventListener('resize', that.resize);
 
-        // Resize initially
-        setTimeout(() => { that.resize(); }, 100);
+    // Resize initially
+    setTimeout(() => { that.resize(); }, 100);
 
-    }, 0);
 
   },
 
-  destroyed() {
-      //if (this.map) { this.map.destroy(); }
-      window.removeEventListener('resize', this.resize);
+  beforeDestroy() {
+      console.debug("Destroying map.");
+
+    window.removeEventListener('resize', this.resize);
+
+    this.map.un('singleclick', this.click);
+    this.map.un('moveend', this.move);
+    this.map.setTarget(null);
+    this.map = null;
+
   }
 
 }

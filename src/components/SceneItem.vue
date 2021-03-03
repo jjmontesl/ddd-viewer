@@ -51,6 +51,7 @@ import DDDScene from '@/components/ddd/DDDScene.vue';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
+    this.setItem(this.$route.params.id);
   },
   metaInfo() {
     return {
@@ -65,9 +66,21 @@ export default {
       nodeId: this.$route.params.id
     }
   },
+  watch: {
+    '$route' () {
+        this.setItem(this.$route.params.id);
+    }
+  },
 
   components: {
     DDDScene
-  }
+  },
+
+  methods: {
+      setItem(nodeId) {
+        this.nodeId = nodeId;
+      }
+  },
+
 }
 </script>

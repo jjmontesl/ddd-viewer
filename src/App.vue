@@ -7,10 +7,10 @@
 
     <div style="margin-top: 40px;">
 
-        <DDDMap v-if="mapVisible" :viewerState="viewerState" @dddPosition="dddPosition" />
+        <DDDMap v-if="mapVisible" /> <!-- :viewerState="viewerState" /> -->
         <DDDMap3DSwitch v-if="mapVisible" />
 
-        <DDDScene v-if="sceneVisible" :viewerState="viewerState" @dddPosition="dddPosition" @dddScenePosition="dddScenePosition" />
+        <DDDScene v-if="sceneVisible" />
 
     </div>
 
@@ -19,7 +19,7 @@
       <loading />
 
       <v-container fluid style="padding: 0px;">
-          <router-view :viewerState="viewerState" @dddViewerMode="dddViewerMode"  />
+          <router-view @dddViewerMode="dddViewerMode"  />
         <!-- <transition name="fade" mode="out-in">
         </transition> -->
       </v-container>
@@ -54,7 +54,7 @@ import DDDMap from '@/components/ddd/DDDMap.vue';
 import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
 import DDDScene from '@/components/ddd/DDDScene.vue';
 
-import DDDViewerState from '@/viewer/DDDViewerState.js';
+import ViewerState from '@/dddviewer/ViewerState.js';
 
 export default {
   name: 'App',
@@ -109,45 +109,55 @@ export default {
   computed: {
     appTitle() {
       return this.$store.getters.appTitle
-    }
+    },
+  },
+  provide: function () {
+      const that = this;
+      return {
+        getViewerState: function() { return that._viewerState; },
+      }
   },
   data() {
     return {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
-      //mapVisible: true,
-      //sceneVisible: false
-      viewerState: new DDDViewerState(),
+      mapVisible: true,
+      sceneVisible: false
+      //viewerState: new ViewerState(),
       //viewerState: null,
     }
   },
   props: {
-    mapVisible: Boolean,
-    sceneVisible: Boolean,
-    //viewerState: DDDViewerState,
+    //mapVisible: Boolean,
+    //sceneVisible: Boolean,
+    //viewerState: Object,
   },
-  created() {
+  beforeCreate() {
+      this._viewerState = new ViewerState();
       //this.mapVisible = true;
       //this.$set(this, 'mapVisible', true);
+      //Object.freeze(this.viewerState);
   },
   methods: {
 
       dddViewerMode(mode) {
         console.debug("Received Viewer Mode change event to: " + mode);
-        this.$set(this, 'mapVisible', mode === 'map');
-        this.$set(this, 'sceneVisible', mode === 'scene');
+        this.mapVisible = mode === 'map';
+        this.sceneVisible = mode === 'scene';
+        //this.$set(this, 'mapVisible', mode === 'map');
+        //this.$set(this, 'sceneVisible', mode === 'scene');
       },
 
       dddPosition(coords, zoom) {
           //console.debug("Received Viewer coords: " + coords);
-          this.viewerState.positionWGS84 = coords;
-          this.viewerState.positionTileZoomLevel = zoom;
+          this._viewerState.positionWGS84 = coords;
+          this._viewerState.positionTileZoomLevel = zoom;
       },
 
       dddScenePosition(coords) {
           //console.debug("Received Viewer coords: " + coords);
-          this.viewerState.positionScene = coords;
+          this._viewerState.positionScene = coords;
       }
   }
 }

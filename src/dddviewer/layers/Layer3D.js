@@ -1,11 +1,11 @@
 import axios from 'axios'
 
-export default {
+export default class {
 
-  request3DTileGenerate(coords) {
-      var url = `http://localhost:8000/api/tasks/gen/${coords}`;
-      return axios.get(url);
+  update() {
+      layer.loadTilesDynamic();
   }
+
 
   /*
   getUsers(params) {
@@ -24,4 +24,6 @@ export default {
   }
   */
 
+
 }
+

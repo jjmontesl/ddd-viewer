@@ -6,55 +6,18 @@
 
         <!-- <DDDMap3DSwitch /> -->
 
-      <!--
-      <v-container fluid>
-
-        <v-layout row wrap>
-          <div class="text-center">
-            <v-dialog v-model="showVerifyDialog" width="500" persistent>
-              <v-card>
-                <v-card-title
-                  class="headline grey lighten-2 black--text dlgVerifyAccount"
-                  primary-title
-                >
-                  <v-icon class="orange--text">mdi-information</v-icon>
-                  &nbsp;{{ $t('home.VERIFY_YOUR_ACCOUNT') }}
-                </v-card-title>
-                <v-card-text class="mt-4">
-                  {{ $t('home.VERIFY_YOUR_ACCOUNT_DESCRIPTION') }}
-                </v-card-text>
-                <v-divider></v-divider>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn
-                    color="primary"
-                    text
-                    @click="showVerifyDialog = false"
-                    class="btnClose"
-                    >{{ $t('home.CLOSE') }}</v-btn
-                  >
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </div>
-
-        </v-layout>
-
-          </v-container>
-      -->
-
     <v-row style="margin: 0px;">
         <v-col style="margin: 0px; padding: 0px;">
 
             <div style="background-color: white; padding: 5px;">
 
                 <v-card class="pa-1" outlined>
-                    <v-card-title>{{ placeName }}</v-card-title>
+                    <v-card-title>{{ placeId }}</v-card-title>
 
                     <v-card-text class="text-left">
                         <div>
-                            <div><b></b> {{ placeName }}</div>
-                            <div><b></b> {{ placeName }} E</div>
+                            <div><b></b> {{ placeId }}</div>
+                            <div><b></b> {{ placeId }} E</div>
                         </div>
                     </v-card-text>
 
@@ -114,6 +77,7 @@ import tiles from '@/services/ddd_http/tiles.js';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'map');
+    this.setPlace(this.$route.params.name);
   },
   metaInfo() {
     return {
@@ -126,17 +90,26 @@ export default {
     return {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
-      placeName: this.$route.params.name.replace(",", ", ")
+      placeId: null,
     }
   },
   components: {
       DDDMap,
       DDDMap3DSwitch
   },
+  watch: {
+    '$route' () {
+        this.setPlace(this.$route.params.name);
+    }
+  },
   methods: {
       request3DTileGenerate: function() {
           console.debug("Generate");
           tiles.request3DTileGenerate(this.$route.params.name);
+      },
+
+      setPlace(placeId) {
+        this.placeId = placeId;
       }
   }
 }

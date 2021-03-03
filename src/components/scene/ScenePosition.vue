@@ -8,8 +8,8 @@
 
             <v-card-text style="padding: 0px;" class="text-left">
                 <div>
-                    <div><b>Coords WGS84:</b> {{ parseFloat(viewerState.positionWGS84[0]).toFixed(5) }}, {{ parseFloat(viewerState.positionWGS84[1]).toFixed(5) }}, {{ parseFloat(viewerState.positionWGS84[2]).toFixed(1) }}</div>
-                    <div><b>Coords Scene:</b> {{ parseFloat(viewerState.positionScene[0]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[1]).toFixed(1) }}, {{ parseFloat(viewerState.positionWGS84[2]).toFixed(0) }}</div>
+                    <div><b>Coords WGS84:</b> {{ parseFloat(viewerState.positionWGS84[0]).toFixed(5) }}, {{ parseFloat(viewerState.positionWGS84[1]).toFixed(5) }}</div>
+                    <div><b>Coords Scene:</b> {{ parseFloat(viewerState.positionScene[0]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[2]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[1]).toFixed(0) }}</div>
                     <div><b>TMS XYZ:</b> </div>
                 </div>
             </v-card-text>
@@ -46,8 +46,14 @@ export default {
     }
   },
   props: [
-      'viewerState',
+      //'viewerState',
   ],
+  inject: [
+      'getViewerState'
+  ],
+  computed: {
+      'viewerState': function() { return this.getViewerState(); }
+  },
   data() {
     return {
       //name: this.$store.state.auth.user.name,

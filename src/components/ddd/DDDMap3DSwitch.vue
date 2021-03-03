@@ -1,9 +1,9 @@
 <template>
 
     <div class="ddd-map-3d-switch">
-        <v-card class="pa-1" outlined style="width: 60px; height: 60px;" @v-click="switch3D()">
-            <canvas id="ddd-map-3d-switch" width="50" height="50" style="width: 50px; height: 50px;"></canvas>
-            <span style="position: absolute; left: 0; right: 0; top: 15px;"><b>3D</b></span>
+        <v-card class="pa-1" outlined style="width: 60px; height: 60px;">
+            <canvas id="ddd-map-3d-switch" width="50" height="50" style="width: 50px; height: 50px;" v-on:click="switch3D"></canvas>
+            <span style="position: absolute; left: 0; right: 0; top: 15px; pointer-events: none;"><b>3D</b></span>
         </v-card>
     </div>
 
@@ -47,30 +47,9 @@ export default {
 
   methods: {
 
-      click: function(event) {
-          console.debug("Map click: " + event.coordinate);
-
-          // Get tile grid coordinates
-          const tileGrid = createXYZ({
-            extent: extentFromProjection('EPSG:3857'),
-            //maxResolution: options.maxResolution,
-            //maxZoom: options.maxZoom,
-            //minZoom: options.minZoom,
-            //tileSize: options.tileSize,
-          });
-
-          const tileCoords = tileGrid.getTileCoordForCoordAndZ(event.coordinate, 17);
-          console.debug(tileCoords);
-
-          // Redirect to appropriate click handler
-
-          // Direct to /map/place
-          const point = olProj.transform(event.coordinate, 'EPSG:3857', 'EPSG:4326');
-          const pointString = point[1].toFixed(7) + "," + point[0].toFixed(7);
-
-          const posString = this.positionString();
-
-          this.$router.push('/maps/place/' + pointString + '/' + posString);
+      switch3D: function() {
+          //console.debug("3D Switcher Switch: " + event.coordinate);
+          this.$router.push('/3d/'); // place/' + pointString + '/' + posString);
 
       },
 

@@ -9,7 +9,8 @@
   },
   "scripts": {
     "generate-build-version": "node generate-build-version",
-    "serve": "vue-cli-service serve --public ropecow.com:8080 --https",
+    "serve": "vue-cli-service serve",
+    "serve-pub-https":  "vue-cli-service serve --public ropecow.com:8080 --https",
     "build": "npm run generate-build-version && vue-cli-service build",
     "format": "prettier --write --config .prettierrc \"**/*.js\"",
     "lint": "vue-cli-service lint --fix",
