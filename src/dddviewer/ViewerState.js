@@ -3,8 +3,10 @@
 
 class ViewerState {
 
+    /*
     mapVisible = false;
     sceneVisible = false;
+    */
 
     positionTileZoomLevel = 9;
 

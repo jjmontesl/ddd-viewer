@@ -195,11 +195,11 @@ export default {
     // Events
     map.on('singleclick', that.click);
     map.on("moveend", that.move);
-    window.addEventListener('resize', that.resize);
+    window.addEventListener('resize', this.resize);
 
     // Resize initially
-    setTimeout(() => { that.resize(); }, 100);
-
+    //setTimeout(() => { that.resize(); }, 100);
+    this.resize();
 
   },
 

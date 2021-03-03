@@ -46,14 +46,16 @@ export default {
     }
   },
   props: [
-      //'viewerState',
+      'viewerState',
   ],
+  /*
   inject: [
       'getViewerState'
   ],
   computed: {
       'viewerState': function() { return this.getViewerState(); }
   },
+  */
   data() {
     return {
       //name: this.$store.state.auth.user.name,

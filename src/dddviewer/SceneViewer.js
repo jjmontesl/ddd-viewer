@@ -225,21 +225,11 @@ class SceneViewer {
         const tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
 
         // Using coords of tile center for custom projection as DDD does
-        this.tileGrid.getTileCoordForCoordAndZ(coordsUtm, 17);
         this.projection = proj4(
             '+proj=tmerc +lat_0=' + tileCenterWGS84[1] + ' +lon_0=' + tileCenterWGS84[0] + ' +k_0=1 ' +
             '+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 ' +
             '+towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
 
-        /*
-        proj4.defs('DDDCUSTOM:0',
-            '+proj=tmerc +lat_0=' + tileCenterWGS84[1] + ' +lon_0=' + tileCenterWGS84[0] + ' +k_0=1 ' +
-            '+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 ' +
-            '+towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
-        register(proj4);
-        */
-
-        //loadTile(tileCoords);
     }
 
 

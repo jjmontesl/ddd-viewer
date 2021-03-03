@@ -19,7 +19,7 @@
       <loading />
 
       <v-container fluid style="padding: 0px;">
-          <router-view @dddViewerMode="dddViewerMode"  />
+          <router-view :viewerState="viewerState" @dddViewerMode="dddViewerMode" />
         <!-- <transition name="fade" mode="out-in">
         </transition> -->
       </v-container>
@@ -114,7 +114,8 @@ export default {
   provide: function () {
       const that = this;
       return {
-        getViewerState: function() { return that._viewerState; },
+        //getViewerState: function() { return that._viewerState; },
+        getViewerState: function() { return that.viewerState; },
       }
   },
   data() {
@@ -123,8 +124,8 @@ export default {
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
       mapVisible: true,
-      sceneVisible: false
-      //viewerState: new ViewerState(),
+      sceneVisible: false,
+      viewerState: new ViewerState(),
       //viewerState: null,
     }
   },
