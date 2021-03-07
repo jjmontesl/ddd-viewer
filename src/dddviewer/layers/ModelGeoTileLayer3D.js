@@ -72,8 +72,9 @@ export default class {
 
           //const tileUrlBase = './scenes/ddd_http_';
           //const tileUrlBase = 'http://localhost:8000/cache/ddd_http/';
-          const tileUrlBase = 'http://' + location.hostname + ':8000/cache/ddd_http/';
+          //const tileUrlBase = 'http://' + app.dddConfig.tileUrlBase + ':8000/cache/ddd_http/';
           //const tileUrlBase = 'http://' + location.hostname + '/cache/ddd_http/';
+          const tileUrlBase = this.layerManager.sceneViewer.viewerState.dddConfig.tileUrlBase;
           const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
 
           const that = this;

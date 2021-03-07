@@ -13,6 +13,13 @@ import VuetifyConfirm from 'vuetify-confirm'
 Vue.config.productionTip = false
 Vue.use(VuetifyConfirm, { vuetify })
 
+Vue.prototype.dddConfig = {
+    //tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
+    tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
+
+    defaultCoords: [-8.723, 42.238]
+}
+
 const app = new Vue({
   vuetify,
   router,
@@ -25,11 +32,6 @@ const app = new Vue({
       store.dispatch('autoLogin')
     }
   },
-
-  // Use as inject:['dddConfig'] as per https://stackoverflow.com/questions/63100658/add-global-variable-in-vue-js-3
-  dddConfig: {
-    defaultCoords: [-8.723, 42.238]
-  }
 
 }).$mount('#app')
 

@@ -98,6 +98,8 @@ export default {
       return this.$store.getters.appTitle
     },
   },
+  inject: [
+  ],
   provide: function () {
       const that = this;
       return {
@@ -126,6 +128,9 @@ export default {
       //this.mapVisible = true;
       //this.$set(this, 'mapVisible', true);
       //Object.freeze(this.viewerState);
+  },
+  mounted() {
+        this.viewerState.dddConfig = this.dddConfig;
   },
   methods: {
 

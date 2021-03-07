@@ -111,7 +111,7 @@
     "FRONTEND_DOCUMENTATION": "Frontend documentation"
   },
   "home": {
-    "TITLE": "Protected Home",
+    "TITLE": "DDD123",
     "GREETING": "Welcome %{0}",
     "DESCRIPTION": "This page is only available privately when the users log in with their credentials",
     "VERIFY_YOUR_ACCOUNT": "IMPORTANT: Verify your account",

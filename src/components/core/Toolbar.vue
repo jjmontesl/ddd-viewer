@@ -270,23 +270,25 @@ export default {
         },
         */
         {
-          title: '3D',
-          link: 'sceneMain',
-          icon: 'mdi-earth',
-          class: 'btnView3D'
-        },
-        {
           title: 'Map',
           link: 'mapMain',
           icon: 'mdi-map-outline',
           class: 'btnViewMap'
         },
         {
+          title: '3D',
+          link: 'sceneMain',
+          icon: 'mdi-earth',
+          class: 'btnView3D'
+        },
+        /*
+        {
           title: 'Settings',
           link: 'settings',
           icon: 'mdi-cog',
           class: 'btnSettings'
         },
+        */
         {
           title: this.$t('menuItems.ABOUT'),
           link: 'about',

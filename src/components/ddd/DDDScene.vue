@@ -32,7 +32,7 @@ export default {
       //'viewerState',
   ],
   inject: [
-      'getViewerState'
+      'getViewerState',
   ],
   computed: {
       //'viewerState': function() {return this.getViewerState();}

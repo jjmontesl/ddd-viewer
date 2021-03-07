@@ -1,57 +1,107 @@
 <template>
-  <v-container fluid>
-    <v-layout row wrap>
-    </v-layout>
 
-    <h2>About DDD-OSM</h2>
+    <div style="padding: 0px;">
 
-    <p>
-        DDD-OSM is a set of tools designed to generate 3D scenes out of
-        <a href="https://www.openstreetmap.org/about">OpenStreetMap</a> data.
-    </p>
+      <v-row style="margin: 0px;">
+        <v-col style="padding: 0px; pointer-events: auto;" sm="5" offset-sm="7" md="4" offset-md="8" >
 
-    <h3>Usage</h3>
+            <div style="background-color: white;">
 
-    <p>
-    </p>
+                <v-card class="">
 
-    <h3>OpenStreetMap</h3>
+                    <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" @click="$router.back();" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
 
-    <p>
+                    <v-card-title>Settings</v-card-title>
 
-    </p>
+                    <v-card-text class="text-left">
+                        <div>
+                            <h3 style="margin-bottom: 5px;">2D Layers</h3>
 
-    <h3>DDD</h3>
+                            OpenStreetMap Default<br/>
+                            DDD 2D<br/>
+                            XYZ Tile Coordinates<br />
+                            DDD Coverage<br />
+                            ...
+                        </div>
+                    </v-card-text>
 
-    <p>
-        OSM 3D data is rendered using <a href="https://github.com/jjmontesl/ddd">DDD(123)</a> Procedural Generation Tool
-    </p>
+                    <v-card-text class="text-left">
+                        <div>
+                            <h3 style="margin-bottom: 5px;">3D View</h3>
+                        </div>
+                        <div>
+                            Textures<br />
+                            ...<br />
+                        </div>
+                        <div>
+                            Movement speed<br />
+                            ...<br />
+                        </div>
+                    </v-card-text>
 
-    <!--
-    <h3>YourCity Racing</h3>
+                    <!--
+                    <v-card-text class="text-left">
+                        <div>
+                            <h3>Street level imagery</h3>
+                            <p>
+                                To be done?
+                            </p>
+                        </div>
+                    </v-card-text>
+                    -->
 
-    -->
+                    <!--
+                    <v-card-text class="text-left">
+                        <div>
+                            <h3>3D Tiles</h3>
+                            <div><a v-on:click="request3DTileGenerate">Generate 3D Tile</a></div>
+                        </div>
+                    </v-card-text>
+                    -->
 
-    <h3><!--Patreon / Buymeacoffee-->Contact</h3>
+                </v-card>
 
-    <p>
-        This site is run by Jose Juan Montes. I have developed the viewer and 3D generation pipeline, and I
-        maintain this demostration server. If you like it, please consider contributing to the codebase
-        of the generator (DDD), this viewer, or to the OpenStreetMap database.
-    </p>
+            </div>
 
+        </v-col>
+    </v-row>
 
+  </div>
 
-  </v-container>
 </template>
 
 <script>
+import DDDMap from '@/components/ddd/DDDMap.vue';
+import DDDMapInsert from '@/components/ddd/DDDMapInsert.vue';
+import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
+import NominatimSearch from '@/components/NominatimSearch.vue';
+import tiles from '@/services/ddd_http/tiles.js';
+
 export default {
   metaInfo() {
     return {
       title: this.$store.getters.appTitle,
-      titleTemplate: `${this.$t('about.TITLE')} - %s`
+      titleTemplate: `Settings - %s`
     }
+  },
+  data() {
+    return {
+      //name: this.$store.state.auth.user.name,
+      //showVerifyDialog: !this.$store.state.verify.emailVerified
+    }
+  },
+  components: {
+      DDDMap,
+  },
+  methods: {
+
+  },
+
+  mounted() {
+  },
+
+  beforeDestroy() {
   }
+
 }
 </script>
