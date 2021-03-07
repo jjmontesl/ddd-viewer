@@ -2,61 +2,65 @@
 
     <div style="padding: 0px;">
 
-        <!-- <DDDMap /> -->
+      <v-row style="margin: 0px;">
+        <v-col style="padding: 0px; pointer-events: auto;" sm="5" offset-sm="7" md="4" offset-md="8" >
 
-        <!-- <DDDMap3DSwitch /> -->
+            <div style="background-color: white;">
 
-    <v-row style="margin: 0px;">
-        <v-col style="margin: 0px; padding: 0px;">
+                <v-card class="">
 
-            <div style="background-color: white; padding: 5px;">
+                    <DDDMapInsert />
 
-                <v-card class="pa-1" outlined>
+                    <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" to="/maps" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
+
                     <v-card-title>{{ placeId }}</v-card-title>
 
                     <v-card-text class="text-left">
                         <div>
-                            <div><b></b> {{ placeId }}</div>
-                            <div><b></b> {{ placeId }} E</div>
+                            <div><b></b> {{ placeCoordsWGS84 }}</div>
+                            <!-- <div><b></b> {{ placeId }} E</div> -->
                         </div>
                     </v-card-text>
 
                     <v-card-text class="text-left">
                         <div>
-                            <h3>Nominatim Place</h3>
-                            <p>
-                            </p>
+                            <h3 style="margin-bottom: 5px;">Nominatim</h3>
+                            <NominatimSearch :query="placeId" />
                         </div>
-
-                        <div>
-                            <h3>Nominatim Results</h3>
-                        </div>
-
                     </v-card-text>
 
+                    <!--
                     <v-card-text class="text-left">
                         <div>
                             <h3>Street level imagery</h3>
                             <p>
+                                To be done?
                             </p>
                         </div>
                     </v-card-text>
+                    -->
 
                     <v-card-text class="text-left">
                         <div>
                             <h3>Links</h3>
-                            <div><a href="">OpenStreetMap</a></div>
+                            <div style="margin-left: 10px;">
+                                See at: <a href="https://www.openstreetmap.org/#map=17/49.75277/13.00271">OpenStreetMap</a> -
+                                <a href="https://www.google.es/maps/@42.232518,-8.7248621,17z">Google Maps</a>
+                            </div>
+                            <!--
                             <div><a href="">OSMCha (Change Analyzer)</a></div>
-                            <div><a href="">Google Maps</a></div>
+                            -->
                         </div>
                     </v-card-text>
 
+                    <!--
                     <v-card-text class="text-left">
                         <div>
                             <h3>3D Tiles</h3>
                             <div><a v-on:click="request3DTileGenerate">Generate 3D Tile</a></div>
                         </div>
                     </v-card-text>
+                    -->
 
                 </v-card>
 
@@ -71,14 +75,12 @@
 
 <script>
 import DDDMap from '@/components/ddd/DDDMap.vue';
+import DDDMapInsert from '@/components/ddd/DDDMapInsert.vue';
 import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
+import NominatimSearch from '@/components/NominatimSearch.vue';
 import tiles from '@/services/ddd_http/tiles.js';
 
 export default {
-  mounted() {
-    this.$emit('dddViewerMode', 'map');
-    this.setPlace(this.$route.params.name);
-  },
   metaInfo() {
     return {
       //title: this.$store.getters.appTitle,
@@ -91,11 +93,15 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       placeId: null,
+      placeTitle: null,
+      placeCoordsWGS84: null,
     }
   },
   components: {
       DDDMap,
-      DDDMap3DSwitch
+      DDDMap3DSwitch,
+      DDDMapInsert,
+      NominatimSearch
   },
   watch: {
     '$route' () {
@@ -103,14 +109,36 @@ export default {
     }
   },
   methods: {
+
       request3DTileGenerate: function() {
           console.debug("Generate");
           tiles.request3DTileGenerate(this.$route.params.name);
       },
 
-      setPlace(placeId) {
-        this.placeId = placeId;
+      setPlace(placeCoordsWGS84) {
+        this.placeId = placeCoordsWGS84;
+        this.placeTitle = placeCoordsWGS84;
+        this.placeCoordsWGS84 = placeCoordsWGS84;
+
+      },
+
+      resize() {
+        let el = this.$el.querySelector('.v-card');
+        //this.$el.style.height = '' + (window.innerHeight - 40) + 'px';
+        el.style.minHeight = '' + (window.innerHeight - 38) + 'px';
       }
+  },
+
+  mounted() {
+    this.$emit('dddViewerMode', 'map');
+    this.setPlace(this.$route.params.name);
+    window.addEventListener('resize', this.resize);
+    this.resize();
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resize);
   }
+
 }
 </script>

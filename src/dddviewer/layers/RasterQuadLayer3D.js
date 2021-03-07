@@ -2,11 +2,6 @@ import axios from 'axios'
 
 export default {
 
-  request3DTileGenerate(coords) {
-      var url = `http://localhost:8000/api/tasks/gen/${coords}`;
-      return axios.get(url);
-  }
-
   /*
   getUsers(params) {
     return axios.get('/users', {

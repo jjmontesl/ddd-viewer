@@ -1,7 +1,7 @@
 <template>
 
     <div style="height: 400px; position: relative; z-index: 0;">
-        <div class="ddd-map" id="ddd-map" style="height: 400px; position: relative; z-index: 0;">
+        <div class="ddd-map" id="ddd-map" style="height: 400px; position: relative; z-index: -1;">
         </div>
     </div>
 

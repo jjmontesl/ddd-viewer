@@ -14,6 +14,9 @@ class ViewerState {
 
     positionScene = [0, 0, 0];
 
+
+    sceneSelectedMesh = null;
+
 }
 
 export default ViewerState;

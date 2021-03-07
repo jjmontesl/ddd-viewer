@@ -6,7 +6,7 @@ export default [
       requiresAuth: false
     },
     component: () =>
-      import(/* webpackChunkName: "sceneMain" */ '@/components/SceneItem.vue')
+      import(/* webpackChunkName: "sceneMain" */ '@/components/scene/SceneItem.vue')
   }
 ]
 

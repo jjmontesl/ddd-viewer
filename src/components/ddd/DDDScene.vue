@@ -1,6 +1,6 @@
 <template>
 
-    <div style="width: 100%; height: 100px; position: relative; z-index: 0;">
+    <div style="width: 100%; position: relative; z-index: 0;" id="ddd-scene-parent">
         <canvas class="ddd-scene" id="ddd-scene" style="width: 100%; outline:none; height: 100px;">
         </canvas>
     </div>
@@ -69,6 +69,9 @@ export default {
     canvas.addEventListener('mousemove', () => {drag = true;});
     canvas.addEventListener('mouseup', () => {if (!drag) { that.click(); } } );
 
+    //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.setSlow(true); } });
+    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.setSlow(false); } });
+
     // Resize initially
     //setTimeout(() => { this.resize(); }, 100);
     this.sceneViewer.engine.resize();
@@ -77,11 +80,26 @@ export default {
 
   methods: {
 
+      setSlow: function(slow) {
+          if (this.sceneViewer.camera.speed < 1.0) {
+              this.sceneViewer.camera.speed = 1.0;
+          } else if (this.sceneViewer.camera.speed < 3.0) {
+              this.sceneViewer.camera.speed = 3.0;
+          //} else if (this.sceneViewer.camera.speed < 2.5) {
+          } else {
+              this.sceneViewer.camera.speed = 0.35;
+          }
+        //this.sceneViewer.camera.speed = (slow ? 0.5 : 2.5);
+      },
+
       resize: function() {
         const height = window.innerHeight - 40;
-        //console.debug("Resizing map: " + height);
-        this.$el.querySelector('.ddd-scene').style.height = height + "px";
-        if (this.$el.querySelector('canvas')) { this.$el.querySelector('canvas').height = height; }
+        let el = this.$el.querySelector('.ddd-scene');
+        if (el) {
+            console.debug("Resizing scene: " + height);
+            el.style.height = height + "px";
+            //if (this.$el.querySelector('canvas')) { this.$el.querySelector('canvas').height = height; }
+        }
         this.sceneViewer.engine.resize();
       },
 
@@ -99,9 +117,9 @@ export default {
 
         const pickResult = this.sceneViewer.scene.pick(this.sceneViewer.scene.pointerX, this.sceneViewer.scene.pointerY);
 
-        console.debug("Scene click: " + pickResult.pickedMesh.id);
+        //console.debug("Scene click: " + pickResult.pickedMesh.id);
         //console.log(pickResult.pickedMesh.id);
-        console.log(pickResult);
+        //console.log(pickResult);
 
         // Direct to /3d/mesh/
         //const point = olProj.transform(event.coordinate, 'EPSG:3857', 'EPSG:4326');
@@ -115,11 +133,9 @@ export default {
             this.$router.push('/3d/item/' + pickResult.pickedMesh.id).catch(()=>{});
             //that.$router.push('/3d/item/test/').catch(()=>{});
 
-            // Highlight
-            //that.highlightLayer.addMesh(pickResult.pickedMesh, BABYLON.Color3.White()); // , true);
-            //pickResult.pickedMesh.material = that.materialHighlight;
-            //pickResult.pickedMesh.material = that.materialGrass;
-            pickResult.pickedMesh.showBoundingBox = true;
+
+
+            this.sceneViewer.selectMesh(pickResult.pickedMesh);
 
             //this.sceneViewer.engine.switchFullscreen(true);
 

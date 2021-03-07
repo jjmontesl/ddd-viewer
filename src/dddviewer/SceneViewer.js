@@ -23,6 +23,9 @@ class SceneViewer {
 
         this.camera = null;
 
+        this.highlightMeshes = [];
+        this.materialHighlight = null;
+
         this.shadowsEnabled = false;
 
         this.layerManager = new LayerManager(this);
@@ -82,6 +85,8 @@ class SceneViewer {
         camera.keysDown += [83];
         camera.keysLeft += [65];
         camera.keysRight += [68];
+        camera.keysUpward += [81];
+        camera.keysDownward += [69];
         camera.attachControl(canvas, true);
         camera.position = new BABYLON.Vector3(0, 750, 0);
         camera.cameraRotation = new BABYLON.Vector2(Math.PI * 0.495, 0);
@@ -230,6 +235,41 @@ class SceneViewer {
             '+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 ' +
             '+towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
 
+    }
+
+    deselectMesh() {
+        if (this.viewerState.selectedMesh) {
+            //this.viewerState.selectedMesh.showBoundingBox = false;
+
+            for (var mesh of this.highlightMeshes) {
+                  mesh.dispose();
+            }
+            this.highlightMeshes = [];
+        }
+    }
+
+    selectMesh(mesh) {
+
+        this.deselectMesh();
+
+        if (mesh) {
+            this.viewerState.selectedMesh = mesh;
+            //this.viewerState.selectedMesh.showBoundingBox = true;
+            //console.debug(this.viewerState.selectedMesh.metadata.gltf.extras);
+
+            // Highlight
+            //that.highlightLayer.addMesh(pickResult.pickedMesh, BABYLON.Color3.White()); // , true);
+            //pickResult.pickedMesh.material = that.materialHighlight;
+            //pickResult.pickedMesh.material = that.materialGrass;
+
+            // Prepare the wireframe mesh
+            // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
+            let highlightClone = mesh.clone();
+            highlightClone.material = this.materialHighlight;
+            //highlightClone.parent = mesh.parent;
+            this.highlightMeshes.push(highlightClone);
+
+        }
     }
 
 

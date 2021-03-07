@@ -37,11 +37,18 @@ export default class {
         const coordsUtm = olProj.transform(this.layerManager.sceneViewer.positionWGS84(), 'EPSG:4326', 'EPSG:3857');
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ(coordsUtm, 17);
 
-        const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
-        if (!(tileKey in this.tiles)) {
-            console.debug("Dynamically loading: " + tileKey);
-            this.loadTile(tileCoords);
+        //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
+
+        //console.debug("Dynamically loading: " + tileKey);
+
+        this.loadTile(tileCoords);
+        /*
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                this.loadTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+            }
         }
+        */
     }
 
     loadTile(tileCoords) {
@@ -66,6 +73,7 @@ export default class {
           //const tileUrlBase = './scenes/ddd_http_';
           //const tileUrlBase = 'http://localhost:8000/cache/ddd_http/';
           const tileUrlBase = 'http://' + location.hostname + ':8000/cache/ddd_http/';
+          //const tileUrlBase = 'http://' + location.hostname + '/cache/ddd_http/';
           const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
 
           const that = this;
@@ -135,6 +143,7 @@ export default class {
                   //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);
                   pivot.position = new BABYLON.Vector3(tileCenterScene[0], 0, tileCenterScene[1]);
                   pivot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+                  pivot.freezeWorldMatrix();
 
                   that.tiles[tileKey] = pivot;
 
@@ -159,7 +168,6 @@ export default class {
               // onError
               function(event) {
                 console.log("Tile model (.glb) loading error: ", event);
-                console.debug(event);
 
                 if (true) {
                         // 404 - tile is being generated, show OSM tile as replacement

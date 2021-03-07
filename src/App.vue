@@ -5,38 +5,25 @@
 
     <v-main class="text-center">
 
-    <div style="margin-top: 40px;">
+        <div class="ddd-render-back">
 
-        <DDDMap v-if="mapVisible" /> <!-- :viewerState="viewerState" /> -->
-        <DDDMap3DSwitch v-if="mapVisible" />
+            <DDDMap v-if="mapVisible" /> <!-- :viewerState="viewerState" /> -->
+            <DDDMap3DSwitch v-if="mapVisible" />
 
-        <DDDScene v-if="sceneVisible" />
+            <DDDScene v-if="sceneVisible" />
 
-    </div>
+        </div>
 
-  <div class="ddd-front">
+        <div class="ddd-front">
 
-      <loading />
+          <loading />
 
-      <v-container fluid style="padding: 0px;">
-          <router-view :viewerState="viewerState" @dddViewerMode="dddViewerMode" />
-        <!-- <transition name="fade" mode="out-in">
-        </transition> -->
-      </v-container>
-  </div>
-
-    <v-row :justify="'end'" style="margin-top: -10px;">
-        <v-col>
-          <div class="ddd-render-back">
-
-
-          </div>
-        </v-col>
-        <v-col>
-
-
-        </v-col>
-    </v-row>
+          <v-container fluid style="padding: 0px;">
+              <router-view :viewerState="viewerState" @dddViewerMode="dddViewerMode" />
+            <!-- <transition name="fade" mode="out-in">
+            </transition> -->
+          </v-container>
+        </div>
 
     </v-main>
 
@@ -159,6 +146,10 @@ export default {
       dddScenePosition(coords) {
           //console.debug("Received Viewer coords: " + coords);
           this._viewerState.positionScene = coords;
+      },
+
+      resize() {
+
       }
   }
 }
@@ -211,20 +202,26 @@ aside.v-navigation-drawer--absolute {
 }
 
 .ddd-render-back {
-    position: relative;
+    position: fixed;
     left: 0;
     right: 0;
-    top: 38px;
-    bottom: 0;
+    top: 40px;
     /* z-index: 0; */
 }
 
 .ddd-front {
-    position: fixed;
-    top: 38px;
+    /*position: fixed;*/
+    margin-top: 38px;
+    /*top: 38px;*/
     right: 0px;
     z-index: 5;
-    width: 400px;
+    /*width: 400px;*/
+    bottom: 0;
+    max-height: 100%;
+    /*height: 100%;*/
+    overflow: auto;
+    width: 100%;
+    pointer-events: none;
 }
 
 </style>

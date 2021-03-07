@@ -1,9 +1,11 @@
 <template>
 
-    <div class="ddd-map-3d-switch">
+    <div class="ddd-map-3d-switch unselectable">
         <v-card class="pa-1" outlined style="width: 60px; height: 60px;">
             <canvas id="ddd-map-3d-switch" width="50" height="50" style="width: 50px; height: 50px;" v-on:click="switch3D"></canvas>
-            <span style="position: absolute; left: 0; right: 0; top: 15px; pointer-events: none;"><b>3D</b></span>
+            <span style="position: absolute; left: 0; right: 0; top: 18px; pointer-events: none; text-align: center; width: 100%; padding-right: 2px;">
+                    <i class="v-icon notranslate mdi mdi-earth"></i><b>3D</b>
+            </span>
         </v-card>
     </div>
 
@@ -12,11 +14,23 @@
 <style>
 .ddd-map-3d-switch {
     position: fixed;
-    z-index: 15;
+    z-index: 2;
     bottom: 70px;
     left: 10px;
     //opacity: .75;
     cursor: pointer;
+}
+*.unselectable {
+   -moz-user-select: none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+
+   /*
+     Introduced in Internet Explorer 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
 }
 </style>
 
