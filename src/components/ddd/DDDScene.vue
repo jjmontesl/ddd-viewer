@@ -39,8 +39,11 @@ export default {
   },
   beforeDestroy() {
       console.debug("Disposing BabylonJS scene.");
-      this.sceneViewer.dispose();
       window.removeEventListener('resize', this.resize);
+      clearTimeout(this._timeout);
+      this.sceneViewer.dispose();
+      this.getViewerState().sceneViewer = null;
+      this.sceneViewer = null;
   },
   mounted() {
     console.debug('Creating 3D scene.');
@@ -55,6 +58,7 @@ export default {
 
     this.sceneViewer = new SceneViewer(this.getViewerState());
     this.sceneViewer.initialize(canvas);
+    this.getViewerState().sceneViewer = this.sceneViewer;
 
     const layerDddOsm3d = new ModelGeoTileLayer3D();
     this.sceneViewer.layerManager.addLayer("ddd-osm-3d", layerDddOsm3d);
@@ -72,6 +76,8 @@ export default {
     //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.setSlow(true); } });
     canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.setSlow(false); } });
 
+    this._timeout = setTimeout(this.checkUpdateHref, 1500);
+
     // Resize initially
     //setTimeout(() => { this.resize(); }, 100);
     this.sceneViewer.engine.resize();
@@ -79,6 +85,26 @@ export default {
   },
 
   methods: {
+
+      checkUpdateHref: function() {
+
+          // Check movement and camera are stopped
+
+          // Update route
+          const posString = this.sceneViewer.positionString();
+
+          //this.$router.replace('/maps/' + posString);
+          if (this.$route.name === 'sceneMain') {
+              this.$router.push('/3d/' + posString).catch(()=>{});
+          } else if (this.$route.name === 'scenePos') {
+              this.$router.push('/3d/pos/' + posString).catch(()=>{});
+          } else if (this.$route.name === 'sceneItem')  {
+              this.$router.push('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
+          }
+
+          this._timeout = setTimeout(this.checkUpdateHref, 1500);
+
+      },
 
       setSlow: function(slow) {
           if (this.sceneViewer.camera.speed < 1.0) {
@@ -130,12 +156,12 @@ export default {
             this.$router.push('/3d/pos/').catch(()=>{});
             return;
         } else {
-            this.$router.push('/3d/item/' + pickResult.pickedMesh.id).catch(()=>{});
             //that.$router.push('/3d/item/test/').catch(()=>{});
 
-
-
             this.sceneViewer.selectMesh(pickResult.pickedMesh);
+
+            let meshName = pickResult.pickedMesh.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
+            this.$router.push('/3d/item/' + meshName + '/' + this.sceneViewer.positionString()).catch(()=>{});
 
             //this.sceneViewer.engine.switchFullscreen(true);
 

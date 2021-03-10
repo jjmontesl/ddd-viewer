@@ -2,7 +2,7 @@
 import * as BABYLON from 'babylonjs';
 import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
 import proj4 from 'proj4';
-import {register} from 'ol/proj/proj4';
+//import {register} from 'ol/proj/proj4';
 import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import 'babylonjs-loaders';
@@ -78,19 +78,7 @@ class SceneViewer {
         camera.panningSensibility = 2;
         */
 
-        const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), that.scene);
-        camera.minZ = 1;
-        camera.maxZ = 4500;
-        camera.keysUp += [87];
-        camera.keysDown += [83];
-        camera.keysLeft += [65];
-        camera.keysRight += [68];
-        camera.keysUpward += [81];
-        camera.keysDownward += [69];
-        camera.attachControl(canvas, true);
-        camera.position = new BABYLON.Vector3(0, 750, 0);
-        camera.cameraRotation = new BABYLON.Vector2(Math.PI * 0.495, 0);
-        that.camera = camera;
+        this.selectCameraFree();
 
         //that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-Math.PI * 0.25, 1, Math.PI), that.scene);
         that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.5, -0.5, 0.5), that.scene);
@@ -125,7 +113,8 @@ class SceneViewer {
         var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:3000.0}, that.scene);
         var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", that.scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox", that.scene);
+        //skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("/textures/skybox", that.scene);
+        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("/textures/TropicalSunnyDay", that.scene);
         skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
@@ -135,7 +124,7 @@ class SceneViewer {
         /*
         let water = new BABYLON.WaterMaterial("water", that.scene, new BABYLON.Vector2(1024, 1024));
         water.backFaceCulling = true;
-        water.bumpTexture = new BABYLON.Texture("textures/waterbump.png", scene);
+        water.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", scene);
         water.windForce = -5;
         water.waveHeight = 1.5;
         water.bumpHeight = 0.5;
@@ -183,7 +172,29 @@ class SceneViewer {
         let positionWGS84 = this.positionWGS84();
         if (positionWGS84) {
             this.viewerState.positionWGS84 = positionWGS84;
+
             this.viewerState.positionTileZoomLevel = 17;
+            if (this.viewerState.positionGroundHeight !== null && this.viewerState.positionGroundHeight < 50) {
+                this.viewerState.positionTileZoomLevel = 18;
+            }
+
+            if (this.camera.alpha) {
+                let heading = -90 + (-this.camera.alpha * (180.0 / Math.PI));
+                heading = (heading % 360 + 360) % 360;
+                this.viewerState.positionHeading = heading;
+
+                let tilt = this.camera.beta * (180.0 / 3.14159265359);
+                this.viewerState.positionTilt = tilt;
+            } else if (this.camera.rotation) {
+
+                let heading = (this.camera.rotation.y * (180.0 / Math.PI));
+                heading = (heading % 360 + 360) % 360;
+                this.viewerState.positionHeading = heading;
+
+                let yaw = this.camera.rotation.x * (180.0 / 3.14159265359);
+                this.viewerState.positionTilt = 90.0 - yaw;
+
+            }
         }
 
         let positionScene = this.camera.position.asArray();
@@ -214,7 +225,45 @@ class SceneViewer {
       const extent = this.map.getView().calculateExtent(this.map.getSize());
       let point = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
       */
+    }
 
+    positionString() {
+        // /@43.2505933,5.3736631,126a,35y,20.08h,56.42t/
+        const point = this.positionWGS84();
+        //const zoom = this.map.getView().getZoom();
+
+        //let heading = (this.camera.rotation.y * (180.0 / 3.14159265359));
+        //heading = (heading % 360 + 360) % 360;
+        let heading = this.viewerState.positionHeading;
+
+        //let yaw = this.camera.rotation.x * (180.0 / 3.14159265359);
+        let tilt = this.viewerState.positionTilt;
+
+        //let height = this.camera.position.y;
+        let groundHeight = this.positionGroundHeight();
+        if (groundHeight === null) { return this.camera.position.y; }
+
+        let posString = "@" + point[1].toFixed(7) + "," + point[0].toFixed(7);
+
+        if (false) {
+            posString = posString + "," + parseInt(groundHeight) + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
+        } else {
+            posString = posString + "," + parseInt(groundHeight) + "a";	// seems Ground M  ... (not WGS84 height (with EGM))
+            posString = posString + "," + parseInt(35) + "y";	// ?
+            posString = posString + "," + heading.toFixed(1) + "h"; // Heading
+            posString = posString + "," + tilt.toFixed(2) + "t";	// Yaw (0 is vertical, 90 horizontal)
+        }
+        return posString;
+    }
+
+    positionGroundHeight() {
+        const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
+        const pickResult = this.scene.pickWithRay(ray);
+        if (pickResult) {
+            return pickResult.distance;
+        } else {
+            return null;
+        }
     }
 
     registerProjectionForCoords(coords) {
@@ -270,6 +319,63 @@ class SceneViewer {
             this.highlightMeshes.push(highlightClone);
 
         }
+    }
+
+    selectCameraFree() {
+         if (this.camera) {
+            this.camera.detachControl();
+            this.camera.dispose();
+        }
+        console.debug("Creating free camera.");
+
+        const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
+        camera.minZ = 1;
+        camera.maxZ = 4500;
+        camera.keysUp += [87];
+        camera.keysDown += [83];
+        camera.keysLeft += [65];
+        camera.keysRight += [68];
+        camera.keysUpward += [81];
+        camera.keysDownward += [69];
+        camera.attachControl(this.engine.getRenderingCanvas(), true);
+        camera.fov = 35.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default
+        let positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
+        camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight, positionScene[2]);
+        camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+        //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
+        this.camera = camera;
+    }
+
+    selectCameraOrbit() {
+
+        let targetCoords = BABYLON.Vector3.Zero();
+        if (this.viewerState.selectedMesh) {
+            //targetCoords = this.viewerState.selectedMesh.absolutePosition;
+            let minWorld = this.viewerState.selectedMesh.getBoundingInfo().boundingBox.minimumWorld;
+            let maxWorld = this.viewerState.selectedMesh.getBoundingInfo().boundingBox.maximumWorld;
+            targetCoords = new BABYLON.Vector3((minWorld.x + maxWorld.x) / 2, (minWorld.y + maxWorld.y) / 2, (minWorld.z + maxWorld.z) / 2);
+
+        }
+
+        let distance = 75.0;
+        if (this.camera) {
+            distance = BABYLON.Vector3.Distance(this.camera.position, targetCoords);
+
+            this.camera.detachControl();
+            this.camera.dispose();
+        }
+
+        console.debug("Creating orbit camera pointing to: " + targetCoords);
+
+        const camera = new BABYLON.ArcRotateCamera("Camera", -(90 + this.viewerState.positionHeading) * Math.PI / 180.0, this.viewerState.positionTilt * Math.PI / 180.0, distance, targetCoords, this.scene);
+        camera.attachControl(this.engine.getRenderingCanvas(), true);
+        camera.minZ = 1;
+        //camera.maxZ = 2500;  // Automatic? see focusOn()
+        camera.lowerRadiusLimit = 15;
+        camera.upperRadiusLimit = 1000;
+        camera.upperBetaLimit = Math.PI; // /2; // Math.PI / 2 = limit to flat view
+        camera.panningSensibility = 0.1; // 0.5;
+        this.camera = camera;
     }
 
 

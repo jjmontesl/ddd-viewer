@@ -16,6 +16,12 @@ class ViewerState {
 
     positionScene = [0, 0, 0];
 
+    positionGroundHeight = 150.0;
+
+    positionHeading = 0.0;
+
+    positionTilt = 0.0;
+
 
     sceneSelectedMesh = null;
 

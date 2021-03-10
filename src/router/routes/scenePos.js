@@ -1,6 +1,6 @@
 export default [
   {
-    path: '/3d/pos/',
+    path: '/3d/pos/:position(@[^\/]+)?',
     name: 'scenePos',
     meta: {
       requiresAuth: false

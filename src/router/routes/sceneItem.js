@@ -1,6 +1,6 @@
 export default [
   {
-    path: '/3d/item/:id(.*)',
+    path: '/3d/item/:id([^/]*)/:position(@[^\/]+)?',
     name: 'sceneItem',
     meta: {
       requiresAuth: false

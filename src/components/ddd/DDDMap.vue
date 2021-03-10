@@ -85,6 +85,9 @@ export default {
           //that.$emit('dddPosition', that.positionWGS84(), this.map.getView().getZoom());
           this.getViewerState().positionWGS84 = that.positionWGS84();
           this.getViewerState().positionTileZoomLevel = this.map.getView().getZoom();
+          this.getViewerState().positionHeading = - this.map.getView().getRotation() * 180.0 / Math.PI;
+          this.getViewerState().positionTilt = 0.01;
+          this.getViewerState().positionGroundHeight = 150.0;
 
           this.map.once('rendercomplete', function () {
 
@@ -163,30 +166,36 @@ export default {
     that.map = new Map({
       controls: defaultControls().extend([scaleLine]),
       layers: [
+
         new TileLayer({
           source: new OSM({
           }),
           maxZoom: 19
         }),
-        /*
+
         new TileLayer({
              source: new XYZ({
-                 url: 'http://localhost:8000/cache/ddd_http/{z}/{x}/{y}.png',
+                 url: this.getViewerState().dddConfig.tileUrlBase + '{z}/{x}/{y}.png',
              }),
+            minZoom: 16,
             maxZoom: 17,
         }),
-        */
+
         new TileLayer({
           source: new TileDebug({
           }),
           minZoom: 16,
           maxZoom: 17
         }) ],
+
+
+
       target: 'ddd-map',
       view: new View({
         center: olProj.transform(that.getViewerState().positionWGS84, 'EPSG:4326', 'EPSG:3857'),
         zoom: that.getViewerState().positionTileZoomLevel,
         maxZoom: 18,
+        rotation: -that.getViewerState().positionHeading * Math.PI / 180.0,
       }),
     });
 

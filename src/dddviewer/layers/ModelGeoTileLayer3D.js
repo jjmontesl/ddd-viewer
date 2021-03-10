@@ -103,8 +103,9 @@ export default class {
                   let minHeight = Number.POSITIVE_INFINITY;
                   let maxHeight = Number.NEGATIVE_INFINITY;
                   newMeshes.forEach((mesh, i) => {
-                      if (that.shadowsEnabled) {
-                          that.shadowGenerator.getShadowMap().renderList.push(mesh);
+                      if (that.layerManager.sceneViewer.shadowsEnabled) {
+                            if (mesh.metadata && mesh.metadata.gltf.extras && mesh.metadata.gltf.extras['ddd:shadows'] === false) { return; }
+                          that.layerManager.sceneViewer.shadowGenerator.getShadowMap().renderList.push(mesh);
                           mesh.receiveShadows = true;
                       }
 
@@ -153,7 +154,18 @@ export default class {
                   that._tilesLoadedCount++;
                   if (that._tilesLoadedCount === 1) {
                         console.debug("Repositioning camera height based on height: " + maxHeight);
-                        that.layerManager.sceneViewer.camera.position.y = maxHeight + 250;
+                        //that.layerManager.sceneViewer.camera.position.y += maxHeight;
+
+                         const ray = new BABYLON.Ray(new BABYLON.Vector3(
+                             that.layerManager.sceneViewer.camera.position.x,
+                             -100.0, that.layerManager.sceneViewer.camera.position.z),
+                             new BABYLON.Vector3(0, 1, 0));
+                         const pickResult = that.layerManager.sceneViewer.scene.pickWithRay(ray);
+                         if (pickResult) {
+                            that.layerManager.sceneViewer.camera.position.y += (pickResult.distance - 100.0);
+                         } else {
+                            that.layerManager.sceneViewer.camera.position.y += maxHeight;
+                         }
                   }
 
 

@@ -15,6 +15,8 @@
 
                     <v-card-title style="text-align: left; word-break: break-word; width: 95%;">{{ nodeName }}</v-card-title>
 
+                    <OSMImage v-if="metadata['osm:image']" :imageUrl="metadata['osm:image']" />
+
                     <v-card-text class="text-left">
                         <div>
                             <!-- <h3>Attributes</h3> -->
@@ -23,23 +25,40 @@
                             <tbody>
                             <tr v-for="key in sortedMetadata" :key="key">
                                 <td style="max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"><b :style="[key.indexOf('osm:') !== 0 ? {'color': 'gray'} : {}]">{{key}}</b></td>
-                                <td style="white-space: nowrap;">{{ metadata[key] }}</td>
+                                <td style="white-space: nowrap;">
+                                    <div v-if="metadata[key] && metadata[key].indexOf && (metadata[key].indexOf('http://') === 0 || metadata[key].indexOf('https://') === 0)" >
+                                        <a :href="metadata[key]" target="_blank">{{ metadata[key] }}</a>
+                                    </div>
+                                    <div v-else-if="key === 'osm:changeset'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmchaLink" target="_blank">OSMCha</a>
+                                    </div>
+                                    <div v-else-if="key === 'osm:id'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmLink" target="_blank">OpenStreetMap</a>
+                                    </div>
+                                    <div v-else>
+                                        {{ metadata[key] }}
+                                    </div>
+                                </td>
                             </tr>
                             </tbody>
                             </v-simple-table>
                         </div>
                     </v-card-text>
 
-                    <!--
                     <v-card-text class="text-left">
                         <div>
                             <h3>Links</h3>
-                            <div><a href="">OpenStreetMap</a></div>
-                            <div><a href="">OSMCha (Change Analyzer)</a></div>
-                            <div><a href="">Google Maps</a></div>
+                            <div><a :href="osmLink">OpenStreetMap Object</a></div>
+                            <div><a :href="osmchaLink">OSMCha (Change Analyzer)</a></div>
+                            <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
-                    -->
+
+                    <div style="height: 20px;"> </div>
+
+                    <v-card-text class="text-left">
+                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbital</v-btn>
+                    </v-card-text>
 
                 </v-card>
 
@@ -67,6 +86,7 @@ tbody tr:nth-of-type(odd) {
 <script>
 import DDDScene from '@/components/ddd/DDDScene.vue';
 import DDDSceneInsert from '@/components/ddd/DDDSceneInsert.vue';
+import OSMImage from '@/components/ddd/OSMImage.vue';
 
 export default {
   mounted() {
@@ -82,6 +102,9 @@ export default {
       //titleTemplate: `${this.$t('home.TITLE')} - %s`
     }
   },
+  inject: [
+      //'getViewerState',
+  ],
   data() {
     return {
       //name: this.$store.state.auth.user.name,
@@ -99,6 +122,29 @@ export default {
       keys.sort();
       keys.sort((a, b) => { return (b.indexOf('osm:') - a.indexOf('osm:'));});
       return keys; // Do your custom sorting here
+    },
+    sceneLinkGoogleMaps: function() {
+        let url = null;
+        if (this.viewerState.sceneViewer) {
+            url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
+        }
+        return url;
+    },
+    osmchaLink: function() {
+        let url = null;
+        if (this.metadata['osm:changeset']) {
+            url = 'https://osmcha.org/changesets/' + this.metadata['osm:changeset'] + '/';
+        }
+        return url;
+    },
+    osmLink: function() {
+        let url = null;
+        if (this.metadata['osm:id']) {
+            let element = this.metadata['osm:element'];
+            let id = this.metadata['osm:id'].split("-")[1];
+            url = 'https://www.openstreetmap.org/' + element + '/' + id;
+        }
+        return url;
     }
   },
   props: [
@@ -112,7 +158,8 @@ export default {
 
   components: {
     DDDScene,
-    DDDSceneInsert
+    DDDSceneInsert,
+    OSMImage,
   },
 
   methods: {
@@ -131,7 +178,11 @@ export default {
         let el = this.$el.querySelector('.v-card');
         //this.$el.style.height = '' + (window.innerHeight - 40) + 'px';
         el.style.minHeight = '' + (window.innerHeight - 38) + 'px';
-      }
+      },
+
+      selectCameraOrbit() {
+          this.viewerState.sceneViewer.selectCameraOrbit();
+      },
 
   },
 

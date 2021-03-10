@@ -14,8 +14,8 @@ Vue.config.productionTip = false
 Vue.use(VuetifyConfirm, { vuetify })
 
 Vue.prototype.dddConfig = {
-    //tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
     tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
+    //tileUrlBase: 'http://' + location.hostname + '/cache/ddd_http/',
 
     defaultCoords: [-8.723, 42.238]
 }

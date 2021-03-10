@@ -13,7 +13,7 @@ Vue.use(Meta)
 const router = new Router({
   mode: 'history',
   //base: process.env.BASE_URL,
-  base: '/',  // to avoid browser and app interpreting routes from inner paths
+  base: '/',  // to avoid browser and app interpreting routes from inner paths (?)
   routes: [...routes]
 })
 
