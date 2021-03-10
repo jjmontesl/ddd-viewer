@@ -314,8 +314,19 @@ class SceneViewer {
             // Prepare the wireframe mesh
             // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
             let highlightClone = mesh.clone();
-            highlightClone.material = this.materialHighlight;
-            //highlightClone.parent = mesh.parent;
+
+            // Iterate clone recursively to set highlight material to all submeshes
+            let that = this;
+            const setHighlightRecursively = function(submesh) {
+                submesh.material = that.materialHighlight;
+                for (let mc of submesh.getChildren()) {
+                    setHighlightRecursively(mc);
+                }
+            }
+            setHighlightRecursively(highlightClone);
+
+            //highlightClone.material = this.materialHighlight;
+            highlightClone.parent = mesh.parent;
             this.highlightMeshes.push(highlightClone);
 
         }
@@ -331,6 +342,8 @@ class SceneViewer {
         const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
         camera.minZ = 1;
         camera.maxZ = 4500;
+        //camera.touchMoveSensibility = 0.01;
+        camera.touchAngularSensibility = 1000.0;
         camera.keysUp += [87];
         camera.keysDown += [83];
         camera.keysLeft += [65];
@@ -346,15 +359,37 @@ class SceneViewer {
         this.camera = camera;
     }
 
+    getBoundsRecursively(node, bounds) {
+        if (!bounds) {
+            bounds = {minimumWorld: {x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY},
+                      maximumWorld: {x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY, z: Number.NEGATIVE_INFINITY}}
+        }
+        if (node.getBoundingInfo) {
+            let minWorld = node.getBoundingInfo().boundingBox.minimumWorld;
+            let maxWorld = node.getBoundingInfo().boundingBox.maximumWorld;
+            if (bounds.minimumWorld.x > minWorld.x) {bounds.minimumWorld.x = minWorld.x;}
+            if (bounds.minimumWorld.y > minWorld.y) {bounds.minimumWorld.y = minWorld.y;}
+            if (bounds.minimumWorld.z > minWorld.z) {bounds.minimumWorld.z = minWorld.z;}
+            if (bounds.maximumWorld.x < maxWorld.x) {bounds.maximumWorld.x = maxWorld.x;}
+            if (bounds.maximumWorld.y < maxWorld.y) {bounds.maximumWorld.y = maxWorld.y;}
+            if (bounds.maximumWorld.z < maxWorld.z) {bounds.maximumWorld.z = maxWorld.z;}
+        }
+
+        for (let c of node.getChildren()) {
+            bounds = this.getBoundsRecursively(c, bounds);
+        }
+        return bounds;
+    }
+
     selectCameraOrbit() {
 
         let targetCoords = BABYLON.Vector3.Zero();
         if (this.viewerState.selectedMesh) {
+            let boundingBox = this.getBoundsRecursively(this.viewerState.selectedMesh);
             //targetCoords = this.viewerState.selectedMesh.absolutePosition;
-            let minWorld = this.viewerState.selectedMesh.getBoundingInfo().boundingBox.minimumWorld;
-            let maxWorld = this.viewerState.selectedMesh.getBoundingInfo().boundingBox.maximumWorld;
+            let minWorld = boundingBox.minimumWorld;
+            let maxWorld = boundingBox.maximumWorld;
             targetCoords = new BABYLON.Vector3((minWorld.x + maxWorld.x) / 2, (minWorld.y + maxWorld.y) / 2, (minWorld.z + maxWorld.z) / 2);
-
         }
 
         let distance = 75.0;
@@ -374,7 +409,11 @@ class SceneViewer {
         camera.lowerRadiusLimit = 15;
         camera.upperRadiusLimit = 1000;
         camera.upperBetaLimit = Math.PI; // /2; // Math.PI / 2 = limit to flat view
-        camera.panningSensibility = 0.1; // 0.5;
+        camera.panningSensibility = 1000.0; // 0.5;
+        camera.multiTouchPanning = false;
+        camera.multiTouchPanAndZoom = false;
+        camera.pinchZoom = true;
+        camera.useNaturalPinchZoom = true;
         this.camera = camera;
     }
 

@@ -1,7 +1,7 @@
 <template>
 
     <div>
-        <div>{{ nodeLabel }}</div>
+        <div><a @click="selectNode">{{ nodeLabel }}</a></div>
         <div style="margin-left: 15px;">
             <NodeHierarchy v-if="childPathGetter() !== null" :nodeGetter="nodeGetter" :pathGetter="childPathGetter"></NodeHierarchy>
         </div>
@@ -31,7 +31,7 @@ const NodeHierarchy = {
     }
   },
   inject: [
-      //'getViewerState',
+      'getViewerState',
   ],
   data() {
     return {
@@ -51,7 +51,7 @@ const NodeHierarchy = {
         //this.pathGetter = null;
         this.childPath = null;
         this.updateNode();
-        //this.$forceUpdate();
+        this.$forceUpdate();
     }
   },
   props: [
@@ -90,12 +90,27 @@ const NodeHierarchy = {
       if (path.length > 0) {
           this.nodeLabel = path[0].id.split("/").slice(-1)[0];
       } else {
-            this.nodeLabel = "ERROR";
+          this.nodeLabel = "ERROR";
       }
+
+    },
+
+    selectNode() {
+          // Select current node
+
+          let path = null;
+          if (this.pathGetter) { path = this.pathGetter(); }
+
+          if (path === null) { return; }
+
+          let node = path[0];
+
+          this.getViewerState().sceneViewer.selectMesh(node);
+          let meshName = node.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
+          this.$router.push('/3d/item/' + meshName + '/' + this.getViewerState().sceneViewer.positionString()).catch(()=>{});
 
     }
   },
-
 }
 
 NodeHierarchy.components = { NodeHierarchy };
