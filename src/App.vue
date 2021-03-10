@@ -161,16 +161,15 @@ export default {
       },
 
       parseHref() {
-          console.debug("Route: " + window.location.href);
+          //console.debug("Route: " + window.location.href);
 
-
-            try {
+          try {
                 // Parse at location
                 //http://localhost:8080/maps/@42.1354407,-0.4126472,17.0z
                 let href = window.location.href;
                 const regexp = /.*@([0-9.\-]+),([0-9.\-]+)((,(([0-9.\-]+)[ayhtz]))*).*/;
                 let matches = href.match(regexp);
-                console.debug(matches);
+                //console.debug(matches);
 
                 if (matches.length >= 3) {
                     this.viewerState.positionWGS84 = [parseFloat(matches[2]),parseFloat(matches[1])];
@@ -189,7 +188,7 @@ export default {
                         } else if (code === 't') {
                             this.viewerState.positionTilt = value;
                         }
-                        console.debug(value, code);
+                        //console.debug(value, code);
                     }
 
                 }

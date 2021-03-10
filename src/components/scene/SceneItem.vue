@@ -58,6 +58,14 @@
 
                     <v-card-text class="text-left">
                         <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbital</v-btn>
+                        <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
+                    </v-card-text>
+
+                    <v-card-text class="text-left">
+                        <div>
+                            <h3>Node Hierarchy</h3>
+                            <NodeHierarchy :nodeGetter="nodeGetter"></NodeHierarchy>
+                        </div>
                     </v-card-text>
 
                 </v-card>
@@ -87,6 +95,7 @@ tbody tr:nth-of-type(odd) {
 import DDDScene from '@/components/ddd/DDDScene.vue';
 import DDDSceneInsert from '@/components/ddd/DDDSceneInsert.vue';
 import OSMImage from '@/components/ddd/OSMImage.vue';
+import NodeHierarchy from '@/components/scene/NodeHierarchy.vue';
 
 export default {
   mounted() {
@@ -109,9 +118,11 @@ export default {
     return {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
+      mesh: null,
       nodeId: this.$route.params.id,
       nodeName: null,
       metadata: {},
+      nodeGetter: () => { return this.viewerState.selectedMesh; },
     }
   },
   computed: {
@@ -145,7 +156,7 @@ export default {
             url = 'https://www.openstreetmap.org/' + element + '/' + id;
         }
         return url;
-    }
+    },
   },
   props: [
       'viewerState',
@@ -160,18 +171,22 @@ export default {
     DDDScene,
     DDDSceneInsert,
     OSMImage,
+    NodeHierarchy,
   },
 
   methods: {
       setMesh(mesh) {
+          //this.mesh = mesh;
           if (!mesh) { return; }
           this.nodeName = mesh.id.split("/").pop().replaceAll("_", " ");
-          if (mesh.metadata.gltf) {
+          if (mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
               this.metadata = mesh.metadata.gltf.extras;
               if (this.metadata['osm:name']) {
                   this.nodeName = this.metadata['osm:name'];
               }
           }
+          this.nodeGetter = () => { return this.viewerState.selectedMesh; };
+          console.debug("Scene Item setMesh called.");
       },
 
       resize() {
@@ -182,6 +197,10 @@ export default {
 
       selectCameraOrbit() {
           this.viewerState.sceneViewer.selectCameraOrbit();
+      },
+
+      selectCameraFree() {
+          this.viewerState.sceneViewer.selectCameraFree();
       },
 
   },
