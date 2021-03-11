@@ -55,6 +55,8 @@ export default {
       nominatimSearch: async function(query) {
         if (!query) { return; }
 
+        this.results = [];
+
         let url = "https://nominatim.openstreetmap.org/search?";
         url = url + "format=json&q=" + query;
 

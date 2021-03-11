@@ -160,6 +160,7 @@ export default {
 
             this.sceneViewer.selectMesh(pickResult.pickedMesh);
 
+            // WARN: TODO: this transformation is done in other places
             let meshName = pickResult.pickedMesh.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
             this.$router.push('/3d/item/' + meshName + '/' + this.sceneViewer.positionString()).catch(()=>{});
 

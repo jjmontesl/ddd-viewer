@@ -25,6 +25,8 @@ class ViewerState {
 
     sceneSelectedMesh = null;
 
+    sceneSelectedMeshId = null;
+
 }
 
 export default ViewerState;

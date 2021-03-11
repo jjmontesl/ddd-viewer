@@ -70,9 +70,16 @@ const NodeHierarchy = {
 
       if (this.pathGetter) { path = this.pathGetter(); }
 
-      if (path === null) {
+      let n = null;
+      if (this.nodeGetter) { n = this.nodeGetter(); }
+      if (!n) {
+        this.childPath = null;
+        this.nodeLabel = "LOADING";
+          return;
+      }
+
+      if (path === null && n) {
           // Create path from root
-          let n = this.nodeGetter();
           path = [ n ];
 
           while (n.parent) {

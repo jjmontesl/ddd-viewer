@@ -15,6 +15,8 @@
 
                     <v-card-title style="text-align: left; word-break: break-word; width: 95%;">{{ nodeName }}</v-card-title>
 
+                    <div v-if="loading" style="text-align: center;">Loading...</div>
+
                     <OSMImage v-if="metadata['osm:image']" :imageUrl="metadata['osm:image']" />
 
                     <v-card-text class="text-left">
@@ -99,12 +101,20 @@ import NodeHierarchy from '@/components/scene/NodeHierarchy.vue';
 
 export default {
   mounted() {
-    this.$emit('dddViewerMode', 'scene');
-    this.setMesh(this.viewerState.selectedMesh);
 
     window.addEventListener('resize', this.resize);
     this.resize();
+
+    this.$emit('dddViewerMode', 'scene');
+    this.setMesh(this.viewerState.selectedMesh);
+
+    if (!this.viewerState.selectedMesh) {
+        let urlNodeId = this.$route.params.id;
+        this.viewerState.sceneSelectedMeshId = urlNodeId;
+    }
+
   },
+
   metaInfo() {
     return {
       //title: this.$store.getters.appTitle,
@@ -122,6 +132,7 @@ export default {
       nodeId: this.$route.params.id,
       nodeName: null,
       metadata: {},
+      loading: true,
       nodeGetter: () => { return this.viewerState.selectedMesh; },
     }
   },
@@ -164,6 +175,9 @@ export default {
   watch: {
     '$route' () {
         this.setMesh(this.viewerState.selectedMesh);
+    },
+    'viewerState.sceneSelectedMeshId' () {
+        this.$forceUpdate();
     }
   },
 
@@ -178,6 +192,7 @@ export default {
       setMesh(mesh) {
           //this.mesh = mesh;
           if (!mesh) { return; }
+          this.loading = false;
           this.nodeName = mesh.id.split("/").pop().replaceAll("_", " ");
           if (mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
               this.metadata = mesh.metadata.gltf.extras;

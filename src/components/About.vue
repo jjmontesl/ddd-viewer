@@ -61,6 +61,12 @@
                             You can also <a href="https://twitter.com/jjmontes" target="_blank">follow Jose Juan Montes on Twitter</a> to stay up to date.
                         </p>
 
+                        <h3>Coverage</h3>
+                        <p>
+                             <center><i>Current Coverage (limited by elevation data disponibility)</i></center>
+                             <center><img src="/img/about-map.png" style="height: 300px;" /></center>
+                        </p>
+
                     </div>
 
                     <div style="height: 20px;"> </div>

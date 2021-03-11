@@ -153,7 +153,7 @@ export default class {
 
                   that._tilesLoadedCount++;
                   if (that._tilesLoadedCount === 1) {
-                        console.debug("Repositioning camera height based on height: " + maxHeight);
+                        console.debug("Repositioning camera height based on terrain height: " + maxHeight);
                         //that.layerManager.sceneViewer.camera.position.y += maxHeight;
 
                          const ray = new BABYLON.Ray(new BABYLON.Vector3(
@@ -167,6 +167,25 @@ export default class {
                             that.layerManager.sceneViewer.camera.position.y += maxHeight;
                          }
                   }
+
+                  // Check if the selected node is in the recently loaded node
+                  // TODO: Should use a generic notification + object id/naming system
+                  if (that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId) {
+                      let criteria = {'_node_name': that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId };
+                      console.debug(criteria);
+                      let foundMesh = that.layerManager.sceneViewer.findNode(pivot, criteria);
+                      console.debug(foundMesh);
+                      if (foundMesh) {
+                          that.layerManager.sceneViewer.selectMesh(foundMesh);
+                          that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId = null;  // Triggers watchers update
+                      }
+                  }
+
+                  /*
+                  this.sceneViewer.selectMesh(pickResult.pickedMesh);
+                  let meshName = pickResult.pickedMesh.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
+                  this.$router.push('/3d/item/' + meshName + '/' + this.sceneViewer.positionString()).catch(()=>{});
+                  */
 
 
               },

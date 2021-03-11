@@ -381,6 +381,33 @@ class SceneViewer {
         return bounds;
     }
 
+    /*
+    * Find a node within a scene or node recursively.
+    * Criteria is a dictionary of key=value pairs. An object will match if any of the pairs matches object's metadata.
+    */
+    findNode(node, criteria) {
+        //console.debug(node);
+        if (criteria['_node_name']) {
+            let name = node.id.split("/").pop().replaceAll('#', '_');
+            if (name === criteria['_node_name']) {
+                return node;
+            }
+        }
+        if (node.metadata && node.metadata.gltf && node.metadata.gltf.extras) {
+            let metadata = node.metadata.gltf.extras;
+            for (let key in criteria) {
+                if (metadata[key] === criteria[key]) {
+                    return node;
+                }
+            }
+        }
+        for (let sn of node.getChildren()) {
+            let result = this.findNode(sn, criteria);
+            if (result) { return result; }
+        }
+        return null;
+    }
+
     selectCameraOrbit() {
 
         let targetCoords = BABYLON.Vector3.Zero();
