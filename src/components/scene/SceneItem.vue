@@ -65,7 +65,7 @@
 
                     <v-card-text class="text-left">
                         <div>
-                            <h3>Node Hierarchy</h3>
+                            <h3>Node Tree</h3>
                             <NodeHierarchy :nodeGetter="nodeGetter"></NodeHierarchy>
                         </div>
                     </v-card-text>

@@ -51,7 +51,7 @@ class SceneViewer {
         //const canvas = that.$el.querySelector('.ddd-scene');
         //const canvas = document.getElementById("renderCanvas");
 
-        console.debug(that.viewerState);
+        //console.debug(that.viewerState);
         let coords = that.viewerState.positionWGS84;
         //that.loadTileForCoords(coords);
 

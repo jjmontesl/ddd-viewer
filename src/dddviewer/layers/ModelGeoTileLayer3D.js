@@ -172,9 +172,9 @@ export default class {
                   // TODO: Should use a generic notification + object id/naming system
                   if (that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId) {
                       let criteria = {'_node_name': that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId };
-                      console.debug(criteria);
+                      //console.debug(criteria);
                       let foundMesh = that.layerManager.sceneViewer.findNode(pivot, criteria);
-                      console.debug(foundMesh);
+                      //console.debug(foundMesh);
                       if (foundMesh) {
                           that.layerManager.sceneViewer.selectMesh(foundMesh);
                           that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId = null;  // Triggers watchers update
