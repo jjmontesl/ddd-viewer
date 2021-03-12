@@ -50,8 +50,8 @@
                     <v-card-text class="text-left">
                         <div>
                             <h3>Links</h3>
-                            <div><a :href="osmLink">OpenStreetMap Object</a></div>
-                            <div><a :href="osmchaLink">OSMCha (Change Analyzer)</a></div>
+                            <div><a :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
+                            <div><a :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
                             <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
@@ -138,6 +138,7 @@ export default {
   },
   computed: {
     sortedMetadata: function () {
+      this.$route;  // force dependency on property
       let keys = Object.keys(this.metadata);
       keys = keys.filter((key) => { return ! (key.indexOf('_') === 0); });
       //keys = keys.filter((key) => { return (key.indexOf('osm:') === 0); });
@@ -146,6 +147,7 @@ export default {
       return keys; // Do your custom sorting here
     },
     sceneLinkGoogleMaps: function() {
+        this.$route;  // force dependency on property
         let url = null;
         if (this.viewerState.sceneViewer) {
             url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
@@ -153,6 +155,7 @@ export default {
         return url;
     },
     osmchaLink: function() {
+        this.$route;  // force dependency on property
         let url = null;
         if (this.metadata['osm:changeset']) {
             url = 'https://osmcha.org/changesets/' + this.metadata['osm:changeset'] + '/';
@@ -160,6 +163,7 @@ export default {
         return url;
     },
     osmLink: function() {
+        this.$route;  // force dependency on property
         let url = null;
         if (this.metadata['osm:id']) {
             let element = this.metadata['osm:element'];

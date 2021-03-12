@@ -23,6 +23,8 @@ class ViewerState {
     positionTilt = 0.0;
 
 
+
+    // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
     sceneSelectedMesh = null;
 
     sceneSelectedMeshId = null;

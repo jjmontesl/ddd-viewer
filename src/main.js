@@ -16,10 +16,10 @@ Vue.config.productionTip = false
 Vue.use(VuetifyConfirm, { vuetify })
 
 Vue.use(VueGtag, {
-  config: { id: "" },
-  params: {
-      send_page_view: false
-  }
+  config: { id: "G-C94KZNB3L3" },
+  //params: {
+  //    send_page_view: false
+  //}
 });
 
 Vue.prototype.dddConfig = {

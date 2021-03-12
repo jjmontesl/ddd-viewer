@@ -57,7 +57,6 @@ class SceneViewer {
 
         that.registerProjectionForCoords(coords);
 
-
         // Associate a Babylon Engine to it.
         let engine = new BABYLON.Engine(canvas, true, { stencil: true });
         that.engine = engine;
@@ -332,33 +331,6 @@ class SceneViewer {
         }
     }
 
-    selectCameraFree() {
-         if (this.camera) {
-            this.camera.detachControl();
-            this.camera.dispose();
-        }
-        console.debug("Creating free camera.");
-
-        const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
-        camera.minZ = 1;
-        camera.maxZ = 4500;
-        //camera.touchMoveSensibility = 0.01;
-        camera.touchAngularSensibility = 1000.0;
-        camera.keysUp += [87];
-        camera.keysDown += [83];
-        camera.keysLeft += [65];
-        camera.keysRight += [68];
-        camera.keysUpward += [81];
-        camera.keysDownward += [69];
-        camera.attachControl(this.engine.getRenderingCanvas(), true);
-        camera.fov = 35.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default
-        let positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
-        camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight, positionScene[2]);
-        camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-        //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
-        this.camera = camera;
-    }
-
     getBoundsRecursively(node, bounds) {
         if (!bounds) {
             bounds = {minimumWorld: {x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY},
@@ -408,6 +380,36 @@ class SceneViewer {
         return null;
     }
 
+    selectCameraFree() {
+         if (this.camera) {
+            this.camera.detachControl();
+            this.camera.dispose();
+        }
+        console.debug("Creating free camera.");
+
+        const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
+        camera.minZ = 1;
+        camera.maxZ = 4500;
+        //camera.touchMoveSensibility = 0.01;
+        camera.touchAngularSensibility = 1000.0;
+        camera.angularSensibility = 1000.0;
+        //camera.inertia = 0.10;
+        camera.keysUp += [87];
+        camera.keysDown += [83];
+        camera.keysLeft += [65];
+        camera.keysRight += [68];
+        camera.keysUpward += [81];
+        camera.keysDownward += [69];
+        camera.attachControl(this.engine.getRenderingCanvas(), true);
+        camera.fov = 35.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default
+        let positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
+        camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight, positionScene[2]);
+        camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+        //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
+        this.camera = camera;
+
+    }
+
     selectCameraOrbit() {
 
         let targetCoords = BABYLON.Vector3.Zero();
@@ -436,11 +438,14 @@ class SceneViewer {
         camera.lowerRadiusLimit = 15;
         camera.upperRadiusLimit = 1000;
         camera.upperBetaLimit = Math.PI; // /2; // Math.PI / 2 = limit to flat view
-        camera.panningSensibility = 1000.0; // 0.5;
+        camera.panningSensibility = 50.0; // 0.5;
+        camera.angularSensibility = 50.0;
+        //camera.inertia = 0.10;
         camera.multiTouchPanning = false;
         camera.multiTouchPanAndZoom = false;
         camera.pinchZoom = true;
         camera.useNaturalPinchZoom = true;
+        camera.fov = 35.0 * (Math.PI / 180.0);
         this.camera = camera;
     }
 

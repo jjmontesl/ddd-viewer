@@ -155,6 +155,7 @@ export default {
     console.debug('Creating DDD map.');
 
     const that = this;
+    this.getViewerState().dddMap = this;
 
     //const el = that.$el.querySelector('.ddd-map');
     //el.style.height = "calc(100%)";

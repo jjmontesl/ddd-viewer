@@ -15,6 +15,7 @@ export default class {
         this.layerManager = null;
 
         this._lastHeight = 0;  // Used to hack positioning of tiles before height is known
+        this._lastLoadDynamic = 0;
 
         this._tilesLoadedCount = 0;
 
@@ -33,15 +34,72 @@ export default class {
     }
 
 
+    /*
+    * From: https://bartwronski.com/2017/04/13/cull-that-cone/
+    */
+    testConeSphere(origin, forward, size, angle, sphereCenter, sphereRadius) {
+
+        const V = sphereCenter.subtract(origin);
+        const VlenSq = BABYLON.Vector3.Dot(V, V);
+        const V1len = BABYLON.Vector3.Dot(V, forward);
+        const distanceClosestPoint = Math.cos(angle) * Math.sqrt(VlenSq - V1len * V1len) - V1len * Math.sin(angle);
+
+        const angleCull = distanceClosestPoint > sphereRadius;
+        const frontCull = V1len >  sphereRadius + size;
+        const backCull  = V1len < -sphereRadius;
+
+        return !(angleCull || frontCull || backCull);
+    }
+
     loadTilesDynamic() {
+
+        this._lastLoadDynamic -= 1;
+        if (this._lastLoadDynamic > 0) { return; }
+
+        this._lastLoadDynamic = 100;
+
         const coordsUtm = olProj.transform(this.layerManager.sceneViewer.positionWGS84(), 'EPSG:4326', 'EPSG:3857');
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ(coordsUtm, 17);
-
         //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
 
-        //console.debug("Dynamically loading: " + tileKey);
+        this.loadTile(tileCoords);  // ensure elevation for current tile
 
-        this.loadTile(tileCoords);
+        // Calculate frustrum (2D)
+        const frustrumOrigin = this.layerManager.sceneViewer.camera.position;
+        if (this.lastHeight) { frustrumOrigin.y -= this._lastHeight; }
+        const frustrumForward = this.layerManager.sceneViewer.camera.getDirection(BABYLON.Vector3.Forward());
+        const frustrumSize = 300.0;
+        const frustrumAngle = this.layerManager.sceneViewer.camera.fov; // 30.0;
+
+        // Project frustrum corners to tiles
+
+        // Calculate tiles inside frustrum
+        const tiledist = 1;
+        for (let i = -tiledist; i <= tiledist; i++) {
+            for (let j = -tiledist; j <= tiledist; j++) {
+                let tileCenter = this.tileGrid.getTileCoordCenter([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+                let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+                let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+                let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
+                let sphereRadius = 220.0;
+                if (this.testConeSphere(frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius)) {
+                    //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
+                    this.loadTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+                } else {
+                    //console.debug("Ignoring: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
+                }
+            }
+        }
+
+        // Sort tiles by distance
+
+        // Enqueue (1 on mobile? 2 on PC?)
+
+        // setEnabled(false) on culled chunks
+
+        // update LOD levels (call lodLevel - remove items, etc) per distance
+
+
         /*
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
@@ -164,6 +222,7 @@ export default class {
                          if (pickResult) {
                             that.layerManager.sceneViewer.camera.position.y += (pickResult.distance - 100.0);
                          } else {
+                             //that._tilesLoadedCount--;
                             that.layerManager.sceneViewer.camera.position.y += maxHeight;
                          }
                   }

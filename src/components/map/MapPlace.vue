@@ -44,12 +44,9 @@
                         <div>
                             <h3>Links</h3>
                             <div style="margin-left: 10px;">
-                                See at: <a href="https://www.openstreetmap.org/#map=17/49.75277/13.00271">OpenStreetMap</a> -
-                                <a href="https://www.google.es/maps/@42.232518,-8.7248621,17z">Google Maps</a>
+                                <div><a :href="mapLinkOSM" target="_blank">OpenStreetMap</a></div>
+                                <div><a :href="mapLinkGoogleMaps" target="_blank">Google Maps</a></div>
                             </div>
-                            <!--
-                            <div><a href="">OSMCha (Change Analyzer)</a></div>
-                            -->
                         </div>
                     </v-card-text>
 
@@ -103,10 +100,34 @@ export default {
       DDDMapInsert,
       NominatimSearch
   },
+  props: [
+      'viewerState',
+  ],
   watch: {
     '$route' () {
         this.setPlace(this.$route.params.name);
     }
+  },
+  computed: {
+    mapLinkGoogleMaps: function() {
+        this.$route;  // force dependency on property
+        let url = null;
+        console.debug(this.viewerState.dddMap);
+        if (this.viewerState.dddMap) {
+            url = 'https://www.google.com/maps/' +  this.viewerState.dddMap.positionString();  // ?hl=es-ES
+        }
+        return url;
+    },
+    mapLinkOSM: function() {
+        //this.$route;  // force dependency on property
+        let url = null;
+        if (this.placeCoordsWGS84) {
+            url = 'https://www.openstreetmap.org/#map=' + parseInt(this.viewerState.positionTileZoomLevel) + '/' +
+                this.viewerState.positionWGS84[1].toFixed(5) + '/' +
+                this.viewerState.positionWGS84[0].toFixed(5);
+        }
+        return url;
+    },
   },
   methods: {
 
