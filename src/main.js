@@ -26,7 +26,8 @@ Vue.prototype.dddConfig = {
     tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
     //tileUrlBase: 'http://' + location.hostname + '/cache/ddd_http/',
 
-    defaultCoords: [-5.6660039, 40.9606671],  // [-8.723, 42.238]
+    //defaultCoords: [-5.666, 40.960],  // Salamanca Cathedral
+    defaultCoords: [[-8.723, 42.238]],  // Vigo Castro
 }
 
 const app = new Vue({

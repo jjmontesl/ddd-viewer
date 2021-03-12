@@ -256,10 +256,11 @@ class SceneViewer {
     }
 
     positionGroundHeight() {
-        const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
+        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
+        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
         const pickResult = this.scene.pickWithRay(ray);
         if (pickResult) {
-            return pickResult.distance;
+            return this.camera.position.y - (pickResult.distance - 100);
         } else {
             return null;
         }

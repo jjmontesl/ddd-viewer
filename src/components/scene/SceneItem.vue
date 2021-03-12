@@ -128,7 +128,7 @@ export default {
     return {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
-      mesh: null,
+      //mesh: null,
       nodeId: this.$route.params.id,
       nodeName: null,
       metadata: {},
@@ -138,6 +138,7 @@ export default {
   },
   computed: {
     sortedMetadata: function () {
+      this.viewerState.sceneSelectedMeshId;
       this.$route;  // force dependency on property
       let keys = Object.keys(this.metadata);
       keys = keys.filter((key) => { return ! (key.indexOf('_') === 0); });
@@ -148,6 +149,7 @@ export default {
     },
     sceneLinkGoogleMaps: function() {
         this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
         let url = null;
         if (this.viewerState.sceneViewer) {
             url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
@@ -156,6 +158,7 @@ export default {
     },
     osmchaLink: function() {
         this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
         let url = null;
         if (this.metadata['osm:changeset']) {
             url = 'https://osmcha.org/changesets/' + this.metadata['osm:changeset'] + '/';
@@ -164,6 +167,7 @@ export default {
     },
     osmLink: function() {
         this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
         let url = null;
         if (this.metadata['osm:id']) {
             let element = this.metadata['osm:element'];
@@ -182,6 +186,9 @@ export default {
     },
     'viewerState.sceneSelectedMeshId' () {
         this.$forceUpdate();
+        this.setMesh(this.viewerState.selectedMesh);
+        //if (! this.metadata['_updated']) {this.metadata['_updated'] = 0;}
+        //this.metadata['_updated']++;
     }
   },
 

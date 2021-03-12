@@ -1,8 +1,6 @@
 
 import * as BABYLON from 'babylonjs';
 import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
-import proj4 from 'proj4';
-import {register} from 'ol/proj/proj4';
 import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import 'babylonjs-loaders';
@@ -18,6 +16,7 @@ export default class {
         this._lastLoadDynamic = 0;
 
         this._tilesLoadedCount = 0;
+        this._initialHeightSet = false;
 
         // TODO: This makes sense here, but is also duplicated on SceneViewer
         this.tileGrid = createXYZ({
@@ -137,7 +136,7 @@ export default class {
 
           const that = this;
 
-          console.debug("Loading: " + tileUrl);
+          //console.debug("Loading: " + tileUrl);
 
           let pivot = new BABYLON.TransformNode("chunk_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
           //let reversePivot = new BABYLON.TransformNode("chunk_reverse_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
@@ -210,20 +209,21 @@ export default class {
                   that._lastHeight = minHeight;
 
                   that._tilesLoadedCount++;
-                  if (that._tilesLoadedCount === 1) {
-                        console.debug("Repositioning camera height based on terrain height: " + maxHeight);
+                  if (! that._initialHeightSet) {
+                        //console.debug("Repositioning camera height based on terrain height: " + maxHeight);
                         //that.layerManager.sceneViewer.camera.position.y += maxHeight;
 
                          const ray = new BABYLON.Ray(new BABYLON.Vector3(
                              that.layerManager.sceneViewer.camera.position.x,
                              -100.0, that.layerManager.sceneViewer.camera.position.z),
-                             new BABYLON.Vector3(0, 1, 0));
+                             new BABYLON.Vector3(0, 1, 0), 5000.0);
                          const pickResult = that.layerManager.sceneViewer.scene.pickWithRay(ray);
-                         if (pickResult) {
+                         if (pickResult && pickResult.pickedMesh.id && pickResult.pickedMesh.id.indexOf('placeholder_') !== 0) {
+                            that._initialHeightSet = true;
                             that.layerManager.sceneViewer.camera.position.y += (pickResult.distance - 100.0);
                          } else {
                              //that._tilesLoadedCount--;
-                            that.layerManager.sceneViewer.camera.position.y += maxHeight;
+                            //that.layerManager.sceneViewer.camera.position.y += maxHeight;
                          }
                   }
 
@@ -258,7 +258,7 @@ export default class {
               },
               // onError
               function(event) {
-                console.log("Tile model (.glb) loading error: ", event);
+                //console.log("Tile model (.glb) loading error: ", event);
 
                 if (true) {
                         // 404 - tile is being generated, show OSM tile as replacement

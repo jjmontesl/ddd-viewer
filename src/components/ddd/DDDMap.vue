@@ -105,7 +105,7 @@ export default {
       },
 
       click: function(event) {
-          console.debug("Map click: " + event.coordinate);
+          //console.debug("Map click: " + event.coordinate);
 
           // Redirect to appropriate click handler
 
@@ -152,7 +152,7 @@ export default {
 
 
   mounted() {
-    console.debug('Creating DDD map.');
+    //console.debug('Creating DDD map.');
 
     const that = this;
     this.getViewerState().dddMap = this;
@@ -178,15 +178,15 @@ export default {
              source: new XYZ({
                  url: this.getViewerState().dddConfig.tileUrlBase + '{z}/{x}/{y}.png',
              }),
-            minZoom: 16,
-            maxZoom: 17,
+            minZoom: 16.6,
+            maxZoom: 17.4,
         }),
 
         new TileLayer({
           source: new TileDebug({
           }),
-          minZoom: 16,
-          maxZoom: 17
+          minZoom: 16.6,
+          maxZoom: 17.4
         }) ],
 
 
@@ -214,7 +214,7 @@ export default {
   },
 
   beforeDestroy() {
-      console.debug("Destroying map.");
+    //console.debug("Destroying map.");
 
     window.removeEventListener('resize', this.resize);
 
