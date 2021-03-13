@@ -53,8 +53,9 @@
                         <h3><!--Patreon / Buymeacoffee-->Author</h3>
 
                         <p>
-                            This site is run by Jose Juan Montes. I have developed the viewer and 3D generation pipeline, and I
-                            maintain this demostration server. If you like it, please consider contributing to the codebase
+                            This site is run by <a href="https://twitter.com/jjmontes" target="_blank">Jose Juan Montes</a>.
+                            I have developed the viewer and software used for 3D generation, and I also
+                            maintain this demostration server. You can contribute to the codebase
                             of the generator (DDD), this viewer, or to the OpenStreetMap database.
                         </p>
                         <p>

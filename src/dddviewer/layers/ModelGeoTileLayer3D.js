@@ -257,16 +257,21 @@ export default class {
                   //marker.material.emissiveColor = color;
               },
               // onError
-              function(event) {
+              function(scene, msg, ex) {
                 //console.log("Tile model (.glb) loading error: ", event);
+                console.log("Tile model (.glb) loading error: ", ex.request.status);
 
-                if (true) {
+                if (ex.request.status === 404) {
                         // 404 - tile is being generated, show OSM tile as replacement
                         marker.dispose(false, true);
                         marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
                         that.tiles[tileKey] = marker; // "notfound";
                 } else {
                       // Error: colour marker red
+                      marker.dispose(false, true);
+                      marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
+                      that.tiles[tileKey] = marker; // "notfound";
+
                       let color = marker.material.emissiveColor;
                       color = new BABYLON.Color3.Red();
                       marker.material.emissiveColor = color;
