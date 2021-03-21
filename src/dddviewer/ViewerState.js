@@ -29,6 +29,11 @@ class ViewerState {
 
     sceneSelectedMeshId = null;
 
+    sceneFPS = 0;
+    sceneDrawCalls = null;
+
+    scenePickingEnabled = true;
+
 }
 
 export default ViewerState;

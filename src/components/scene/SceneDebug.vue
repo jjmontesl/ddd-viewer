@@ -2,31 +2,6 @@
 
     <div style="position: fixed; left: 10px; top: 50px; width: 280px; padding: 0px;">
 
-        <v-card class="pa-1" outlined>
-
-            <!-- <v-card-title style="padding: 0px;">Position</v-card-title> -->
-
-            <v-card-text style="padding: 0px;" class="text-left">
-                <div>
-                    <div><b>Coords WGS84:</b> {{ parseFloat(viewerState.positionWGS84[0]).toFixed(5) }}, {{ parseFloat(viewerState.positionWGS84[1]).toFixed(5) }}</div>
-                    <div><b>Coords Scene:</b> {{ parseFloat(viewerState.positionScene[0]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[2]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[1]).toFixed(0) }}</div>
-                    <!--<div><b>TMS XYZ:</b> </div>-->
-                    <div><small>{{ viewerState.sceneFPS }} FPS</small> <small>{{ viewerState.sceneDrawCalls }} drawcalls</small></div>
-
-                </div>
-            </v-card-text>
-
-            <!--
-            <v-card-text class="text-left">
-                <div>
-                    <h3>3D Tiles</h3>
-                    <div><a v-on:click="request3DTileGenerate">Generate 3D Tile</a></div>
-                </div>
-            </v-card-text>
-            -->
-
-        </v-card>
-
     </div>
 
 </template>
@@ -39,7 +14,9 @@ import tiles from '@/services/ddd_http/tiles.js';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
+    this.showDebugView();
   },
+
   metaInfo() {
     return {
       //title: this.$store.getters.appTitle,
@@ -74,6 +51,15 @@ export default {
           //console.debug("Generate");
           tiles.request3DTileGenerate(this.$route.params.name);
       },
+      showDebugView: function() {
+          console.debug("Show debug view.");
+
+          this.viewerState.sceneViewer.showDebugView();
+
+          this.viewerState.scenePickingEnabled = false;
+
+      }
+
   }
 }
 </script>

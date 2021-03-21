@@ -281,6 +281,12 @@ export default {
           icon: 'mdi-earth',
           class: 'btnView3D'
         },
+        {
+          title: 'Tools',
+          link: 'sceneTools',
+          icon: 'mdi-wrench',
+          class: 'btnSettings'
+        },
         /*
         {
           title: 'Settings',

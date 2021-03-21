@@ -13,46 +13,15 @@
 
                     <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" to="/3d" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
 
-                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">{{ nodeName }}</v-card-title>
-
-                    <div v-if="loading" style="text-align: center;">Loading...</div>
-
-                    <OSMImage v-if="metadata['osm:image']" :imageUrl="metadata['osm:image']" />
+                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">View Sequence</v-card-title>
 
                     <v-card-text class="text-left">
                         <div>
                             <!-- <h3>Attributes</h3> -->
-
                             <v-simple-table dense>
                             <tbody>
-                            <tr v-for="key in sortedMetadata" :key="key">
-                                <td style="max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"><b :style="[key.indexOf('osm:') !== 0 ? {'color': 'gray'} : {}]">{{key}}</b></td>
-                                <td style="white-space: nowrap;">
-                                    <div v-if="metadata[key] && metadata[key].indexOf && (metadata[key].indexOf('http://') === 0 || metadata[key].indexOf('https://') === 0)" >
-                                        <a :href="metadata[key]" target="_blank">{{ metadata[key] }}</a>
-                                    </div>
-                                    <div v-else-if="key === 'osm:changeset'">
-                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmchaLink" target="_blank">OSMCha</a>
-                                    </div>
-                                    <div v-else-if="key === 'osm:id'">
-                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmLink" target="_blank">OpenStreetMap</a>
-                                    </div>
-                                    <div v-else>
-                                        {{ metadata[key] }}
-                                    </div>
-                                </td>
-                            </tr>
                             </tbody>
                             </v-simple-table>
-                        </div>
-                    </v-card-text>
-
-                    <v-card-text class="text-left">
-                        <div>
-                            <h3>Links</h3>
-                            <div><a :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
-                            <div><a :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
-                            <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
 
@@ -61,17 +30,6 @@
                     <v-card-text class="text-left">
                         <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbital</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
-                    </v-card-text>
-
-                    <v-card-text class="text-left">
-                        <a @click="removeNode">Remove Node</a>
-                    </v-card-text>
-
-                    <v-card-text class="text-left">
-                        <div>
-                            <h3>Node Tree</h3>
-                            <NodeHierarchy :nodeGetter="nodeGetter" depth="1"></NodeHierarchy>
-                        </div>
                     </v-card-text>
 
                 </v-card>
@@ -110,12 +68,14 @@ export default {
     this.resize();
 
     this.$emit('dddViewerMode', 'scene');
-    this.setMesh(this.viewerState.selectedMesh);
+    //this.setMesh(this.viewerState.selectedMesh);
 
+    /*
     if (!this.viewerState.selectedMesh) {
         let urlNodeId = this.$route.params.id;
         this.viewerState.sceneSelectedMeshId = urlNodeId;
     }
+    */
 
   },
 
@@ -133,14 +93,20 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //mesh: null,
-      nodeId: this.$route.params.id,
-      nodeName: null,
+      //nodeId: this.$route.params.id,
+      //nodeName: null,
       metadata: {},
-      loading: true,
+      steps: [
+          {'time': 1.0, 'position': null, },
+          {'label': 1.0, 'text': 'This is a demostration of DDD OSM Viewer', }
+
+      ],
+      //loading: true,
       nodeGetter: () => { return this.viewerState.selectedMesh; },
     }
   },
   computed: {
+    /*
     sortedMetadata: function () {
       this.viewerState.sceneSelectedMeshId;
       this.$route;  // force dependency on property
@@ -151,40 +117,13 @@ export default {
       keys.sort((a, b) => { return (b.indexOf('osm:') - a.indexOf('osm:'));});
       return keys; // Do your custom sorting here
     },
-    sceneLinkGoogleMaps: function() {
-        this.$route;  // force dependency on property
-        this.viewerState.sceneSelectedMeshId;
-        let url = null;
-        if (this.viewerState.sceneViewer) {
-            url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
-        }
-        return url;
-    },
-    osmchaLink: function() {
-        this.$route;  // force dependency on property
-        this.viewerState.sceneSelectedMeshId;
-        let url = null;
-        if (this.metadata['osm:changeset']) {
-            url = 'https://osmcha.org/changesets/' + this.metadata['osm:changeset'] + '/';
-        }
-        return url;
-    },
-    osmLink: function() {
-        this.$route;  // force dependency on property
-        this.viewerState.sceneSelectedMeshId;
-        let url = null;
-        if (this.metadata['osm:id']) {
-            let element = this.metadata['osm:element'];
-            let id = this.metadata['osm:id'].split("-")[1];
-            url = 'https://www.openstreetmap.org/' + element + '/' + id;
-        }
-        return url;
-    },
+    */
   },
   props: [
       'viewerState',
   ],
   watch: {
+    /*
     '$route' () {
         this.setMesh(this.viewerState.selectedMesh);
     },
@@ -194,6 +133,7 @@ export default {
         //if (! this.metadata['_updated']) {this.metadata['_updated'] = 0;}
         //this.metadata['_updated']++;
     }
+    */
   },
 
   components: {
@@ -204,6 +144,7 @@ export default {
   },
 
   methods: {
+      /*
       setMesh(mesh) {
           //this.mesh = mesh;
           if (!mesh) { return; }
@@ -218,6 +159,7 @@ export default {
           this.nodeGetter = () => { return this.viewerState.selectedMesh; };
           console.debug("Scene Item setMesh called.");
       },
+      */
 
       resize() {
         let el = this.$el.querySelector('.v-card');
@@ -232,14 +174,6 @@ export default {
       selectCameraFree() {
           this.viewerState.sceneViewer.selectCameraFree();
       },
-
-      removeNode() {
-         //this.getViewerState().sceneViewer.selectMesh(node);
-         let mesh = this.viewerState.selectedMesh;
-         this.viewerState.sceneViewer.deselectMesh();
-         mesh.setParent(null);
-         mesh.dispose();
-      }
 
   },
 

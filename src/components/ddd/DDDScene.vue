@@ -135,6 +135,8 @@ export default {
 
       click: function() {
 
+        if (! this.getViewerState().scenePickingEnabled) { return; }
+
         // Easy way of computing dragging (still clicks if mouse is stopped before button release
         if (this.sceneViewer.camera.inertialAlphaOffset || this.sceneViewer.camera.inertialBetaOffset) {
             return;

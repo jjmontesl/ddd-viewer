@@ -22,6 +22,7 @@ class SceneViewer {
         this.scene = null;
 
         this.camera = null;
+        this.walkMode = false;
 
         this.highlightMeshes = [];
         this.materialHighlight = null;
@@ -40,6 +41,10 @@ class SceneViewer {
             //minZoom: options.minZoom,
             //tileSize: options.tileSize,
         });
+
+        this.catalog = {};
+        this.catalog_materials = {};
+        this.instanceRoots = {};
 
     }
 
@@ -64,6 +69,9 @@ class SceneViewer {
         that.scene = new BABYLON.Scene(engine);
         //that.scene = createScene(engine, canvas);
 
+        //this.sceneInstru = null;
+        this.sceneInstru = new BABYLON.SceneInstrumentation(that.scene);
+
         //that.highlightLayer = new BABYLON.HighlightLayer("hl1", that.scene);
 
         /*
@@ -79,11 +87,15 @@ class SceneViewer {
 
         this.selectCameraFree();
 
-        //that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-Math.PI * 0.25, 1, Math.PI), that.scene);
-        that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.5, -0.5, 0.5), that.scene);
-        that.light.intensity = 0.75;
-        that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.5, -0.3, -0.5), that.scene);
-        that.light2.intensity = 0.6;
+        that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
+        that.lightHemi.intensity = 1.15;
+        that.lightHemi.diffuse = new BABYLON.Color3(0.95, 0.95, 1);
+        that.lightHemi.specular = new BABYLON.Color3(1, 1, 0.95);
+        that.lightHemi.groundColor = new BABYLON.Color3(0.95, 1, 0.95);
+        //that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.5, -0.5, 0.5), that.scene);
+        //that.light.intensity = 0.75;
+        //that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.5, -0.3, -0.5), that.scene);
+        //that.light2.intensity = 0.6;
 
         that.shadowGenerator = null;
         if (that.shadowsEnabled) {
@@ -140,6 +152,8 @@ class SceneViewer {
         that.materialGrass.ambientTexture = that.textureGrass;
         */
 
+        this.loadCatalog('/assets/catalog.glb', false);
+        this.loadCatalog('/assets/catalog_materials.glb', true);
 
         // Show BabylonJS Inspector
         //that.scene.debugLayer.show();
@@ -151,6 +165,247 @@ class SceneViewer {
             that.scene.render();
         });
 
+    }
+
+    showDebugView() {
+        this.scene.debugLayer.show();
+    }
+
+    loadCatalog(filename, loadMaterials) {
+        console.debug("Loading catalog.");
+        const that = this;
+        BABYLON.SceneLoader.ImportMesh(null, filename, '', this.scene, //this.scene,
+          // onSuccess
+          function(newMeshes, particleSystems, skeletons) {
+              //console.log("GLB loaded", newMeshes);
+              that.loadCatalogFromMesh(newMeshes[0], loadMaterials);
+              newMeshes[0].setParent(null);
+              newMeshes[0].setEnabled(false);
+              //newMeshes[0].isVisible = false;
+              //newMeshes[0].dispose();
+          },
+          function(event) {
+          },
+          function(scene, msg, ex) {
+              console.debug("Could not load scene catalog.");
+          }
+        );
+    }
+
+    loadCatalogFromMesh(mesh, loadMaterials) {
+
+        if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
+            let metadata = mesh.metadata.gltf.extras;
+
+            if (metadata['ddd:instance:key']) {
+                this.addMeshToCatalog(metadata['ddd:instance:key'], mesh);
+            }
+
+            if (loadMaterials && metadata['ddd:material']) {
+                this.addMaterialToCatalog(metadata['ddd:material'], mesh);
+            }
+        }
+
+        for (let child of mesh.getChildren()) {
+            this.loadCatalogFromMesh(child, loadMaterials);
+        }
+    }
+
+    addMaterialToCatalog(key, mesh) {
+        if (mesh.material) {
+            //console.debug(mesh.material);
+            if (this.catalog_materials[key]) {
+                console.debug("Material already in catalog: " + key)
+            } else {
+                console.debug("Adding material to catalog: " + key);
+                this.catalog_materials[key] = mesh.material;
+                if (mesh.material.albedoTexture) {
+                    //mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
+                    //mesh.material.specularColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.2);
+                    //mesh.material.albedoColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.5);
+                    //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
+                    //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
+                }
+            }
+        } else {
+            console.debug("No material found in mesh: " + mesh.id + " (key=" + key + ")");
+        }
+    }
+
+    addMeshToCatalog(key, mesh) {
+        if (this.catalog[key]) {
+            console.debug("Mesh already in catalog: " + key)
+        } else {
+            console.debug("Adding mesh to catalog: " + key);
+            this.catalog[key] = mesh;
+            mesh.setEnabled(false);
+            mesh.parent = null;
+        }
+    }
+
+    processMesh(root, mesh) {
+        //console.debug("Processing mesh: " + mesh.id)
+        var replaced = false;
+        if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
+            let metadata = mesh.metadata.gltf.extras;
+
+            if (metadata['ddd:material']) {
+                let key = metadata['ddd:material'];
+                let mat = this.catalog_materials[key];
+                if (mat) {
+                    mesh.material = mat;
+                } else {
+                    console.debug("Material not found in catalog: " + key);
+                }
+            }
+
+
+            if (metadata['ddd:light:color']) {
+                replaced = true;
+                /*
+                var light = new BABYLON.PointLight("light_" + mesh.id, mesh.position, this.scene);
+                light.parent = mesh.parent;
+                light.position = mesh.position;
+                light.position.y = light.position.z + 1;
+                light.intensity = 20;
+                light.diffuse = new BABYLON.Color3(1, 0, 0);
+                light.specular = new BABYLON.Color3(0, 1, 0);
+                */
+
+                mesh.dispose();
+
+            } else if (metadata['ddd:text']) {
+
+                // TODO: requires fixing Marker export form DDD. Also reuse materials.
+                /*
+                let newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 5, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
+                newMesh.position = mesh.position;
+                newMesh.rotationQuaternion = mesh.rotationQuaternion;
+                newMesh.scaling = mesh.scaling;
+                newMesh.parent = null;
+                newMesh.parent = mesh.parent; // .parent;
+
+                //Create dynamic texture
+                var texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + mesh.id , {width:512, height:256}, this.scene);
+                //var textureContext = texture.getContext();
+                var font = "bold 44px monospace";
+                texture.drawText(metadata['ddd:text'], 75, 135, font, "green", "white", true, true);
+
+                var material = new BABYLON.StandardMaterial("Mat" + mesh.id, this.scene);
+                material.diffuseTexture = texture;
+                newMesh.material = material;
+                */
+
+                mesh.dispose();
+                //mesh = newMesh;
+
+            } else if (metadata['ddd:instance:key']) {
+                replaced = true;
+                let key = metadata['ddd:instance:key'];
+                if (this.catalog[key]) {
+
+                    //instanceAsNode();
+                    this.instanceAsThinInstance(root, key, mesh);
+
+                } else {
+                    console.debug("Instance key not found in catalog: : " + key);
+                }
+            }
+        }
+
+        //if (!replaced) {
+            for (let children of mesh.getChildren()) {
+                this.processMesh(root, children);
+            }
+        //}
+    }
+
+    instanceAsThinInstance(root, key, node) {
+
+        let instance = this.catalog[key];
+        let meshes = instance.getChildMeshes();
+
+        for (let mesh of meshes) {
+            // Get root
+            let instanceRootKey = root.id + "_" + key + "_" + mesh.id; // root.id + "_" +
+            let meshInstanceRoot = this.instanceRoots[instanceRootKey];
+            if (!meshInstanceRoot) {
+                console.debug("Creating instanceroot for: " + instanceRootKey);
+                instance.setEnabled(true);
+                meshInstanceRoot = mesh.clone(instanceRootKey, null, true);
+                meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
+                meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";
+                meshInstanceRoot.toLeftHanded();
+                //meshInstanceRoot.position = root.computeWorldMatrix(true);
+                //meshInstanceRoot.rotate(BABYLON.Vector3.Up(), Math.PI / 2);
+                //meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
+                this.instanceRoots[instanceRootKey] = meshInstanceRoot;
+                meshInstanceRoot.parent = root;
+                instance.setEnabled(false);
+            }
+
+            // Transform
+            /*
+            let localPos = mesh.position;
+            let localRot = mesh.rotationQuaternion;
+            let localScaling = mesh.scaling;
+            localScaling.x = -1 * localScaling.x;
+            var meshMatrix = BABYLON.Matrix.Compose(localScaling, localRot, localPos);
+            */
+
+            //var adaptMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
+
+            let scaleMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), new BABYLON.Quaternion(0, 0, 0, 0), new BABYLON.Vector3(0, 0, 0)); //BABYLON.Matrix.Scaling(-1, 1, 1);
+
+            let nodeMatrix = node.computeWorldMatrix(true);
+            let meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix(true);
+            //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
+            let matrix = scaleMatrix.multiply(nodeMatrix);
+            matrix = matrix.multiply(BABYLON.Matrix.Invert(meshInstanceRootMatrix));
+            //console.debug("Creating instance: " + meshInstanceRoot.id);
+            var idx = meshInstanceRoot.thinInstanceAdd(matrix);
+
+            //let tmpcopy = meshInstanceRoot.clone();
+            //tmpcopy.position = localPos;
+            //tmpcopy.rotationQuaternion = localRot;
+            //tmpcopy.parent = meshInstanceRoot;
+
+        }
+
+        node.dispose();
+
+    }
+
+    instanceAsNode() {
+        //console.debug("Replacing mesh: " + key);
+        let newMesh = new BABYLON.TransformNode(mesh.id + "_instance", this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
+        //let newMesh = mesh;
+        //newMesh.geometry = null;
+        newMesh.parent = mesh.parent;
+        newMesh.position = mesh.position;
+        newMesh.rotationQuaternion = mesh.rotationQuaternion;
+        newMesh.scaling = mesh.scaling;
+        //newMesh.absoluteScaling = mesh.absoluteScaling;
+        /*for (let cc of mesh.getChildren()) {
+            cc.parent = null;
+            cc.dispose();
+        }*/
+        if (!newMesh.metadata) { newMesh.metadata = {}; }
+        if (mesh.metadata && mesh.metadata.gltf) {
+            newMesh.metadata.gltf = mesh.metadata.gltf;
+            //newMesh.metadata.gltf.extras['ddd:instance:key'] = null;
+        }
+        mesh.dispose();
+        this.catalog[key].setEnabled(true);
+        const instance = this.catalog[key].clone(); // createInstance(mesh.id + "_instanced");
+        this.catalog[key].setEnabled(false);
+        instance.metadata.gltf.extras['ddd:instance:key'] = null;
+        instance.id = mesh.id + "_clone";
+        //instance.isVisible = true;
+        instance.parent = newMesh;
+        newMesh.rotate(new BABYLON.Vector3(1, 0, 0), Math.PI / 2, BABYLON.Space.LOCAL);
+        instance.setEnabled(true);
+        mesh = newMesh;
     }
 
     dispose() {
@@ -177,6 +432,14 @@ class SceneViewer {
                 this.viewerState.positionTileZoomLevel = 18;
             }
 
+            // Fix viewer to floor
+            if (this.walkMode) {
+                let terrainElevation = this.positionTerrainElevation();
+                if (terrainElevation !== null) {
+                    this.camera.position.y = terrainElevation + 2.0;
+                }
+            }
+
             if (this.camera.alpha) {
                 let heading = -90 + (-this.camera.alpha * (180.0 / Math.PI));
                 heading = (heading % 360 + 360) % 360;
@@ -200,6 +463,10 @@ class SceneViewer {
         this.viewerState.positionScene = positionScene;
 
         this.layerManager.update();
+
+        this.viewerState.sceneFPS = this.engine.getFps().toFixed(1);
+        this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current.toString() : null;
+
     }
 
     sceneToWGS84(coords) {
@@ -261,6 +528,17 @@ class SceneViewer {
         const pickResult = this.scene.pickWithRay(ray);
         if (pickResult) {
             return this.camera.position.y - (pickResult.distance - 100);
+        } else {
+            return null;
+        }
+    }
+
+    positionTerrainElevation() {
+        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
+        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
+        const pickResult = this.scene.pickWithRay(ray);
+        if (pickResult) {
+            return (pickResult.distance - 100);
         } else {
             return null;
         }
@@ -360,7 +638,7 @@ class SceneViewer {
     */
     findNode(node, criteria) {
         //console.debug(node);
-        if (criteria['_node_name']) {
+        if (criteria['_node_name'] && node.id) {
             let name = node.id.split("/").pop().replaceAll('#', '_');
             if (name === criteria['_node_name']) {
                 return node;
@@ -386,7 +664,9 @@ class SceneViewer {
             this.camera.detachControl();
             this.camera.dispose();
         }
-        console.debug("Creating free camera.");
+
+        //console.debug("Creating free camera.");
+        this.walkMode = false;
 
         const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
         camera.minZ = 1;
@@ -411,7 +691,14 @@ class SceneViewer {
 
     }
 
+    selectCameraWalk() {
+        this.selectCameraFree();
+        this.walkMode = true;
+    }
+
     selectCameraOrbit() {
+
+        this.walkMode = false;
 
         let targetCoords = BABYLON.Vector3.Zero();
         if (this.viewerState.selectedMesh) {

@@ -199,10 +199,11 @@ export default class {
 
                   //let distance = 225.0;
                   //pivot.position = new BABYLON.Vector3((x - 62360) * distance, 0, -(y - 48539) * distance);
-                  //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);
+                  //pivot.scaling = new BABYLON.Vector3(1, 1, -1);
                   pivot.position = new BABYLON.Vector3(tileCenterScene[0], 0, tileCenterScene[1]);
                   pivot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-                  pivot.freezeWorldMatrix();
+
+                  //pivot.freezeWorldMatrix();
 
                   that.tiles[tileKey] = pivot;
 
@@ -227,6 +228,11 @@ export default class {
                          }
                   }
 
+                  // Replace materials, instancing...
+                  that.layerManager.sceneViewer.processMesh(pivot, pivot);
+
+                  pivot.freezeWorldMatrix();
+
                   // Check if the selected node is in the recently loaded node
                   // TODO: Should use a generic notification + object id/naming system
                   if (that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId) {
@@ -239,6 +245,7 @@ export default class {
                           that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId = null;  // Triggers watchers update
                       }
                   }
+
 
                   /*
                   this.sceneViewer.selectMesh(pickResult.pickedMesh);
@@ -259,9 +266,9 @@ export default class {
               // onError
               function(scene, msg, ex) {
                 //console.log("Tile model (.glb) loading error: ", event);
-                console.log("Tile model (.glb) loading error: ", ex.request.status);
+                console.log("Tile model (.glb) loading error: ", ex);
 
-                if (ex.request.status === 404) {
+                if (ex.request && ex.request.status === 404) {
                         // 404 - tile is being generated, show OSM tile as replacement
                         marker.dispose(false, true);
                         marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
@@ -289,14 +296,18 @@ export default class {
         const y = tileCoords[2];
         const tileKey = z + "/" + x + "/" + y;
 
-        // TODO: Clone planes or use instancing! (plane.clone()) (as per https://forum.babylonjs.com/t/fastest-unlit-material-shared-geometry/6369)
-        let size = 225.0;
-        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { size: size, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
-
         let tileExtent = this.tileGrid.getTileCoordExtent(tileCoords);
         let tileCenter = extent.getCenter(tileExtent);
         let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
         let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+
+        let tileExtentMinScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getBottomLeft(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+        let tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getTopRight(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+        let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
+        let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
+
+        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
+
         marker.position = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new BABYLON.Vector3(Math.PI * 0.5, 0, 0);
 
@@ -327,14 +338,19 @@ export default class {
         const y = tileCoords[2];
         const tileKey = z + "/" + x + "/" + y;
 
-        // TODO: Clone planes or use instancing! (plane.clone()) (as per https://forum.babylonjs.com/t/fastest-unlit-material-shared-geometry/6369)
-        let size = 225.0;
-        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { size: size, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
-
         let tileExtent = this.tileGrid.getTileCoordExtent(tileCoords);
         let tileCenter = extent.getCenter(tileExtent);
         let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
         let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+
+        let tileExtentMinScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getBottomLeft(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+        let tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getTopRight(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+        let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
+        let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
+
+        console.debug(sizeWidth, sizeHeight);
+        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
+
         marker.position = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new BABYLON.Vector3(Math.PI * 0.5, 0, 0);
 
