@@ -205,8 +205,11 @@ export default {
       sidebar: false
     }
   },
+  props: [
+      'viewerState'
+  ],
   computed: {
-    ...mapGetters(['appTitle', 'isTokenSet', 'user']),
+    ...mapGetters(['appTitle', 'isTokenSet', 'user',]),
     admin() {
       return this.user !== null ? this.user.role === 'admin' : false
     },
@@ -261,7 +264,8 @@ export default {
           }
         ]
       }
-      return [
+      let links = [];
+      links = [
         /*
         {
           title: this.$t('menuItems.HOME'),
@@ -281,12 +285,15 @@ export default {
           icon: 'mdi-earth',
           class: 'btnView3D'
         },
-        {
+         ]
+      if (this.viewerState && this.viewerState.sceneVisible) {
+        links.push({
           title: 'Tools',
           link: 'sceneTools',
           icon: 'mdi-wrench',
           class: 'btnSettings'
-        },
+        });
+      }
         /*
         {
           title: 'Settings',
@@ -295,12 +302,12 @@ export default {
           class: 'btnSettings'
         },
         */
-        {
+      links.push({
           title: this.$t('menuItems.ABOUT'),
           link: 'about',
           icon: 'mdi-help-circle-outline',
           class: 'btnAbout'
-        },
+        });
         /*
         {
           title: this.$t('menuItems.LOGIN'),
@@ -315,7 +322,7 @@ export default {
           class: 'btnLogin'
         }
         */
-      ]
+      return links;
     }
   },
   methods: {
@@ -327,6 +334,9 @@ export default {
     isDark() {
       this.$vuetify.theme.dark = this.isDark
       localStorage.setItem('dark', this.isDark)
+    },
+    'viewerState.sceneVisible'() {
+        this.$forceUpdate();
     }
   },
   created() {

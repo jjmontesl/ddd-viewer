@@ -107,13 +107,13 @@ export default {
       },
 
       setSlow: function(slow) {
-          if (this.sceneViewer.camera.speed < 1.0) {
-              this.sceneViewer.camera.speed = 1.0;
-          } else if (this.sceneViewer.camera.speed < 3.0) {
-              this.sceneViewer.camera.speed = 3.0;
+          if (this.sceneViewer.camera.speed < 5.0) {
+              this.sceneViewer.camera.speed = 5.0;
+          } else if (this.sceneViewer.camera.speed < 10.0) {
+              this.sceneViewer.camera.speed = 10.0;
           //} else if (this.sceneViewer.camera.speed < 2.5) {
           } else {
-              this.sceneViewer.camera.speed = 0.35;
+              this.sceneViewer.camera.speed = 2.5;
           }
         //this.sceneViewer.camera.speed = (slow ? 0.5 : 2.5);
       },
@@ -165,8 +165,6 @@ export default {
             // WARN: TODO: this transformation is done in other places
             let meshName = pickResult.pickedMesh.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
             this.$router.push('/3d/item/' + meshName + '/' + this.sceneViewer.positionString()).catch(()=>{});
-
-            //this.sceneViewer.engine.switchFullscreen(true);
 
             return;
         }

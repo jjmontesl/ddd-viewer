@@ -9,8 +9,17 @@
             <v-card-text style="padding: 0px;" class="text-left">
                 <div>
                     <div><b>Coords WGS84:</b> {{ parseFloat(viewerState.positionWGS84[0]).toFixed(5) }}, {{ parseFloat(viewerState.positionWGS84[1]).toFixed(5) }}</div>
-                    <div><b>Coords Scene:</b> {{ parseFloat(viewerState.positionScene[0]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[2]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[1]).toFixed(0) }}</div>
+                    <div><b>Coords Scene:</b> {{ parseFloat(viewerState.positionScene[0]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[2]).toFixed(1) }}, {{ parseFloat(viewerState.positionScene[1]).toFixed(0) }} <span style="color: gray;">m</span></div>
                     <!--<div><b>TMS XYZ:</b> </div>-->
+
+                    <div style="height: 5px;"></div>
+                    <div><b>Altitude MSL:</b> {{ parseFloat(viewerState.positionScene[1]).toFixed(1) }} <span style="color: gray;">m</span></div>
+                    <div><b>Altitude Ground:</b> {{ 0 }} <span style="color: gray;">m</span></div>
+                    <div><b>Terrain Height:</b> {{ 0 }} <span style="color: gray;">m</span></div>
+
+                    <div style="height: 5px;"></div>
+                    <div style="overflow: hidden; white-space: nowrap;"><b>{{ viewerState.positionName }}</b>&nbsp;</div>
+
                     <div><small>{{ viewerState.sceneFPS }} FPS</small> <small>{{ viewerState.sceneDrawCalls }} drawcalls</small></div>
 
                 </div>
@@ -70,10 +79,6 @@ export default {
       DDDMap3DSwitch
   },
   methods: {
-      request3DTileGenerate: function() {
-          //console.debug("Generate");
-          tiles.request3DTileGenerate(this.$route.params.name);
-      },
   }
 }
 </script>

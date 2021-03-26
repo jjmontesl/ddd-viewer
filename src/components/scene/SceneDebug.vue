@@ -52,12 +52,11 @@ export default {
           tiles.request3DTileGenerate(this.$route.params.name);
       },
       showDebugView: function() {
-          console.debug("Show debug view.");
-
-          this.viewerState.sceneViewer.showDebugView();
-
-          this.viewerState.scenePickingEnabled = false;
-
+          if (this.viewerState) {
+                //console.debug("Show debug view.");
+              this.viewerState.sceneViewer.showDebugView();
+              this.viewerState.scenePickingEnabled = false;
+          }
       }
 
   }

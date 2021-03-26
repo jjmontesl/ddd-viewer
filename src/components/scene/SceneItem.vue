@@ -59,19 +59,22 @@
                     <div style="height: 20px;"> </div>
 
                     <v-card-text class="text-left">
-                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbital</v-btn>
+                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
+                        <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn>
                     </v-card-text>
 
-                    <v-card-text class="text-left">
-                        <a @click="removeNode">Remove Node</a>
-                    </v-card-text>
 
                     <v-card-text class="text-left">
                         <div>
                             <h3>Node Tree</h3>
                             <NodeHierarchy :nodeGetter="nodeGetter" depth="1"></NodeHierarchy>
                         </div>
+                    </v-card-text>
+
+                    <v-card-text class="text-left">
+                        <h3>Node Actions</h3>
+                        <a @click="removeNode">Remove Node</a>
                     </v-card-text>
 
                 </v-card>
@@ -228,9 +231,11 @@ export default {
       selectCameraOrbit() {
           this.viewerState.sceneViewer.selectCameraOrbit();
       },
-
       selectCameraFree() {
           this.viewerState.sceneViewer.selectCameraFree();
+      },
+      selectCameraWalk() {
+          this.viewerState.sceneViewer.selectCameraWalk();
       },
 
       removeNode() {

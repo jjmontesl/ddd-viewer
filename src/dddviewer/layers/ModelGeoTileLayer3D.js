@@ -6,11 +6,31 @@ import * as extent from 'ol/extent';
 import 'babylonjs-loaders';
 
 
+class Tile3D {
+    constructor(key) {
+        this.key = key;
+        this.status = null;
+    }
+}
+
+class GeoTile3D extends Tile3D {
+    constructor(key) {
+        super(key);
+        this.node = null;
+        this.coordsTileGrid = null;
+    }
+}
+
+
 export default class {
 
     constructor() {
         this.tiles = {};
         this.layerManager = null;
+
+        this.groundTextureLayerUrl = null;
+        //this.groundTextureLayerUrl = "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png";  // "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png";
+        //this.groundTextureLayerUrl = "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg";  // "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
         this._lastHeight = 0;  // Used to hack positioning of tiles before height is known
         this._lastLoadDynamic = 0;
@@ -29,7 +49,7 @@ export default class {
     }
 
     update() {
-        this.loadTilesDynamic();
+        this.updateTilesDynamic();
     }
 
 
@@ -50,7 +70,7 @@ export default class {
         return !(angleCull || frontCull || backCull);
     }
 
-    loadTilesDynamic() {
+    updateTilesDynamic() {
 
         this._lastLoadDynamic -= 1;
         if (this._lastLoadDynamic > 0) { return; }
@@ -67,25 +87,31 @@ export default class {
         const frustrumOrigin = this.layerManager.sceneViewer.camera.position;
         if (this.lastHeight) { frustrumOrigin.y -= this._lastHeight; }
         const frustrumForward = this.layerManager.sceneViewer.camera.getDirection(BABYLON.Vector3.Forward());
-        const frustrumSize = 300.0;
+        const frustrumSize = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance * 250.0;
         const frustrumAngle = this.layerManager.sceneViewer.camera.fov; // 30.0;
 
         // Project frustrum corners to tiles
 
         // Calculate tiles inside frustrum
-        const tiledist = 1;
-        for (let i = -tiledist; i <= tiledist; i++) {
-            for (let j = -tiledist; j <= tiledist; j++) {
-                let tileCenter = this.tileGrid.getTileCoordCenter([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
-                let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
-                let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
-                let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
-                let sphereRadius = 220.0;
-                if (this.testConeSphere(frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius)) {
-                    //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
-                    this.loadTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+        const tiledistWalk = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance + 3;
+        const tiledistDraw = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance + 0.7;
+        for (let i = -tiledistWalk; i <= tiledistWalk; i++) {
+            for (let j = -tiledistWalk; j <= tiledistWalk; j++) {
+                if (i * i + j * j > tiledistDraw * tiledistDraw) {
+                    this.disableTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
                 } else {
-                    //console.debug("Ignoring: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
+                    let tileCenter = this.tileGrid.getTileCoordCenter([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+                    let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+                    let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+                    let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
+                    let sphereRadius = 220.0;
+                    if (this.testConeSphere(frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius)) {
+                        //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
+                        this.loadTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+                    } else {
+                        //console.debug("Ignoring: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
+                        this.disableTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
+                    }
                 }
             }
         }
@@ -108,6 +134,22 @@ export default class {
         */
     }
 
+    disableTile(tileCoords) {
+        const z = tileCoords[0];
+        const x = tileCoords[1];
+        const y = tileCoords[2];
+        const tileKey = z + "/" + x + "/" + y;
+
+        if (!(tileKey in this.tiles)) {
+              return;
+        }
+
+        let tile = this.tiles[tileKey];
+        if (tile.status !== "loading" && tile.node.isEnabled(false)) {
+            tile.node.setEnabled(false);
+        }
+    }
+
     loadTile(tileCoords) {
 
           //console.debug(tileCoords);
@@ -117,9 +159,15 @@ export default class {
           const tileKey = z + "/" + x + "/" + y;
 
           if (tileKey in this.tiles) {
+              let tile = this.tiles[tileKey];
+              if (tile.status !== "loading" && !tile.node.isEnabled(false)) {
+                  tile.node.setEnabled(true);
+              }
               return;
           } else {
-              this.tiles[tileKey] = "loading";
+              this.tiles[tileKey] = new GeoTile3D(tileKey);
+              this.tiles[tileKey].status = "loading";
+              this.tiles[tileKey].coordsTileGrid = tileCoords;
           }
 
           //const glb = "https://www.yourcityracing.com/static/game/acoruna_hercules_500r_-8.406,43.386.glb";
@@ -147,9 +195,9 @@ export default class {
           //pivot.parent = this.scene;
 
           let marker = this.loadQuadMarker(tileCoords, BABYLON.Color3.Gray());
-          this.tiles[tileKey] = marker;
+          this.tiles[tileKey].node = marker;
 
-          BABYLON.SceneLoader.ImportMesh(null, '', tileUrl, that.scene, //this.scene,
+          this.layerManager.sceneViewer.queueLoader.enqueueLoadModel(tileUrl,
               // onSuccess
               function(newMeshes, particleSystems, skeletons) {
                   //console.log("GLB loaded", newMeshes);
@@ -189,7 +237,8 @@ export default class {
 
                   // Reparent root
                   newMeshes[0].parent = pivot;
-                  that.tiles[tileKey] = pivot;
+                  that.tiles[tileKey].node = pivot;
+                  that.tiles[tileKey].status = 'loaded';
 
 
                   let tileExtent = that.tileGrid.getTileCoordExtent(tileCoords);
@@ -205,7 +254,7 @@ export default class {
 
                   //pivot.freezeWorldMatrix();
 
-                  that.tiles[tileKey] = pivot;
+                  that.tiles[tileKey].node = pivot;
 
                   that._lastHeight = minHeight;
 
@@ -231,7 +280,10 @@ export default class {
                   // Replace materials, instancing...
                   that.layerManager.sceneViewer.processMesh(pivot, pivot);
 
+                  //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
                   pivot.freezeWorldMatrix();
+
+                  that.groundTextureLayerProcessNode(tileCoords, pivot);
 
                   // Check if the selected node is in the recently loaded node
                   // TODO: Should use a generic notification + object id/naming system
@@ -255,14 +307,6 @@ export default class {
 
 
               },
-
-              // onProgress
-              function(event) {
-                  //console.log("Tile model (.glb) loading: ", (event.loaded) )
-                  //let color = marker.material.emissiveColor;
-                  //color = new BABYLON.Color3((color.r + 0.05) % 1, (color.r + 0.05) % 1, (color.r + 0.05) % 1);
-                  //marker.material.emissiveColor = color;
-              },
               // onError
               function(scene, msg, ex) {
                 //console.log("Tile model (.glb) loading error: ", event);
@@ -272,12 +316,14 @@ export default class {
                         // 404 - tile is being generated, show OSM tile as replacement
                         marker.dispose(false, true);
                         marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
-                        that.tiles[tileKey] = marker; // "notfound";
+                        that.tiles[tileKey].node = marker; // "notfound";
+                        that.tiles[tileKey].status = "notfound";
                 } else {
                       // Error: colour marker red
                       marker.dispose(false, true);
                       marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
-                      that.tiles[tileKey] = marker; // "notfound";
+                      that.tiles[tileKey].node = marker; // "notfound";
+                      that.tiles[tileKey].status = "error";
 
                       let color = marker.material.emissiveColor;
                       color = new BABYLON.Color3.Red();
@@ -373,6 +419,93 @@ export default class {
         marker.material = materialPlane;
 
         return marker;
+    }
+
+    groundTextureLayerProcessNode(tileCoords, node) {
+
+        let materialGround = null;
+
+        if (this.groundTextureLayerUrl) {
+            const z = tileCoords[0];
+            const x = tileCoords[1];
+            const y = tileCoords[2];
+
+            let tileExtent = this.tileGrid.getTileCoordExtent(tileCoords);
+            let tileCenter = extent.getCenter(tileExtent);
+            let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+            let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+
+            let tileExtentMinScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getBottomLeft(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+            let tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getTopRight(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+            let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
+            let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
+
+            // Create material
+            //console.debug("Creating material for ground texture: " + url);
+            const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
+            let url = this.replaceTileCoordsUrl(tileCoords, this.groundTextureLayerUrl);
+            materialGround = new BABYLON.StandardMaterial("materialGround_" + tileKey, this.scene);
+            materialGround.roughness = 0.95;
+            materialGround.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15); // BABYLON.Color3.Black();
+            //materialGround.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2); // BABYLON.Color3.Black();
+            //materialGround.emissiveColor = BABYLON.Color3.White();  // new BABYLON.Color3(1.0, 1.0, 1.);
+            //materialGround.disableLighting = true;
+            //materialGround.backFaceCulling = false;
+            materialGround.diffuseTexture = new BABYLON.Texture(url, this.scene);
+            materialGround.diffuseTexture.uScale = 1.0 / sizeWidth;
+            materialGround.diffuseTexture.vScale = 1.0 / sizeHeight;
+            materialGround.diffuseTexture.uOffset = -0.5;
+            materialGround.diffuseTexture.vOffset = -0.5;
+            /*
+            materialGround.bumpTexture = materialGround.diffuseTexture;
+            materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
+            materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
+            materialGround.bumpTexture.uOffset = -0.5;
+            materialGround.bumpTexture.vOffset = -0.5;
+            */
+        }
+
+        // Assign
+        let meshes = node.getChildMeshes();
+        for (let mesh of meshes) {
+            if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
+                let metadata = mesh.metadata.gltf.extras;
+                if ((metadata['ddd:path'].indexOf('/Areas') > 0) ||
+                    (metadata['ddd:path'].indexOf('/Ways') > 0)) {
+                    if (materialGround !== null) {
+                        if (!('_ground_material_original' in mesh)) {
+                            mesh._ground_material_original = mesh.material;
+                        }
+                        mesh.material = materialGround;
+                    } else {
+                        if (mesh._ground_material_original) {
+                            mesh.material = mesh._ground_material_original;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    replaceTileCoordsUrl(tileCoords, url) {
+        let result = url;
+        result = result.replace('{z}', tileCoords[0]);
+        result = result.replace('{x}', tileCoords[1]);
+        result = result.replace('{y}', tileCoords[2]);
+        return result;
+    }
+
+    groundTextureLayerSet(url) {
+        // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
+        console.debug("Layer setting ground texture layer: " + url);
+        this.groundTextureLayerUrl = url;
+
+        // Update existing tiles
+        for (let key in this.tiles) {
+            let tile = this.tiles[key];
+
+            this.groundTextureLayerProcessNode(tile.coordsTileGrid, tile.node);
+        }
     }
 
 }

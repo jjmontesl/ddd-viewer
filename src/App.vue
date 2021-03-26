@@ -1,17 +1,17 @@
 <template>
   <v-app>
 
-    <Toolbar />
+    <Toolbar :viewerState="viewerState" />
 
     <v-main class="text-center">
 
         <div class="ddd-render-back">
 
-            <DDDMap v-if="mapVisible" /> <!-- :viewerState="viewerState" /> -->
-            <DDDMap3DSwitch v-if="mapVisible" />
+            <DDDMap v-if="viewerState.mapVisible" /> <!-- :viewerState="viewerState" /> -->
+            <DDDMap3DSwitch v-if="viewerState.mapVisible" />
 
-            <DDDScene v-if="sceneVisible" />
-            <SceneViewMode v-if="sceneVisible" :viewerState="viewerState" />
+            <DDDScene v-if="viewerState.sceneVisible" />
+            <SceneViewMode v-if="viewerState.sceneVisible" :viewerState="viewerState" />
 
         </div>
 
@@ -106,7 +106,6 @@ export default {
   provide: function () {
       const that = this;
       return {
-        //getViewerState: function() { return that._viewerState; },
         getViewerState: function() { return that.viewerState; },
       }
   },
@@ -115,8 +114,6 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
-      mapVisible: true,
-      sceneVisible: false,
       viewerState: new ViewerState(),
       //viewerState: null,
     }
@@ -142,8 +139,8 @@ export default {
 
       dddViewerMode(mode) {
         console.debug("Received Viewer Mode change event to: " + mode);
-        this.mapVisible = mode === 'map';
-        this.sceneVisible = mode === 'scene';
+        this.viewerState.mapVisible = mode === 'map';
+        this.viewerState.sceneVisible = mode === 'scene';
         //this.$set(this, 'mapVisible', mode === 'map');
         //this.$set(this, 'sceneVisible', mode === 'scene');
       },

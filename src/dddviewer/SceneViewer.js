@@ -8,6 +8,7 @@ import * as extent from 'ol/extent';
 import 'babylonjs-loaders';
 
 import LayerManager from '@/dddviewer/layers/LayerManager.js';
+import QueueLoader from '@/dddviewer/loading/QueueLoader.js';
 
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
@@ -30,6 +31,7 @@ class SceneViewer {
         this.shadowsEnabled = false;
 
         this.layerManager = new LayerManager(this);
+        this.queueLoader = new QueueLoader(this);
 
         this.originShiftWGS84 = [0, 0];
         this.projection = null;
@@ -46,6 +48,8 @@ class SceneViewer {
         this.catalog_materials = {};
         this.instanceRoots = {};
 
+        // Dependencies to not yet loaded objects, in order to process them
+        this.depends = [];
     }
 
     initialize(canvas) {
@@ -121,16 +125,8 @@ class SceneViewer {
         //});
 
         // Skybox
-        var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:3000.0}, that.scene);
-        var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", that.scene);
-        skyboxMaterial.backFaceCulling = false;
-        //skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("/textures/skybox", that.scene);
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("/textures/TropicalSunnyDay", that.scene);
-        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-        skybox.material = skyboxMaterial;
-        skybox.infiniteDistance = true;
+        //this.loadSkybox("/textures/skybox");
+        this.loadSkybox("/textures/TropicalSunnyDay");
 
         /*
         let water = new BABYLON.WaterMaterial("water", that.scene, new BABYLON.Vector2(1024, 1024));
@@ -153,7 +149,7 @@ class SceneViewer {
         */
 
         this.loadCatalog('/assets/catalog.glb', false);
-        this.loadCatalog('/assets/catalog_materials.glb', true);
+        //this.loadCatalog('/assets/catalog_materials.glb', true);
 
         // Show BabylonJS Inspector
         //that.scene.debugLayer.show();
@@ -165,6 +161,32 @@ class SceneViewer {
             that.scene.render();
         });
 
+    }
+
+    loadSkybox(baseUrl) {
+        // Remove skybox
+        if (this.skybox) {
+            this.skybox.dispose();
+            this.skybox = null;
+        }
+
+        // Set skybox
+        if (baseUrl !== null) {
+            var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:3000.0}, this.scene);
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this.scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(baseUrl, this.scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+            skybox.material = skyboxMaterial;
+            skybox.infiniteDistance = true;
+            this.skybox = skybox;
+        }
+    }
+
+    showFullScreen() {
+        this.engine.switchFullscreen(true);
     }
 
     showDebugView() {
@@ -183,6 +205,8 @@ class SceneViewer {
               newMeshes[0].setEnabled(false);
               //newMeshes[0].isVisible = false;
               //newMeshes[0].dispose();
+
+              that.processDepends();
           },
           function(event) {
           },
@@ -190,6 +214,15 @@ class SceneViewer {
               console.debug("Could not load scene catalog.");
           }
         );
+    }
+
+    processDepends() {
+        //console.debug("Processing dependencies");
+        let dependsCopy = [...this.depends];
+        for (let dep of dependsCopy) {
+            this.depends = this.depends.filter(item => item !== dep);
+            this.processMesh(dep, dep);
+        }
     }
 
     loadCatalogFromMesh(mesh, loadMaterials) {
@@ -255,7 +288,7 @@ class SceneViewer {
                 if (mat) {
                     mesh.material = mat;
                 } else {
-                    console.debug("Material not found in catalog: " + key);
+                    //console.debug("Material not found in catalog: " + key);
                 }
             }
 
@@ -304,14 +337,19 @@ class SceneViewer {
                 let key = metadata['ddd:instance:key'];
                 if (this.catalog[key]) {
 
-                    //instanceAsNode();
+                    //this.instanceAsNode(root, key, mesh);
                     this.instanceAsThinInstance(root, key, mesh);
 
                 } else {
-                    console.debug("Instance key not found in catalog: : " + key);
+                    // Instance not found. Mark this root for re processing and exit.
+                    //console.debug("Instance key not found in catalog: : " + key);
+                    this.depends.push(root);
+                    return;
                 }
             }
         }
+
+        //mesh.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
         //if (!replaced) {
             for (let children of mesh.getChildren()) {
@@ -326,15 +364,24 @@ class SceneViewer {
         let meshes = instance.getChildMeshes();
 
         for (let mesh of meshes) {
+
+            if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
+                let metadata = mesh.metadata.gltf.extras;
+                if (metadata['ddd:light:color']) {
+                    // TODO: include the child instance
+                    continue;
+                }
+            }
+
             // Get root
-            let instanceRootKey = root.id + "_" + key + "_" + mesh.id; // root.id + "_" +
+            let instanceRootKey = root.id + "_" + key + "_" + mesh.id; // root.id + "_" +  // TODO! do not clone but keep groups!
             let meshInstanceRoot = this.instanceRoots[instanceRootKey];
             if (!meshInstanceRoot) {
-                console.debug("Creating instanceroot for: " + instanceRootKey);
+                //console.debug("Creating instanceroot for: " + instanceRootKey);
                 instance.setEnabled(true);
                 meshInstanceRoot = mesh.clone(instanceRootKey, null, true);
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
-                meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";
+                //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
                 meshInstanceRoot.toLeftHanded();
                 //meshInstanceRoot.position = root.computeWorldMatrix(true);
                 //meshInstanceRoot.rotate(BABYLON.Vector3.Up(), Math.PI / 2);
@@ -376,7 +423,7 @@ class SceneViewer {
 
     }
 
-    instanceAsNode() {
+    instanceAsNode(root, key, mesh) {
         //console.debug("Replacing mesh: " + key);
         let newMesh = new BABYLON.TransformNode(mesh.id + "_instance", this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
         //let newMesh = mesh;
@@ -436,7 +483,7 @@ class SceneViewer {
             if (this.walkMode) {
                 let terrainElevation = this.positionTerrainElevation();
                 if (terrainElevation !== null) {
-                    this.camera.position.y = terrainElevation + 2.0;
+                    this.camera.position.y = terrainElevation + 3.0;
                 }
             }
 
@@ -538,6 +585,13 @@ class SceneViewer {
         const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
         const pickResult = this.scene.pickWithRay(ray);
         if (pickResult) {
+
+            if (pickResult.pickedMesh.metadata && pickResult.pickedMesh.metadata.gltf && pickResult.pickedMesh.metadata.gltf.extras && pickResult.pickedMesh.metadata.gltf.extras['osm:name']) {
+                this.viewerState.positionName = pickResult.pickedMesh.metadata.gltf.extras['osm:name'];
+            } else {
+                this.viewerState.positionName = null;
+            }
+
             return (pickResult.distance - 100);
         } else {
             return null;
@@ -672,9 +726,10 @@ class SceneViewer {
         camera.minZ = 1;
         camera.maxZ = 4500;
         //camera.touchMoveSensibility = 0.01;
-        camera.touchAngularSensibility = 1000.0;
-        camera.angularSensibility = 1000.0;
+        camera.touchAngularSensibility = 500.0;
+        camera.angularSensibility = 500.0;
         //camera.inertia = 0.10;
+        camera.inertia = 0.5;
         camera.keysUp += [87];
         camera.keysDown += [83];
         camera.keysLeft += [65];
@@ -694,6 +749,7 @@ class SceneViewer {
     selectCameraWalk() {
         this.selectCameraFree();
         this.walkMode = true;
+        this.camera.inertia = 0.0;
     }
 
     selectCameraOrbit() {
@@ -736,6 +792,11 @@ class SceneViewer {
         camera.fov = 35.0 * (Math.PI / 180.0);
         this.camera = camera;
     }
+
+      groundTextureLayerSet(url) {
+          //console.debug("Setting ground texture layer: " + url);
+          this.layerManager.layers['ddd-osm-3d'].groundTextureLayerSet(url);
+      }
 
 
 }

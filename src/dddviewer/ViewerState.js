@@ -3,10 +3,8 @@
 
 class ViewerState {
 
-    /*
-    mapVisible = false;
+    mapVisible = true;
     sceneVisible = false;
-    */
 
     dddConfig = null;
 
@@ -22,9 +20,12 @@ class ViewerState {
 
     positionTilt = 0.0;
 
+    positionName = "";
+
 
 
     // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
+    // TODO: Try removing this and this.sceneViewer
     sceneSelectedMesh = null;
 
     sceneSelectedMeshId = null;
@@ -33,6 +34,12 @@ class ViewerState {
     sceneDrawCalls = null;
 
     scenePickingEnabled = true;
+
+    sceneTileDrawDistance = 1;
+
+    sceneCameraSpeed = 2;
+
+    sceneSkybox = "/textures/TropicalSunnyDay";
 
 }
 
