@@ -289,7 +289,7 @@ export default {
       if (this.viewerState && this.viewerState.sceneVisible) {
         links.push({
           title: 'Tools',
-          link: 'sceneTools',
+          link: (this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools'),
           icon: 'mdi-wrench',
           class: 'btnSettings'
         });

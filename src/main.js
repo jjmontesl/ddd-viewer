@@ -26,6 +26,11 @@ Vue.prototype.dddConfig = {
     tileUrlBase: 'http://' + location.hostname + ':8000/cache/ddd_http/',
     //tileUrlBase: 'http://' + location.hostname + '/cache/ddd_http/',
 
+    sceneGroundLayers: {
+        'osm': {text: 'OpenStreetMap', url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"},
+        'es-pnoa': {text: 'ES - PNOA (Orthophotos)', url: "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"},
+    },
+
     //defaultCoords: [-5.666, 40.960],  // Salamanca Cathedral
     defaultCoords: [[-8.723, 42.238]],  // Vigo Castro
 }

@@ -2,11 +2,17 @@
 
     <div class="ddd-view-mode-selector unselectable" style="text-align: right;">
         <div style="margin-top: 4px;">
-            <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><small><v-icon dark>mdi-walk</v-icon> Walk</small></v-btn>
-           </div><div style="margin-top: 4px;">
-            <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
-        </div><div style="margin-top: 4px;">
-            <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><small><v-icon dark>mdi-axis-arrow</v-icon> Free</small></v-btn>
+            <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
+        </div>
+        <div style="margin-top: 4px;">
+            <v-btn @click="selectCameraFree" class="" dark color="primary"><small><v-icon dark>mdi-axis-arrow</v-icon> Free</small></v-btn>
+        </div>
+        <div style="margin-top: 4px;">
+            <v-btn @click="selectCameraWalk" class="" dark color="primary"><small><v-icon dark>mdi-walk</v-icon> Walk</small></v-btn>
+        </div>
+
+        <div style="margin-top: 8px;">
+            <v-btn @click="cycleMoveSpeed" class="" dark color="secondary"><small><v-icon dark>mdi-fast</v-icon> Move Speed {{ viewerState.sceneMoveSpeed }}</small></v-btn>
         </div>
     </div>
 
@@ -77,6 +83,10 @@ export default {
       selectCameraWalk() {
           this.viewerState.sceneViewer.selectCameraWalk();
       },
+
+      cycleMoveSpeed() {
+          this.viewerState.sceneViewer.cycleMoveSpeed();
+      }
 
   },
 

@@ -149,7 +149,7 @@ class SceneViewer {
         */
 
         this.loadCatalog('/assets/catalog.glb', false);
-        //this.loadCatalog('/assets/catalog_materials.glb', true);
+        this.loadCatalog('/assets/catalog_materials.glb', true);
 
         // Show BabylonJS Inspector
         //that.scene.debugLayer.show();
@@ -626,6 +626,7 @@ class SceneViewer {
                   mesh.dispose();
             }
             this.highlightMeshes = [];
+            this.viewerState.sceneSelectedMeshId = null;
         }
     }
 
@@ -635,6 +636,7 @@ class SceneViewer {
 
         if (mesh) {
             this.viewerState.selectedMesh = mesh;
+            this.viewerState.sceneSelectedMeshId = mesh.id;
             //this.viewerState.selectedMesh.showBoundingBox = true;
             //console.debug(this.viewerState.selectedMesh.metadata.gltf.extras);
 
@@ -743,6 +745,7 @@ class SceneViewer {
         camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
         //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
         this.camera = camera;
+        this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
 
     }
 
@@ -750,6 +753,7 @@ class SceneViewer {
         this.selectCameraFree();
         this.walkMode = true;
         this.camera.inertia = 0.0;
+        this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
     }
 
     selectCameraOrbit() {
@@ -793,10 +797,35 @@ class SceneViewer {
         this.camera = camera;
     }
 
-      groundTextureLayerSet(url) {
-          //console.debug("Setting ground texture layer: " + url);
-          this.layerManager.layers['ddd-osm-3d'].groundTextureLayerSet(url);
+      groundTextureLayerSetKey(key) {
+
+          this.viewerState.sceneGroundTextureOverride = key;
+
+          let url = null;
+          const layers = {
+              'osm': {text: 'OpenStreetMap', url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"},
+              'es-pnoa': {text: 'ES - PNOA (Orthophotos)', url: "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"},
+          }
+          if (layers[key]) {
+              url = layers[key].url;
+          }
+          this.layerManager.layers['ddd-osm-3d'].groundTextureLayerSetUrl(url);
       }
+
+    setMoveSpeed(speed) {
+        this.viewerState.sceneMoveSpeed = speed;
+        this.camera.speed = speed;
+    }
+
+    cycleMoveSpeed() {
+          if (this.viewerState.sceneMoveSpeed < 5.0) {
+              this.setMoveSpeed(5.0);
+          } else if (this.viewerState.sceneMoveSpeed < 10.0) {
+              this.setMoveSpeed(10.0);
+          } else {
+              this.setMoveSpeed(2.0);
+          }
+    }
 
 
 }

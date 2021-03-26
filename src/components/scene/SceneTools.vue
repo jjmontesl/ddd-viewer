@@ -17,25 +17,30 @@
 
                     <div style="height: 20px;"> </div>
 
+
                     <v-card-text class="text-left">
-                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
+                           <v-slider v-model="viewerState.sceneTileDrawDistance" step="1" min="0" max="4" thumb-label ticks label="Draw Distance"></v-slider>
+
+                           <!--
+                           <v-slider v-model="viewerState.sceneCameraSpeed" step="1" min="1" max="3" thumb-label ticks label="Camera Speed" hint="You can also toggle camera speed by pressing the SHIFT key."></v-slider>
+                           -->
+                    </v-card-text>
+
+                    <v-card-text class="text-left">
+                        <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
                         <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn>
                     </v-card-text>
 
                     <v-card-text class="text-left">
-                           <v-slider v-model="viewerState.sceneTileDrawDistance" step="1" min="0" max="4" thumb-label ticks label="Draw Distance"></v-slider>
-
-                           <v-slider v-model="viewerState.sceneCameraSpeed" step="1" min="1" max="3" thumb-label ticks label="Camera Speed" hint="You can also toggle camera speed by pressing the SHIFT key."></v-slider>
-                    </v-card-text>
-
-                    <v-card-text class="text-left">
+                        <!--
                         <v-checkbox label="Items" disabled style="margin-top: 2px;"></v-checkbox>
                         <v-checkbox label="Shadows" disabled style="margin-top: 2px;"></v-checkbox>
+                        -->
 
-                        <v-select @change="groundTextureLayerChange" :items="groundTextureLayerItems" label="Ground texture override" ></v-select>
+                        <v-select v-model="viewerState.sceneGroundTextureOverride" @change="groundTextureLayerChange" :items="groundTextureLayerItems" label="Ground texture override" ></v-select>
 
-                        <v-select :items="textureModeItems" label="Textures" ></v-select>
+                        <!-- <v-select :items="textureModeItems" label="Textures" ></v-select> -->
 
                         <v-select v-model="viewerState.sceneSkybox" @change="skyboxChange" :items="skyBoxItems" label="Environment" ></v-select>
                     </v-card-text>
@@ -45,7 +50,6 @@
                             <h3>Links</h3>
 
                             <div><router-link to="/3d/inspector">Inspector</router-link></div>
-                            <br />
                             <!--
                             <div><a :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
                             <div><a :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
@@ -121,13 +125,6 @@ export default {
       loading: true,
       nodeGetter: () => { return this.viewerState.selectedMesh; },
 
-      groundTextureLayerItems: [
-          {value: 'none', text: 'None'},
-          {value: 'divider1', divider: true},
-          {value: 'osm', text: 'OpenStreetMap'},
-          {value: 'es-pnoa', text: 'ES - PNOA (Orthophotos)'},
-      ],
-
       textureModeItems: [
           'Basic',
           'All',
@@ -152,6 +149,17 @@ export default {
       keys.sort((a, b) => { return (b.indexOf('osm:') - a.indexOf('osm:'));});
       return keys; // Do your custom sorting here
     },
+
+    groundTextureLayerItems: function() {
+        let result = [];
+        result.push({value: null, text: 'None'});
+        result.push({value: 'divider1', divider: true});
+        for (let key in this.dddConfig.sceneGroundLayers) {
+            result.push({value: key, text: this.dddConfig.sceneGroundLayers[key].text},)
+        }
+        return result;
+    },
+
     sceneLinkGoogleMaps: function() {
         this.$route;  // force dependency on property
         this.viewerState.sceneSelectedMeshId;
@@ -250,17 +258,7 @@ export default {
 
       groundTextureLayerChange(value) {
           console.debug("Changing ground texture: ", value);
-
-          let url = null;
-          const layers = {
-              'osm': {text: 'OpenStreetMap', url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"},
-              'es-pnoa': {text: 'ES - PNOA (Orthophotos)', url: "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"},
-          }
-          if (layers[value]) {
-              url = layers[value].url;
-          }
-
-          this.viewerState.sceneViewer.groundTextureLayerSet(url);
+          this.viewerState.sceneViewer.groundTextureLayerSetKey(value);
       },
 
       skyboxChange(value) {

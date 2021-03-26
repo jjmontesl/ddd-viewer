@@ -73,8 +73,8 @@ export default {
     canvas.addEventListener('mousemove', () => {drag = true;});
     canvas.addEventListener('mouseup', () => {if (!drag) { that.click(); } } );
 
-    //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.setSlow(true); } });
-    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.setSlow(false); } });
+    //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
+    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
 
     this._timeout = setTimeout(this.checkUpdateHref, 1500);
 
@@ -106,16 +106,8 @@ export default {
 
       },
 
-      setSlow: function(slow) {
-          if (this.sceneViewer.camera.speed < 5.0) {
-              this.sceneViewer.camera.speed = 5.0;
-          } else if (this.sceneViewer.camera.speed < 10.0) {
-              this.sceneViewer.camera.speed = 10.0;
-          //} else if (this.sceneViewer.camera.speed < 2.5) {
-          } else {
-              this.sceneViewer.camera.speed = 2.5;
-          }
-        //this.sceneViewer.camera.speed = (slow ? 0.5 : 2.5);
+      cycleMoveSpeed: function() {
+          this.sceneViewer.cycleMoveSpeed();
       },
 
       resize: function() {

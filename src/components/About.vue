@@ -18,15 +18,26 @@
                         <h2>About DDD-OSM</h2>
 
                         <p>
-                            DDD-OSM is a set of tools designed to generate 3D scenes out of
+                            DDD-OSM is a set of tools designed to generate 3D scenes from
                             <a href="https://www.openstreetmap.org/about">OpenStreetMap</a> data.
                         </p>
 
-                        <!--
                         <h3>Usage</h3>
                         <p>
+                            In the 3D view:
+                            <ul>
+                                <li>Free mode: Use W,A,S,D or cursor keys to move. Q and W to move up / down.</li>
+                                <li>Orbit mode: Left click orbits. Right click pans. Mouse wheel zooms in/out.</li>
+                            </ul>
                         </p>
-                        -->
+                        <p>
+                            Tiles are loaded dynamically. Tiles shown as gray squares are being loaded. Tiles
+                            shown in 3D as OpenStreetMap squares are enqueued for server generation (this may
+                            take minutes or hours depending on server load). Generated tiles are currently
+                            shown after reloading the 3D view. Tiles shown as red squares have errored and cannot
+                            be generated in current version.
+                        </p>
+
 
                         <h3>OpenStreetMap</h3>
 

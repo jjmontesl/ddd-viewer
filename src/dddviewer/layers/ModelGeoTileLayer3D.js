@@ -452,10 +452,12 @@ export default class {
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
             materialGround.diffuseTexture = new BABYLON.Texture(url, this.scene);
-            materialGround.diffuseTexture.uScale = 1.0 / sizeWidth;
-            materialGround.diffuseTexture.vScale = 1.0 / sizeHeight;
+            materialGround.diffuseTexture.uScale = 1.0 / (sizeWidth + 0);  // Force small texture overlap to avoid texture repeating
+            materialGround.diffuseTexture.vScale = 1.0 / (sizeHeight + 1);  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.uOffset = -0.5;
             materialGround.diffuseTexture.vOffset = -0.5;
+            materialGround.diffuseTexture.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
+            materialGround.diffuseTexture.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
             /*
             materialGround.bumpTexture = materialGround.diffuseTexture;
             materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
@@ -495,7 +497,7 @@ export default class {
         return result;
     }
 
-    groundTextureLayerSet(url) {
+    groundTextureLayerSetUrl(url) {
         // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
         console.debug("Layer setting ground texture layer: " + url);
         this.groundTextureLayerUrl = url;

@@ -56,9 +56,8 @@
                         </div>
                     </v-card-text>
 
-                    <div style="height: 20px;"> </div>
-
                     <v-card-text class="text-left">
+                        <h3>View</h3>
                         <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
                         <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn>
@@ -74,7 +73,7 @@
 
                     <v-card-text class="text-left">
                         <h3>Node Actions</h3>
-                        <a @click="removeNode">Remove Node</a>
+                        <v-btn @click="removeNode" class="mx-2" dark color="primary"><v-icon dark>mdi-delete</v-icon> Remove Node</v-btn>
                     </v-card-text>
 
                 </v-card>

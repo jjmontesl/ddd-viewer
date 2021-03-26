@@ -37,9 +37,11 @@ class ViewerState {
 
     sceneTileDrawDistance = 1;
 
-    sceneCameraSpeed = 2;
+    sceneMoveSpeed = 5;
 
     sceneSkybox = "/textures/TropicalSunnyDay";
+
+    sceneGroundTextureOverride = null;
 
 }
 
