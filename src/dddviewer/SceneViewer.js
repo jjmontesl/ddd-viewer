@@ -91,15 +91,22 @@ class SceneViewer {
 
         this.selectCameraFree();
 
+        this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+        /*
         that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
         that.lightHemi.intensity = 1.15;
         that.lightHemi.diffuse = new BABYLON.Color3(0.95, 0.95, 1);
         that.lightHemi.specular = new BABYLON.Color3(1, 1, 0.95);
         that.lightHemi.groundColor = new BABYLON.Color3(0.95, 1, 0.95);
-        //that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.5, -0.5, 0.5), that.scene);
-        //that.light.intensity = 0.75;
-        //that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.5, -0.3, -0.5), that.scene);
-        //that.light2.intensity = 0.6;
+        */
+        that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(-0.1, -0.5, -0.5).normalizeToNew(), that.scene);
+        that.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
+        that.light.specular = new BABYLON.Color3(1, 1, 0.95);
+        that.light.intensity = 2.1;
+        that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(0.2, 0.3, 0.5).normalizeToNew(), that.scene);
+        that.light.diffuse = new BABYLON.Color3(223 / 255, 242 / 255, 196 / 255);
+        that.light.specular = new BABYLON.Color3(1, 1, 0.95);
+        that.light2.intensity = 1.5;
 
         that.shadowGenerator = null;
         if (that.shadowsEnabled) {
@@ -211,7 +218,7 @@ class SceneViewer {
           function(event) {
           },
           function(scene, msg, ex) {
-              console.debug("Could not load scene catalog.");
+              console.debug("Could not load scene catalog: " + filename);
           }
         );
     }
@@ -235,7 +242,11 @@ class SceneViewer {
             }
 
             if (loadMaterials && metadata['ddd:material']) {
-                this.addMaterialToCatalog(metadata['ddd:material'], mesh);
+                try {
+                    this.addMaterialToCatalog(metadata['ddd:material'], mesh);
+                } catch (e) {
+                    console.debug("Error adding material to catalog: ", mesh, e);
+                }
             }
         }
 
@@ -252,13 +263,49 @@ class SceneViewer {
             } else {
                 console.debug("Adding material to catalog: " + key);
                 this.catalog_materials[key] = mesh.material;
-                if (mesh.material.albedoTexture) {
-                    //mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
+                let metadata = mesh.metadata.gltf.extras;
+
+                if (metadata['ddd:material'] === 'WaterBasicDaytime') {
+                    mesh.material.alpha = 0.7;
+                    mesh.material.transparencyMode = 2;  // ALPHA_BLEND
+                    mesh.material.useSpecularOverAlpha = true;
+                    mesh.material.useReflectionOverAlpha = true;
+                    mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+
+                } else if (metadata['ddd:material'] === 'Water4Advanced') {
+                    mesh.material.alpha = 0.8;
+                    mesh.material.transparencyMode = 2;  // ALPHA_BLEND
+                    mesh.material.useSpecularOverAlpha = true;
+                    mesh.material.useReflectionOverAlpha = true;
+                    mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+
+                } else if (mesh.material.albedoTexture) {
+                    mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
                     //mesh.material.specularColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.2);
                     //mesh.material.albedoColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.5);
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
+
+                    if ((metadata['ddd:material'] !== 'Roadline') &&
+                        (metadata['ddd:material'] !== 'TrafficSigns')) {
+                        mesh.material.albedoTexture.uScale = 0.25;
+                        mesh.material.albedoTexture.vScale = 0.25;
+                        if (mesh.material.bumpTexture) {
+                            mesh.material.bumpTexture.uScale = 0.25;
+                            mesh.material.bumpTexture.vScale = 0.25;
+                        }
+                    }
+
+                    mesh.material.detailMap.texture = new BABYLON.Texture("/textures/SurfaceImperfections12_ddd.png", this.scene);
+                    //mesh.material.detailMap.texture = new BABYLON.Texture("/textures/detailmap.png", this.scene);
+                    mesh.material.detailMap.texture.uScale = 0.005;
+                    mesh.material.detailMap.texture.vScale = 0.005;
+                    mesh.material.detailMap.isEnabled = true;
+                    mesh.material.detailMap.diffuseBlendLevel = 0.3; // between 0 and 1
+                    mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
+                    mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
                 }
+
             }
         } else {
             console.debug("No material found in mesh: " + mesh.id + " (key=" + key + ")");
@@ -286,7 +333,11 @@ class SceneViewer {
                 let key = metadata['ddd:material'];
                 let mat = this.catalog_materials[key];
                 if (mat) {
+                    if (mesh.material && mesh.material !== mat) {
+                        mesh.material.dispose();
+                    }
                     mesh.material = mat;
+
                 } else {
                     //console.debug("Material not found in catalog: " + key);
                 }
@@ -746,6 +797,26 @@ class SceneViewer {
         //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
         this.camera = camera;
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
+
+        // Postprocess
+        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 1.0, camera);
+        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.5, camera);
+
+        /*
+        var curve = new BABYLON.ColorCurves();
+        curve.globalHue = 200;
+        curve.globalDensity = 80;
+        curve.globalSaturation = 80;
+        curve.highlightsHue = 20;
+        curve.highlightsDensity = 80;
+        curve.highlightsSaturation = -80;
+        curve.shadowsHue = 2;
+        curve.shadowsDensity = 80;
+        curve.shadowsSaturation = 40;
+        this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
+        this.scene.imageProcessingConfiguration.colorCurves = curve;
+        var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
+        */
 
     }
 

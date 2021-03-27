@@ -48,7 +48,7 @@ import tiles from '@/services/ddd_http/tiles.js';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
-    this.viewerState.sceneViewer.deselectMesh();
+    if (this.viewerState.sceneViewer) {this.viewerState.sceneViewer.deselectMesh();}
   },
   metaInfo() {
     return {
