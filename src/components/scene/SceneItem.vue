@@ -26,7 +26,7 @@
                             <v-simple-table dense>
                             <tbody>
                             <tr v-for="key in sortedMetadata" :key="key">
-                                <td style="max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"><b :style="[key.indexOf('osm:') !== 0 ? {'color': 'gray'} : {}]">{{key}}</b></td>
+                                <td style="max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" :title="key"><b :style="[key.indexOf('osm:') !== 0 ? {'color': 'gray'} : {}]">{{key}}</b></td>
                                 <td style="white-space: nowrap;">
                                     <div v-if="metadata[key] && metadata[key].indexOf && (metadata[key].indexOf('http://') === 0 || metadata[key].indexOf('https://') === 0)" >
                                         <a :href="metadata[key]" target="_blank">{{ metadata[key] }}</a>

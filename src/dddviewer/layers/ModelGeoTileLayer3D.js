@@ -209,9 +209,16 @@ export default class {
                   let maxHeight = Number.NEGATIVE_INFINITY;
                   newMeshes.forEach((mesh, i) => {
                       if (that.layerManager.sceneViewer.shadowsEnabled) {
-                            if (mesh.metadata && mesh.metadata.gltf.extras && mesh.metadata.gltf.extras['ddd:shadows'] === false) { return; }
-                          that.layerManager.sceneViewer.shadowGenerator.getShadowMap().renderList.push(mesh);
                           mesh.receiveShadows = true;
+                          if (mesh.metadata && mesh.metadata.gltf.extras &&
+                                ((mesh.metadata.gltf.extras['ddd:shadows'] === false) ||
+                                 (mesh.metadata.gltf.extras['ddd:shadows'] === "false") ||
+                                 (mesh.metadata.gltf.extras['ddd:path'].indexOf("/Areas_") > 0) ||
+                                 (mesh.metadata.gltf.extras['ddd:path'].indexOf("/Ways_") > 0))) {
+                                 //console.debug("No shadow");
+                                 return;
+                          }
+                          that.layerManager.sceneViewer.shadowGenerator.getShadowMap().renderList.push(mesh);
                       }
 
                       //console.debug(mesh.getBoundingInfo());
@@ -268,7 +275,10 @@ export default class {
                              -100.0, that.layerManager.sceneViewer.camera.position.z),
                              new BABYLON.Vector3(0, 1, 0), 5000.0);
                          const pickResult = that.layerManager.sceneViewer.scene.pickWithRay(ray);
-                         if (pickResult && pickResult.pickedMesh.id && pickResult.pickedMesh.id.indexOf('placeholder_') !== 0) {
+                         if (pickResult && pickResult.pickedMesh.id &&
+                              pickResult.pickedMesh.id.indexOf('placeholder_') !== 0 &&
+                              pickResult.pickedMesh.id.indexOf('skyBox') !== 0) {
+                            console.debug("Setting height from: " + pickResult.pickedMesh.id);
                             that._initialHeightSet = true;
                             that.layerManager.sceneViewer.camera.position.y += (pickResult.distance - 100.0);
                          } else {
@@ -394,7 +404,7 @@ export default class {
         let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
         let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
-        console.debug(sizeWidth, sizeHeight);
+        //console.debug(sizeWidth, sizeHeight);
         const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
 
         marker.position = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);

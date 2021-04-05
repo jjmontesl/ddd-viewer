@@ -93,13 +93,16 @@ export default {
           // Update route
           const posString = this.sceneViewer.positionString();
 
-          //this.$router.replace('/maps/' + posString);
-          if (this.$route.name === 'sceneMain') {
-              this.$router.push('/3d/' + posString).catch(()=>{});
-          } else if (this.$route.name === 'scenePos') {
-              this.$router.push('/3d/pos/' + posString).catch(()=>{});
-          } else if (this.$route.name === 'sceneItem')  {
-              this.$router.push('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
+          if (posString !== null) {
+
+              //this.$router.replace('/maps/' + posString);
+              if (this.$route.name === 'sceneMain') {
+                  this.$router.push('/3d/' + posString).catch(()=>{});
+              } else if (this.$route.name === 'scenePos') {
+                  this.$router.push('/3d/pos/' + posString).catch(()=>{});
+              } else if (this.$route.name === 'sceneItem')  {
+                  this.$router.push('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
+              }
           }
 
           this._timeout = setTimeout(this.checkUpdateHref, 1500);

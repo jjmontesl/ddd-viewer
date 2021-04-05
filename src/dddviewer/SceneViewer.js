@@ -76,6 +76,7 @@ class SceneViewer {
         //this.sceneInstru = null;
         this.sceneInstru = new BABYLON.SceneInstrumentation(that.scene);
 
+
         //that.highlightLayer = new BABYLON.HighlightLayer("hl1", that.scene);
 
         /*
@@ -90,8 +91,20 @@ class SceneViewer {
         */
 
         this.selectCameraFree();
+        //this.selectCameraOrbit();
 
-        this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+        // Skybox
+        //this.loadSkybox("/textures/skybox");
+        this.loadSkybox("/textures/TropicalSunnyDay");
+
+        this.scene.createDefaultEnvironment();
+        //var hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("/textures/environment.env", this.scene);
+        var hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("/textures/country.env", this.scene);
+        this.scene.environmentTexture = hdrTexture;
+        //this.scene.environmentTexture = new BABYLON.CubeTexture("/textures/TropicalSunnyDay", this.scene);  // freezes
+
+
+        this.scene.ambientColor = new BABYLON.Color3(0.70, 0.70, 0.7);
         /*
         that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
         that.lightHemi.intensity = 1.15;
@@ -99,18 +112,28 @@ class SceneViewer {
         that.lightHemi.specular = new BABYLON.Color3(1, 1, 0.95);
         that.lightHemi.groundColor = new BABYLON.Color3(0.95, 1, 0.95);
         */
-        that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(-0.1, -0.5, -0.5).normalizeToNew(), that.scene);
+        that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -0.5, 0.5).normalizeToNew(), that.scene);
         that.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
         that.light.specular = new BABYLON.Color3(1, 1, 0.95);
         that.light.intensity = 2.1;
-        that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(0.2, 0.3, 0.5).normalizeToNew(), that.scene);
+        /*
+        that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
         that.light.diffuse = new BABYLON.Color3(223 / 255, 242 / 255, 196 / 255);
         that.light.specular = new BABYLON.Color3(1, 1, 0.95);
         that.light2.intensity = 1.5;
+        */
 
         that.shadowGenerator = null;
         if (that.shadowsEnabled) {
             that.shadowGenerator = new BABYLON.CascadedShadowGenerator(1024, that.light);
+            //that.shadowGenerator.debug = true;
+            that.shadowGenerator.shadowMaxZ = 500;
+            that.shadowGenerator.autoCalcDepthBounds = true;
+            that.shadowGenerator.penumbraDarkness = 0.7;
+            that.shadowGenerator.lambda = 0.5;
+            //that.shadowGenerator.depthClamp = false;
+            //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
+            that.shadowGenerator.splitFrustum();
         }
 
         //var ssao = new BABYLON.SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
@@ -131,9 +154,6 @@ class SceneViewer {
         //    that.scene.activeCamera.alpha += Math.PI; // camera +180°
         //});
 
-        // Skybox
-        //this.loadSkybox("/textures/skybox");
-        this.loadSkybox("/textures/TropicalSunnyDay");
 
         /*
         let water = new BABYLON.WaterMaterial("water", that.scene, new BABYLON.Vector2(1024, 1024));
@@ -218,7 +238,7 @@ class SceneViewer {
           function(event) {
           },
           function(scene, msg, ex) {
-              console.debug("Could not load scene catalog: " + filename);
+              console.debug("Could not load scene catalog: " + filename, ex);
           }
         );
     }
@@ -280,14 +300,16 @@ class SceneViewer {
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
 
                 } else if (mesh.material.albedoTexture) {
-                    mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
+
                     //mesh.material.specularColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.2);
                     //mesh.material.albedoColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.5);
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
 
                     if ((metadata['ddd:material'] !== 'Roadline') &&
-                        (metadata['ddd:material'] !== 'TrafficSigns')) {
+                        (metadata['ddd:material'] !== 'TrafficSigns') &&
+                        (metadata['ddd:material'] !== 'RoadRailway') &&
+                        (metadata['ddd:material'] !== 'Grass Blade')) {
                         mesh.material.albedoTexture.uScale = 0.25;
                         mesh.material.albedoTexture.vScale = 0.25;
                         if (mesh.material.bumpTexture) {
@@ -298,13 +320,19 @@ class SceneViewer {
 
                     mesh.material.detailMap.texture = new BABYLON.Texture("/textures/SurfaceImperfections12_ddd.png", this.scene);
                     //mesh.material.detailMap.texture = new BABYLON.Texture("/textures/detailmap.png", this.scene);
-                    mesh.material.detailMap.texture.uScale = 0.005;
-                    mesh.material.detailMap.texture.vScale = 0.005;
+                    mesh.material.detailMap.texture.uScale = 1 / 256;
+                    mesh.material.detailMap.texture.vScale = 1 / 256;
                     mesh.material.detailMap.isEnabled = true;
                     mesh.material.detailMap.diffuseBlendLevel = 0.3; // between 0 and 1
                     mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                     mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
                 }
+
+                if (metadata['zoffset']) {
+                    mesh.material.zOffset = metadata['zoffset'];
+                }
+
+                //mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
 
             }
         } else {
@@ -334,12 +362,14 @@ class SceneViewer {
                 let mat = this.catalog_materials[key];
                 if (mat) {
                     if (mesh.material && mesh.material !== mat) {
-                        mesh.material.dispose();
+                        //mesh.material.dispose();
                     }
                     mesh.material = mat;
 
                 } else {
                     //console.debug("Material not found in catalog: " + key);
+                    // TODO: Will never happen if not showing materials (dependencies should be to the particular instance or material)
+                    this.depends.push(root);
                 }
             }
 
@@ -439,6 +469,12 @@ class SceneViewer {
                 //meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
                 this.instanceRoots[instanceRootKey] = meshInstanceRoot;
                 meshInstanceRoot.parent = root;
+
+                // Enable shadows for the instances if shadows are set
+                if (this.shadowGenerator) {
+                    this.shadowGenerator.getShadowMap().renderList.push(meshInstanceRoot);
+                }
+
                 instance.setEnabled(false);
             }
 
@@ -605,7 +641,10 @@ class SceneViewer {
 
         //let height = this.camera.position.y;
         let groundHeight = this.positionGroundHeight();
-        if (groundHeight === null) { return this.camera.position.y; }
+        if (groundHeight === null) {
+            //return this.camera.position.y;
+            return null;
+        }
 
         let posString = "@" + point[1].toFixed(7) + "," + point[0].toFixed(7);
 
@@ -624,7 +663,8 @@ class SceneViewer {
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
         const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
         const pickResult = this.scene.pickWithRay(ray);
-        if (pickResult) {
+        if (pickResult && pickResult.pickedMesh.id !== 'skyBox') {
+            //console.debug(pickResult.pickedMesh.id);
             return this.camera.position.y - (pickResult.distance - 100);
         } else {
             return null;
@@ -799,14 +839,14 @@ class SceneViewer {
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
 
         // Postprocess
-        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 1.0, camera);
-        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.5, camera);
+        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
+        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.0, camera);
 
         /*
         var curve = new BABYLON.ColorCurves();
-        curve.globalHue = 200;
+        curve.globalHue = 0;
         curve.globalDensity = 80;
-        curve.globalSaturation = 80;
+        curve.globalSaturation = 5;
         curve.highlightsHue = 20;
         curve.highlightsDensity = 80;
         curve.highlightsSaturation = -80;
