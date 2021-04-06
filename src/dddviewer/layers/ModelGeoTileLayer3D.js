@@ -103,7 +103,7 @@ export default class {
                     let tileCenter = this.tileGrid.getTileCoordCenter([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
                     let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
                     let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
-                    let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
+                    let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);  // TODO: Get median height from tile
                     let sphereRadius = 220.0;
                     if (this.testConeSphere(frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius)) {
                         //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
@@ -280,7 +280,12 @@ export default class {
                               pickResult.pickedMesh.id.indexOf('skyBox') !== 0) {
                             console.debug("Setting height from: " + pickResult.pickedMesh.id);
                             that._initialHeightSet = true;
-                            that.layerManager.sceneViewer.camera.position.y += (pickResult.distance - 100.0);
+                            that.layerManager.sceneViewer.camera.position.y = (pickResult.distance - 100.0);
+                            if (that.layerManager.sceneViewer.viewerState.positionGroundHeight) {
+                                that.layerManager.sceneViewer.camera.position.y += that.layerManager.sceneViewer.viewerState.positionGroundHeight;
+                            } else {
+                                that.layerManager.sceneViewer.camera.position.y += 50.0;
+                            }
                          } else {
                              //that._tilesLoadedCount--;
                             //that.layerManager.sceneViewer.camera.position.y += maxHeight;

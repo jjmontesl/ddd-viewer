@@ -1,6 +1,6 @@
 <template>
 
-    <div style="padding: 2px;" class="hidden-sm-and-up">
+    <div style="padding: 2px; pointer-events: auto;" class="hidden-sm-and-up">
         <div class="ddd-map-insert" id="ddd-map-insert" style="height: 400px;">
         </div>
     </div>

@@ -37,6 +37,15 @@
                             shown after reloading the 3D view. Tiles shown as red squares have errored and cannot
                             be generated in current version.
                         </p>
+                        <p>
+                            <b>NOTE this software is in development stage.</b> Loading and generation times vary
+                            depending on server load. <b>Performance degrades after loading a few tiles</b>
+                            (try reloading or switching to 2D and back to 3D to restore performance). <b>Camera
+                            may appear far below or above surface</b> at times during loading. If this happens,
+                            try switching to <i>walk</i> mode as it will set the camera above the ground.
+                            Textures are not assigned to models after initial load. Orthophotos layer
+                            may not be available.
+                        </p>
 
 
                         <h3>OpenStreetMap</h3>
@@ -75,7 +84,7 @@
 
                         <h3>Coverage</h3>
                         <p>
-                             <center><i>Current Coverage (limited by elevation data disponibility)</i></center>
+                             <center><i>Current Coverage (limited by disk space available for elevation data)</i></center>
                              <center><img src="/img/about-map.png" style="height: 300px;" /></center>
                         </p>
 

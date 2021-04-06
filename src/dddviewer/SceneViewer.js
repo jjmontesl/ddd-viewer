@@ -91,6 +91,7 @@ class SceneViewer {
         */
 
         this.selectCameraFree();
+        //this.selectCameraWalk();
         //this.selectCameraOrbit();
 
         // Skybox
@@ -105,6 +106,7 @@ class SceneViewer {
 
 
         this.scene.ambientColor = new BABYLON.Color3(0.70, 0.70, 0.7);
+        //this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
         /*
         that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
         that.lightHemi.intensity = 1.15;
@@ -115,7 +117,7 @@ class SceneViewer {
         that.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -0.5, 0.5).normalizeToNew(), that.scene);
         that.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
         that.light.specular = new BABYLON.Color3(1, 1, 0.95);
-        that.light.intensity = 2.1;
+        that.light.intensity = 2.5;
         /*
         that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
         that.light.diffuse = new BABYLON.Color3(223 / 255, 242 / 255, 196 / 255);
@@ -129,7 +131,7 @@ class SceneViewer {
             //that.shadowGenerator.debug = true;
             that.shadowGenerator.shadowMaxZ = 500;
             that.shadowGenerator.autoCalcDepthBounds = true;
-            that.shadowGenerator.penumbraDarkness = 0.7;
+            that.shadowGenerator.penumbraDarkness = 0.8;
             that.shadowGenerator.lambda = 0.5;
             //that.shadowGenerator.depthClamp = false;
             //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
@@ -187,6 +189,34 @@ class SceneViewer {
             that.update();
             that.scene.render();
         });
+
+        // Shaders
+        /*
+        BABYLON.Effect.ShadersStore["customVertexShader"]= `
+            precision highp float;
+
+            // Attributes
+            attribute vec3 position;
+            attribute vec3 normal;
+            attribute vec2 uv;
+
+            // Uniforms
+            uniform mat4 worldViewProjection;
+            uniform float time;
+
+            // Varying
+            //varying vec2 vUV;
+
+            void main(void) {
+                vec3 p = position;
+                p.x = p.x + sin(2.0 * position.y + time);
+                p.y = p.y + sin(time + 4.0);
+                gl_Position = worldViewProjection * vec4(p, 1.0);
+
+                //vUV = uv;
+        }`;
+        */
+
 
     }
 
@@ -306,9 +336,36 @@ class SceneViewer {
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
                     //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
 
-                    if ((metadata['ddd:material'] !== 'Roadline') &&
+                    var uvScale = 0.25;
+
+                    if ((metadata['ddd:material'] === 'Roadline') ||
+                        (metadata['ddd:material'] === 'Fence') ||
+                        (metadata['ddd:material'] === 'TrafficSigns') ||
+                        (metadata['ddd:material'] === 'RoadRailway') ||
+                        (metadata['ddd:material'] === 'Flowers Blue') ||
+                        (metadata['ddd:material'] === 'Flowers Roses') ||
+                        (metadata['ddd:material'] === 'Grass Blade')) {
+                        uvScale = 1.0;
+                    }
+                    if ((metadata['ddd:material'] === 'Fence')) {
+                        uvScale = 0.5;
+                    }
+
+                    if (uvScale !== 1.0) {
+                        mesh.material.albedoTexture.uScale = uvScale;
+                        mesh.material.albedoTexture.vScale = uvScale;
+                        if (mesh.material.bumpTexture) {
+                            mesh.material.bumpTexture.uScale = uvScale;
+                            mesh.material.bumpTexture.vScale = uvScale;
+                        }
+                    }
+
+                    /*
+                    if ((metadata['ddd:material'] !== 'Flo') &&
                         (metadata['ddd:material'] !== 'TrafficSigns') &&
                         (metadata['ddd:material'] !== 'RoadRailway') &&
+                        (metadata['ddd:material'] !== 'Flowers Blue') &&
+                        (metadata['ddd:material'] !== 'Flowers Roses') &&
                         (metadata['ddd:material'] !== 'Grass Blade')) {
                         mesh.material.albedoTexture.uScale = 0.25;
                         mesh.material.albedoTexture.vScale = 0.25;
@@ -317,6 +374,7 @@ class SceneViewer {
                             mesh.material.bumpTexture.vScale = 0.25;
                         }
                     }
+                    */
 
                     mesh.material.detailMap.texture = new BABYLON.Texture("/textures/SurfaceImperfections12_ddd.png", this.scene);
                     //mesh.material.detailMap.texture = new BABYLON.Texture("/textures/detailmap.png", this.scene);
@@ -566,9 +624,10 @@ class SceneViewer {
                 this.viewerState.positionTileZoomLevel = 18;
             }
 
+            let terrainElevation = this.positionTerrainElevation();
+
             // Fix viewer to floor
             if (this.walkMode) {
-                let terrainElevation = this.positionTerrainElevation();
                 if (terrainElevation !== null) {
                     this.camera.position.y = terrainElevation + 3.0;
                 }
@@ -646,6 +705,7 @@ class SceneViewer {
             return null;
         }
 
+        this.viewerState.positionGroundHeight = groundHeight;
         let posString = "@" + point[1].toFixed(7) + "," + point[0].toFixed(7);
 
         if (false) {

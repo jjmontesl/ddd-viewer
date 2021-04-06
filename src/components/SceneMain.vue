@@ -1,12 +1,15 @@
 <template>
 
-    <div>
+    <div  style="position: fixed; left: 10px; bottom: 10px; padding: 0px; z-index: 10;">
+
+        <SceneLabel :viewerState="viewerState"></SceneLabel>
+
     </div>
 
 </template>
 
 <script>
-import DDDScene from '@/components/ddd/DDDScene.vue';
+import SceneLabel from '@/components/scene/SceneLabel.vue';
 
 export default {
   mounted() {
@@ -24,6 +27,9 @@ export default {
       //titleTemplate: `${this.$t('home.TITLE')} - %s`
     }
   },
+  props: [
+      'viewerState',
+  ],
   data() {
     return {
       //name: this.$store.state.auth.user.name,
@@ -31,7 +37,7 @@ export default {
     }
   },
   components: {
-    DDDScene
+    SceneLabel
   }
 }
 </script>
