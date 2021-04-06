@@ -653,6 +653,7 @@ class SceneViewer {
         }
 
         let positionScene = this.camera.position.asArray();
+        positionScene = [positionScene[0], positionScene[1], positionScene[2]];  // Copy array
         this.viewerState.positionScene = positionScene;
 
         this.layerManager.update();
@@ -677,8 +678,8 @@ class SceneViewer {
     }
 
     positionWGS84() {
-      const scenePos = this.camera.position.asArray();
-      const wgs84Pos = this.sceneToWGS84(scenePos);
+      let scenePos = this.camera.position.asArray();
+      let wgs84Pos = this.sceneToWGS84([scenePos[0], scenePos[1], scenePos[2]]);
       return wgs84Pos;
       /*
       const extent = this.map.getView().calculateExtent(this.map.getSize());
@@ -721,11 +722,11 @@ class SceneViewer {
 
     positionGroundHeight() {
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
-        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
+        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
         const pickResult = this.scene.pickWithRay(ray);
-        if (pickResult && pickResult.pickedMesh.id !== 'skyBox') {
+        if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
             //console.debug(pickResult.pickedMesh.id);
-            return this.camera.position.y - (pickResult.distance - 100);
+            return this.camera.position.y - (pickResult.distance - 100.0);
         } else {
             return null;
         }
@@ -733,9 +734,9 @@ class SceneViewer {
 
     positionTerrainElevation() {
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
-        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 5000.0);
+        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
         const pickResult = this.scene.pickWithRay(ray);
-        if (pickResult) {
+        if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
 
             if (pickResult.pickedMesh.metadata && pickResult.pickedMesh.metadata.gltf && pickResult.pickedMesh.metadata.gltf.extras && pickResult.pickedMesh.metadata.gltf.extras['osm:name']) {
                 this.viewerState.positionName = pickResult.pickedMesh.metadata.gltf.extras['osm:name'];
@@ -743,7 +744,7 @@ class SceneViewer {
                 this.viewerState.positionName = null;
             }
 
-            return (pickResult.distance - 100);
+            return (pickResult.distance - 100.0);
         } else {
             return null;
         }

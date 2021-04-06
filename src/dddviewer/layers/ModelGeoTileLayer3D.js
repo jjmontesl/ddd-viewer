@@ -81,14 +81,14 @@ export default class {
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ(coordsUtm, 17);
         //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
 
-        this.loadTile(tileCoords);  // ensure elevation for current tile
-
         // Calculate frustrum (2D)
-        const frustrumOrigin = this.layerManager.sceneViewer.camera.position;
-        if (this.lastHeight) { frustrumOrigin.y -= this._lastHeight; }
+        const frustrumOrigin = new BABYLON.Vector3(this.layerManager.sceneViewer.camera.position);
+        if (this._lastHeight) { frustrumOrigin.y -= this._lastHeight; }
         const frustrumForward = this.layerManager.sceneViewer.camera.getDirection(BABYLON.Vector3.Forward());
-        const frustrumSize = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance * 250.0;
+        const frustrumSize = 1500.0; // this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance * 250.0;
         const frustrumAngle = this.layerManager.sceneViewer.camera.fov; // 30.0;
+
+        this.loadTile(tileCoords);  // ensure elevation for current tile
 
         // Project frustrum corners to tiles
 
@@ -97,6 +97,10 @@ export default class {
         const tiledistDraw = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance + 0.7;
         for (let i = -tiledistWalk; i <= tiledistWalk; i++) {
             for (let j = -tiledistWalk; j <= tiledistWalk; j++) {
+
+                // Current tile is already enqueued
+                if (i === 0 && j === 0) { continue; }
+
                 if (i * i + j * j > tiledistDraw * tiledistDraw) {
                     this.disableTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
                 } else {
@@ -273,9 +277,9 @@ export default class {
                          const ray = new BABYLON.Ray(new BABYLON.Vector3(
                              that.layerManager.sceneViewer.camera.position.x,
                              -100.0, that.layerManager.sceneViewer.camera.position.z),
-                             new BABYLON.Vector3(0, 1, 0), 5000.0);
+                             new BABYLON.Vector3(0, 1, 0), 3000.0);
                          const pickResult = that.layerManager.sceneViewer.scene.pickWithRay(ray);
-                         if (pickResult && pickResult.pickedMesh.id &&
+                         if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id &&
                               pickResult.pickedMesh.id.indexOf('placeholder_') !== 0 &&
                               pickResult.pickedMesh.id.indexOf('skyBox') !== 0) {
                             console.debug("Setting height from: " + pickResult.pickedMesh.id);
@@ -284,7 +288,7 @@ export default class {
                             if (that.layerManager.sceneViewer.viewerState.positionGroundHeight) {
                                 that.layerManager.sceneViewer.camera.position.y += that.layerManager.sceneViewer.viewerState.positionGroundHeight;
                             } else {
-                                that.layerManager.sceneViewer.camera.position.y += 50.0;
+                                that.layerManager.sceneViewer.camera.position.y += 40.0;
                             }
                          } else {
                              //that._tilesLoadedCount--;
@@ -324,7 +328,7 @@ export default class {
               },
               // onError
               function(scene, msg, ex) {
-                //console.log("Tile model (.glb) loading error: ", event);
+                // eslint-disable-next-line no-console
                 console.log("Tile model (.glb) loading error: ", ex);
 
                 if (ex.request && ex.request.status === 404) {
@@ -514,7 +518,7 @@ export default class {
 
     groundTextureLayerSetUrl(url) {
         // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
-        console.debug("Layer setting ground texture layer: " + url);
+        //console.debug("Layer setting ground texture layer: " + url);
         this.groundTextureLayerUrl = url;
 
         // Update existing tiles

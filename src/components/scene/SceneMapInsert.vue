@@ -45,11 +45,6 @@ export default {
   },
   beforeDestroy() {
     //console.debug("Destroying map.");
-
-    window.removeEventListener('resize', this.resize);
-
-    this.map.un('singleclick', this.click);
-    this.map.un('moveend', this.move);
     this.map.setTarget(null);
     this.map = null;
 

@@ -114,7 +114,7 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
-      viewerState: new ViewerState(),
+      viewerState: new ViewerState(this.dddConfig.defaultCoords),
       //viewerState: null,
     }
   },
