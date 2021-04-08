@@ -16,6 +16,8 @@ class ViewerState {
 
     positionGroundHeight = 150.0;
 
+    positionTerrainElevation = 0;
+
     positionHeading = 0.0;
 
     positionTilt = 0.0;
@@ -29,6 +31,7 @@ class ViewerState {
     sceneSelectedMesh = null;
 
     sceneSelectedMeshId = null;
+
 
     sceneFPS = 0;
     sceneDrawCalls = null;

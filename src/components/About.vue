@@ -9,7 +9,7 @@
 
                 <v-card class="">
 
-                    <!-- <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" @click="$router.back();" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn> -->
+                    <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" @click="$router.back();" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
 
                     <v-card-title></v-card-title>
 
@@ -26,8 +26,9 @@
                         <p>
                             In the 3D view:
                             <ul>
-                                <li>Free mode: Use W,A,S,D or cursor keys to move. Q and W to move up / down.</li>
-                                <li>Orbit mode: Left click orbits. Right click pans. Mouse wheel zooms in/out.</li>
+                                <li>Free & walk mode: Left click to view around. Use W,A,S,D or cursor keys to move. Q and W to move up / down.</li>
+                                <li>Orbit mode: Left click to orbit. Right click to pan. Mouse wheel to zooms in/out.</li>
+                                <li>SHIFT key: change movement speed.</li>
                             </ul>
                         </p>
                         <p>

@@ -1,6 +1,6 @@
 <template>
 
-    <div class="ddd-view-mode-selector unselectable" style="text-align: right;">
+    <div class="ddd-view-mode-selector unselectable" style="text-align: right; pointer-events: auto;">
         <div style="margin-top: 4px;">
             <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
         </div>
@@ -20,11 +20,11 @@
 
 <style>
 .ddd-view-mode-selector {
-    position: fixed;
-    z-index: 2;
+    position: absolute;
+    /*z-index: 2;*/
     bottom: 10px;
     right: 10px;
-    //opacity: .75;
+    /*//opacity: .75;*/
     cursor: pointer;
 }
 *.unselectable {

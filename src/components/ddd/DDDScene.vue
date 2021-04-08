@@ -1,8 +1,14 @@
 <template>
 
-    <div style="width: 100%; position: relative; z-index: 0;" id="ddd-scene-parent">
+    <div style="width: 100%; position: relative; z-index: 0; text-align: left;" id="ddd-scene-parent">
+
         <canvas class="ddd-scene" id="ddd-scene" style="width: 100%; outline:none; height: 100px;">
         </canvas>
+
+        <div class="ddd-scene-overlay" id="ddd-scene-overlay" style="width: 100%; height: 100%; position: absolute; z-index: 2; top: 0px; pointer-events: none;">
+            <SceneViewMode v-if="myViewerState.sceneVisible" :viewerState="myViewerState" />
+        </div>
+
     </div>
 
 </template>
@@ -16,6 +22,7 @@ import 'babylonjs-loaders';
 
 import SceneViewer from '@/dddviewer/SceneViewer.js';
 import ModelGeoTileLayer3D from '@/dddviewer/layers/ModelGeoTileLayer3D.js';
+import SceneViewMode from '@/components/scene/SceneViewMode.vue';
 
 export default {
   metaInfo() {
@@ -23,6 +30,9 @@ export default {
       title: this.$store.getters.appTitle,
       titleTemplate: `${this.$t('home.TITLE')} - %s`
     }
+  },
+  components: {
+      SceneViewMode
   },
   data() {
     return {
@@ -35,7 +45,7 @@ export default {
       'getViewerState',
   ],
   computed: {
-      //'viewerState': function() {return this.getViewerState();}
+      'myViewerState': function() {return this.getViewerState();}
   },
   beforeDestroy() {
       console.debug("Disposing BabylonJS scene.");
@@ -114,13 +124,27 @@ export default {
       },
 
       resize: function() {
-        const height = window.innerHeight - 40;
+
+        let panel = document.querySelector('.ddd-front .row div');
+        //let panel = this.$refs.dddViewPanel;
+        const width = window.innerWidth - (panel ? panel.offsetWidth : 0);
+
+        const height = window.innerHeight;
         let el = this.$el.querySelector('.ddd-scene');
         if (el) {
-            console.debug("Resizing scene: " + height);
+            //console.debug("Resizing scene: " + width + " " + height);
             el.style.height = height + "px";
-            //if (this.$el.querySelector('canvas')) { this.$el.querySelector('canvas').height = height; }
+            el.style.width = width + "px";
         }
+
+        let elOverlay = this.$el.querySelector('.ddd-scene-overlay');
+        if (elOverlay) {
+            //console.debug("Resizing scene: " + width + " " + height);
+            //el.style.height = height + "px";
+            elOverlay.style.height = (height - 40) + "px";
+            elOverlay.style.width = width + "px";
+        }
+
         this.sceneViewer.engine.resize();
       },
 

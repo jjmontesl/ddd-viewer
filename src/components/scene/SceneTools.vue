@@ -1,9 +1,9 @@
 <template>
 
-    <div style="padding: 0px;">
+    <div style="padding: 0px;" ref="dddViewPanel">
 
       <v-row style="margin: 0px;">
-        <v-col style="padding: 0px; pointer-events: auto;" sm="6" offset-sm="6" md="5" offset-md="7" lg="4" offset-lg="8" >
+        <v-col style="padding: 0px; pointer-events: auto;" sm="6" offset-sm="6" md="5" offset-md="7" lg="4" offset-lg="8"  >
 
             <div style="background-color: white;">
 

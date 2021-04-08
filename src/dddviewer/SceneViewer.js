@@ -624,12 +624,17 @@ class SceneViewer {
                 this.viewerState.positionTileZoomLevel = 18;
             }
 
-            let terrainElevation = this.positionTerrainElevation();
+            this.updateElevation();
+            const terrainElevation = this.viewerState.positionTerrainElevation;
 
             // Fix viewer to floor
             if (this.walkMode) {
                 if (terrainElevation !== null) {
                     this.camera.position.y = terrainElevation + 3.0;
+                }
+            } else {
+                if (terrainElevation && this.camera.position.y < (terrainElevation + 1.0)) {
+                    this.camera.position.y = terrainElevation + 1.0;
                 }
             }
 
@@ -700,13 +705,12 @@ class SceneViewer {
         let tilt = this.viewerState.positionTilt;
 
         //let height = this.camera.position.y;
-        let groundHeight = this.positionGroundHeight();
+        let groundHeight = this.viewerState.positionGroundHeight;
         if (groundHeight === null) {
             //return this.camera.position.y;
             return null;
         }
 
-        this.viewerState.positionGroundHeight = groundHeight;
         let posString = "@" + point[1].toFixed(7) + "," + point[0].toFixed(7);
 
         if (false) {
@@ -720,6 +724,29 @@ class SceneViewer {
         return posString;
     }
 
+   updateElevation() {
+
+        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
+        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
+        const pickResult = this.scene.pickWithRay(ray);
+        if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
+
+            if (pickResult.pickedMesh.metadata && pickResult.pickedMesh.metadata.gltf && pickResult.pickedMesh.metadata.gltf.extras && pickResult.pickedMesh.metadata.gltf.extras['osm:name']) {
+                this.viewerState.positionName = pickResult.pickedMesh.metadata.gltf.extras['osm:name'];
+            } else {
+                this.viewerState.positionName = null;
+            }
+
+            let terrainElevation = (pickResult.distance - 100.0);
+            this.viewerState.positionTerrainElevation = terrainElevation;
+            this.viewerState.positionGroundHeight = this.camera.position.y - terrainElevation;
+        } else {
+            //this.viewerState.positionTerrainElevation = null;
+        }
+
+    }
+
+    /*
     positionGroundHeight() {
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
         const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
@@ -749,6 +776,7 @@ class SceneViewer {
             return null;
         }
     }
+    */
 
     registerProjectionForCoords(coords) {
 
@@ -893,7 +921,7 @@ class SceneViewer {
         camera.attachControl(this.engine.getRenderingCanvas(), true);
         camera.fov = 35.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default
         let positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
-        camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight, positionScene[2]);
+        camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
         camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
         //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
         this.camera = camera;

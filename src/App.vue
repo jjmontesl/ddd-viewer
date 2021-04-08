@@ -10,8 +10,7 @@
             <DDDMap v-if="viewerState.mapVisible" /> <!-- :viewerState="viewerState" /> -->
             <DDDMap3DSwitch v-if="viewerState.mapVisible" />
 
-            <DDDScene v-if="viewerState.sceneVisible" />
-            <SceneViewMode v-if="viewerState.sceneVisible" :viewerState="viewerState" />
+            <DDDScene v-if="viewerState.sceneVisible" /> <!--  :viewerState="viewerState" -->
 
         </div>
 
@@ -143,6 +142,8 @@ export default {
         this.viewerState.sceneVisible = mode === 'scene';
         //this.$set(this, 'mapVisible', mode === 'map');
         //this.$set(this, 'sceneVisible', mode === 'scene');
+
+        window.dispatchEvent(new Event('resize'));
       },
 
       dddPosition(coords, zoom) {

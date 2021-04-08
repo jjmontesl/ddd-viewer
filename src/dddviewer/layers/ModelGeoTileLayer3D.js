@@ -57,7 +57,7 @@ export default class {
     * From: https://bartwronski.com/2017/04/13/cull-that-cone/
     */
     testConeSphere(origin, forward, size, angle, sphereCenter, sphereRadius) {
-
+        //console.debug(origin, forward, size, angle, sphereCenter, sphereRadius);
         const V = sphereCenter.subtract(origin);
         const VlenSq = BABYLON.Vector3.Dot(V, V);
         const V1len = BABYLON.Vector3.Dot(V, forward);
@@ -82,11 +82,14 @@ export default class {
         //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
 
         // Calculate frustrum (2D)
-        const frustrumOrigin = new BABYLON.Vector3(this.layerManager.sceneViewer.camera.position);
-        if (this._lastHeight) { frustrumOrigin.y -= this._lastHeight; }
+        const frustrumOrigin = this.layerManager.sceneViewer.camera.position.clone();
+        //if (this._lastHeight) { frustrumOrigin.y -= this._lastHeight; }  // Considers all tiles in a plane centered on last
+        frustrumOrigin.y = 0;
         const frustrumForward = this.layerManager.sceneViewer.camera.getDirection(BABYLON.Vector3.Forward());
-        const frustrumSize = 1500.0; // this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance * 250.0;
-        const frustrumAngle = this.layerManager.sceneViewer.camera.fov; // 30.0;
+        frustrumForward.y = 0;
+        frustrumForward.normalize();
+        const frustrumSize = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance * 300.0; // 1500.0;
+        const frustrumAngle = this.layerManager.sceneViewer.camera.fov * 2.0; // * (Math.PI / 180.0); // 30.0;
 
         this.loadTile(tileCoords);  // ensure elevation for current tile
 
@@ -107,8 +110,8 @@ export default class {
                     let tileCenter = this.tileGrid.getTileCoordCenter([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
                     let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
                     let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
-                    let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);  // TODO: Get median height from tile
-                    let sphereRadius = 220.0;
+                    let sphereCenter = new BABYLON.Vector3(tileCenterScene[0], 0, tileCenterScene[1]);  // TODO: Get median height from tile
+                    let sphereRadius = 230.0 / 2.0;
                     if (this.testConeSphere(frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius)) {
                         //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
                         this.loadTile([tileCoords[0], tileCoords[1] + i, tileCoords[2] + j]);
@@ -282,7 +285,7 @@ export default class {
                          if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id &&
                               pickResult.pickedMesh.id.indexOf('placeholder_') !== 0 &&
                               pickResult.pickedMesh.id.indexOf('skyBox') !== 0) {
-                            console.debug("Setting height from: " + pickResult.pickedMesh.id);
+                            //console.debug("Setting height from: " + pickResult.pickedMesh.id);
                             that._initialHeightSet = true;
                             that.layerManager.sceneViewer.camera.position.y = (pickResult.distance - 100.0);
                             if (that.layerManager.sceneViewer.viewerState.positionGroundHeight) {
