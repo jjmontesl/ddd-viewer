@@ -215,7 +215,7 @@ export default class {
                   let minHeight = Number.POSITIVE_INFINITY;
                   let maxHeight = Number.NEGATIVE_INFINITY;
                   newMeshes.forEach((mesh, i) => {
-                      if (that.layerManager.sceneViewer.shadowsEnabled) {
+                      if (that.layerManager.sceneViewer.shadowGenerator) {
                           mesh.receiveShadows = true;
                           if (mesh.metadata && mesh.metadata.gltf.extras &&
                                 ((mesh.metadata.gltf.extras['ddd:shadows'] === false) ||

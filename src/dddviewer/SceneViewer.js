@@ -32,8 +32,6 @@ class SceneViewer {
         this.highlightMeshes = [];
         this.materialHighlight = null;
 
-        this.shadowsEnabled = true;
-
         this.layerManager = new LayerManager(this);
         this.queueLoader = new QueueLoader(this);
 
@@ -141,7 +139,7 @@ class SceneViewer {
         */
 
         that.shadowGenerator = null;
-        if (that.shadowsEnabled) {
+        if (that.viewerState.sceneShadowsEnabled) {
             that.shadowGenerator = new BABYLON.CascadedShadowGenerator(1024, that.light);
             //that.shadowGenerator.debug = true;
             that.shadowGenerator.shadowMaxZ = 500;
@@ -207,7 +205,8 @@ class SceneViewer {
         */
 
         this.loadCatalog('/assets/catalog.glb', false);
-        this.loadCatalog('/assets/catalog_materials.glb', true);
+
+        this.loadTextures();
 
         // Show BabylonJS Inspector
         //that.scene.debugLayer.show();
@@ -1171,7 +1170,30 @@ class SceneViewer {
         }
 
         //console.debug(this.scene.ambientColor);
+    }
 
+    sceneShadowsSetEnabled(value) {
+        this.viewerState.sceneShadowsEnabled = value;
+        localStorage.setItem('dddSceneShadowsEnabled', value);
+        alert('Reload the viewer for changes to take effect.');
+    }
+
+    /**
+    */
+    loadTextures() {
+        if (this.viewerState.sceneTextureSet !== null) {
+            this.loadCatalog('/assets/catalog_materials-' + this.viewerState.sceneTextureSet + '.glb', true);
+        }
+    }
+
+    sceneTextureSet(value) {
+        this.viewerState.sceneTextureSet = value;
+        localStorage.setItem('dddSceneTextureSet', JSON.stringify(value));
+
+        if (value !== null) {
+            this.loadTextures();
+        }
+        alert('Changes will apply when the app is reloaded.');
     }
 
 }

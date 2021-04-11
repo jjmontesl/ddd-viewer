@@ -12,7 +12,7 @@ import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
 
 export default {
   mounted() {
-    console.debug('Enabling DDD Scene');
+    //console.debug('Enabling DDD Scene');
     this.$emit('dddViewerMode', 'map');
   },
   metaInfo() {

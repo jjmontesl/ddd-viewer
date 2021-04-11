@@ -218,7 +218,7 @@ export default {
               }
           }
           this.nodeGetter = () => { return this.viewerState.selectedMesh; };
-          console.debug("Scene Item setMesh called.");
+          //console.debug("Scene Item setMesh called.");
       },
 
       resize() {

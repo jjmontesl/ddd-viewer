@@ -17,32 +17,32 @@
 
                     <div style="height: 20px;"> </div>
 
-
                     <v-card-text class="text-left">
-                           <v-slider v-model="viewerState.sceneTileDrawDistance" step="1" min="0" max="4" thumb-label ticks label="Draw Distance"></v-slider>
-
-                           <!--
-                           <v-slider v-model="viewerState.sceneCameraSpeed" step="1" min="1" max="3" thumb-label ticks label="Camera Speed" hint="You can also toggle camera speed by pressing the SHIFT key."></v-slider>
-                           -->
+                           <v-slider v-model="sceneTime" @change="sceneTimeChange" step="0.1" min="0" max="24" thumb-label ticks label="Scene Time"></v-slider>
                     </v-card-text>
 
+                    <!--
                     <v-card-text class="text-left">
                         <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
                         <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn>
                     </v-card-text>
+                    -->
 
                     <v-card-text class="text-left">
-                        <!--
-                        <v-checkbox label="Items" disabled style="margin-top: 2px;"></v-checkbox>
-                        <v-checkbox label="Shadows" disabled style="margin-top: 2px;"></v-checkbox>
-                        -->
+
+                        <v-slider v-model="viewerState.sceneTileDrawDistance" step="1" min="0" max="4" thumb-label ticks label="Draw Distance"></v-slider>
+
+                        <v-select v-model="viewerState.sceneTextureSet" @change="sceneTextureSetChange" :items="textureModeItems" label="Textures" ></v-select>
 
                         <v-select v-model="viewerState.sceneGroundTextureOverride" @change="groundTextureLayerChange" :items="groundTextureLayerItems" label="Ground texture override" ></v-select>
 
-                        <!-- <v-select :items="textureModeItems" label="Textures" ></v-select> -->
-
                         <v-select v-model="viewerState.sceneSkybox" @change="skyboxChange" :items="skyBoxItems" label="Environment" ></v-select>
+
+                        <!--
+                        <v-checkbox label="Items" disabled style="margin-top: 2px;"></v-checkbox>
+                        -->
+                        <v-checkbox v-model="viewerState.sceneShadowsEnabled" @change="sceneShadowsEnabledChange" label="Shadows" style="margin-top: 2px;"></v-checkbox>
                     </v-card-text>
 
                     <v-card-text class="text-left">
@@ -103,6 +103,8 @@ export default {
         this.viewerState.sceneSelectedMeshId = urlNodeId;
     }
 
+    window.dispatchEvent(new Event('resize'));
+
   },
 
   metaInfo() {
@@ -125,10 +127,13 @@ export default {
       loading: true,
       nodeGetter: () => { return this.viewerState.selectedMesh; },
 
+      sceneTime: this.viewerState.positionDate.getHours(),
+
       textureModeItems: [
-          'Basic',
-          'All',
-          'None',
+          //{value: 'minimal', text: 'Minimal'},
+          {value: 'default256', text: 'Default Set (256x256)'},
+          {value: 'default512', text: 'Default Set (512x512)'},
+          {value: null, text: 'None'},
       ],
 
       skyBoxItems: [
@@ -223,7 +228,7 @@ export default {
               }
           }
           this.nodeGetter = () => { return this.viewerState.selectedMesh; };
-          console.debug("Scene Item setMesh called.");
+          //console.debug("Scene Item setMesh called.");
       },
 
       resize() {
@@ -257,13 +262,28 @@ export default {
       },
 
       groundTextureLayerChange(value) {
-          console.debug("Changing ground texture: ", value);
+          //console.debug("Changing ground texture: ", value);
           this.viewerState.sceneViewer.groundTextureLayerSetKey(value);
       },
 
       skyboxChange(value) {
-            console.debug("Changing skybox: ", value);
+            //console.debug("Changing skybox: ", value);
             this.viewerState.sceneViewer.loadSkybox(value);
+      },
+
+      sceneShadowsEnabledChange(value) {
+          this.viewerState.sceneViewer.sceneShadowsSetEnabled(value);
+      },
+
+      sceneTextureSetChange(value) {
+          this.viewerState.sceneViewer.sceneTextureSet(value);
+      },
+
+      sceneTimeChange(value) {
+            let currentDate = this.viewerState.positionDate;
+            currentDate.setHours(parseInt(value));
+            currentDate.setMinutes(parseInt((value - parseInt(value)) * 60));
+            //this.viewerState.positionDate = currentDate;
       }
 
   },

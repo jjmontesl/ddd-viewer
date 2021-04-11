@@ -38,6 +38,8 @@ class ViewerState {
     sceneFPS = 0;
     sceneDrawCalls = null;
 
+    sceneShadowsEnabled = false;
+
     scenePickingEnabled = true;
 
     sceneViewModeShow = true;
@@ -48,10 +50,23 @@ class ViewerState {
 
     sceneSkybox = "/textures/TropicalSunnyDay";
 
+    sceneTextureSet = "default256";
+
     sceneGroundTextureOverride = null;
 
     constructor(initialCoords) {
         this.positionWGS84 = initialCoords;
+
+        const shadowsEnabled = localStorage.getItem('dddSceneShadowsEnabled');
+        this.sceneShadowsEnabled = shadowsEnabled ? JSON.parse(shadowsEnabled) : this.sceneShadowsEnabled;
+
+        const textureSet = localStorage.getItem('dddSceneTextureSet');
+        this.sceneTextureSet = textureSet ? JSON.parse(textureSet) : this.sceneTextureSet;
+
+        // Start at 10:00 AM always
+        this.positionDate.setHours(10);
+        this.positionDate.setMinutes(0);
+
     }
 
 }

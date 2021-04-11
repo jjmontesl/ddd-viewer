@@ -137,7 +137,7 @@ export default {
   methods: {
 
       dddViewerMode(mode) {
-        console.debug("Received Viewer Mode change event to: " + mode);
+        //console.debug("Received Viewer Mode change event to: " + mode);
         this.viewerState.mapVisible = mode === 'map';
         this.viewerState.sceneVisible = mode === 'scene';
         //this.$set(this, 'mapVisible', mode === 'map');
@@ -194,7 +194,7 @@ export default {
 
                 }
             } catch(e) {
-                console.debug("Error parsing location from href: " + e);
+                //console.debug("Error parsing location from href: " + e);
             }
 
           //let positionWgs84 = this.getViewerState().positionWGS84;
