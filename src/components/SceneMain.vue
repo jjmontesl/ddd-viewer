@@ -1,9 +1,7 @@
 <template>
 
     <div  style="position: fixed; left: 10px; bottom: 10px; padding: 0px; z-index: 10;">
-
         <SceneLabel :viewerState="viewerState"></SceneLabel>
-
     </div>
 
 </template>

@@ -24,6 +24,8 @@ class ViewerState {
 
     positionName = "";
 
+    positionDate = new Date();
+
 
 
     // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
@@ -38,6 +40,8 @@ class ViewerState {
 
     scenePickingEnabled = true;
 
+    sceneViewModeShow = true;
+
     sceneTileDrawDistance = 1;
 
     sceneMoveSpeed = 5;
@@ -45,6 +49,10 @@ class ViewerState {
     sceneSkybox = "/textures/TropicalSunnyDay";
 
     sceneGroundTextureOverride = null;
+
+    constructor(initialCoords) {
+        this.positionWGS84 = initialCoords;
+    }
 
 }
 

@@ -1,12 +1,12 @@
 <template>
 
-    <div style="width: 100%; position: relative; z-index: 0; text-align: left;" id="ddd-scene-parent">
+    <div style="width: 100%; position: relative; z-index: 0; text-align: left;" id="ddd-scene-parent" class="ddd-scene-parent">
 
-        <canvas class="ddd-scene" id="ddd-scene" style="width: 100%; outline:none; height: 100px;">
+        <canvas class="ddd-scene" id="ddd-scene" style="width: 100%; outline:none; height: 100%;">
         </canvas>
 
         <div class="ddd-scene-overlay" id="ddd-scene-overlay" style="width: 100%; height: 100%; position: absolute; z-index: 2; top: 0px; pointer-events: none;">
-            <SceneViewMode v-if="myViewerState.sceneVisible" :viewerState="myViewerState" />
+            <SceneViewMode v-if="myViewerState.sceneVisible && myViewerState.sceneViewModeShow" :viewerState="myViewerState" />
         </div>
 
     </div>
@@ -58,6 +58,8 @@ export default {
   mounted() {
     console.debug('Creating 3D scene.');
 
+    this.sceneParent = this.$el; // .querySelector('.ddd-scene-parent');
+
     const height = window.innerHeight - 40;
     //console.debug("Resizing 3D canvas: " + height);
     this.$el.querySelector('.ddd-scene').style.height = height + "px";
@@ -86,6 +88,10 @@ export default {
     //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
     canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
 
+    let timeSkipIntervalSec = 30 * 60;
+    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 109) { that.cycleTime(-timeSkipIntervalSec); } });
+    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 107) { that.cycleTime(timeSkipIntervalSec); } });
+
     this._timeout = setTimeout(this.checkUpdateHref, 1500);
 
     // Resize initially
@@ -107,11 +113,11 @@ export default {
 
               //this.$router.replace('/maps/' + posString);
               if (this.$route.name === 'sceneMain') {
-                  this.$router.push('/3d/' + posString).catch(()=>{});
+                  this.$router.replace('/3d/' + posString).catch(()=>{});
               } else if (this.$route.name === 'scenePos') {
-                  this.$router.push('/3d/pos/' + posString).catch(()=>{});
+                  this.$router.replace('/3d/pos/' + posString).catch(()=>{});
               } else if (this.$route.name === 'sceneItem')  {
-                  this.$router.push('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
+                  this.$router.replace('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
               }
           }
 
@@ -125,23 +131,35 @@ export default {
 
       resize: function() {
 
+        console.debug("Resizing DDDScene.");
+        if (!this.sceneParent) { return; }
+
         let panel = document.querySelector('.ddd-front .row div');
         //let panel = this.$refs.dddViewPanel;
-        const width = window.innerWidth - (panel ? panel.offsetWidth : 0);
 
-        const height = window.innerHeight;
-        let el = this.$el.querySelector('.ddd-scene');
+
+        let width = null;
+        let height = window.innerHeight;
+        if (this.sceneParent.parentNode.id === 'ddd-scene-insert') {
+            width = this.sceneParent.parentNode.clientWidth;
+            height = this.sceneParent.parentNode.clientHeight;
+        } else {
+            width = document.body.clientWidth - (panel ? panel.offsetWidth : 0);
+            height = window.innerHeight - 40;
+        }
+
+        let el = this.sceneParent.querySelector('.ddd-scene');
         if (el) {
             //console.debug("Resizing scene: " + width + " " + height);
             el.style.height = height + "px";
             el.style.width = width + "px";
         }
 
-        let elOverlay = this.$el.querySelector('.ddd-scene-overlay');
+        let elOverlay = this.sceneParent.querySelector('.ddd-scene-overlay');
         if (elOverlay) {
             //console.debug("Resizing scene: " + width + " " + height);
             //el.style.height = height + "px";
-            elOverlay.style.height = (height - 40) + "px";
+            elOverlay.style.height = height + "px";
             elOverlay.style.width = width + "px";
         }
 
@@ -150,6 +168,11 @@ export default {
 
       addLayer: function(layer) {
           console.debug("Adding layer: " + layer);
+      },
+
+      cycleTime: function(seconds) {
+            this.sceneViewer.viewerState.positionDate.setSeconds(this.sceneViewer.viewerState.positionDate.getSeconds() + seconds);
+            this.sceneViewer.lightSetupFromDatePos();
       },
 
       click: function() {

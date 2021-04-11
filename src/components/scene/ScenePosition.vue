@@ -1,5 +1,7 @@
 <template>
 
+    <div>
+
     <div style="position: fixed; left: 10px; top: 50px; width: 280px; padding: 0px;">
 
         <v-card class="pa-1" outlined>
@@ -17,8 +19,10 @@
                     <div><b>Altitude Ground:</b> {{ parseFloat(viewerState.positionGroundHeight).toFixed(1) }} <span style="color: gray;">m</span></div>
                     <div><b>Terrain Height:</b> {{ (parseFloat(viewerState.positionScene[1]) - parseFloat(viewerState.positionGroundHeight)).toFixed(0) }} <span style="color: gray;">m</span></div>
 
+                    <!--
                     <div style="height: 5px;"></div>
-                    <div style="overflow: hidden; white-space: nowrap;"><b>{{ viewerState.positionName }}</b>&nbsp;</div>
+                    <div style="overflow: hidden; white-space: nowrap;"><b></b>&nbsp;</div>
+                    -->
 
                     <div><small>{{ viewerState.sceneFPS }} FPS</small> <small>{{ viewerState.sceneDrawCalls }} drawcalls</small></div>
 
@@ -38,11 +42,18 @@
 
     </div>
 
+    <div  style="position: fixed; left: 10px; bottom: 10px; padding: 0px; z-index: 10;">
+        <SceneLabel :viewerState="viewerState"></SceneLabel>
+    </div>
+
+    </div>
+
 </template>
 
 <script>
 import DDDMap from '@/components/ddd/DDDMap.vue';
 import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
+import SceneLabel from '@/components/scene/SceneLabel.vue';
 import tiles from '@/services/ddd_http/tiles.js';
 
 export default {
@@ -77,7 +88,8 @@ export default {
   },
   components: {
       DDDMap,
-      DDDMap3DSwitch
+      DDDMap3DSwitch,
+      SceneLabel
   },
   methods: {
   }

@@ -7,8 +7,12 @@ import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import 'babylonjs-loaders';
 
+/// <reference types="suncalc" />
+import * as SunCalc from 'suncalc';
+
 import LayerManager from '@/dddviewer/layers/LayerManager.js';
 import QueueLoader from '@/dddviewer/loading/QueueLoader.js';
+import ViewerSequencer from '@/dddviewer/seq/ViewerSequencer.js';
 
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
@@ -28,7 +32,7 @@ class SceneViewer {
         this.highlightMeshes = [];
         this.materialHighlight = null;
 
-        this.shadowsEnabled = false;
+        this.shadowsEnabled = true;
 
         this.layerManager = new LayerManager(this);
         this.queueLoader = new QueueLoader(this);
@@ -50,6 +54,15 @@ class SceneViewer {
 
         // Dependencies to not yet loaded objects, in order to process them
         this.depends = [];
+
+        this.ambientColorNight = new BABYLON.Color3(0, 0, 0.3);
+        this.ambientColorDay = new BABYLON.Color3(0.70, 0.70, 0.7);
+
+        this.lastDateUpdate = new Date().getTime();
+
+        // TODO: Sequencer would better belong to the app
+        this.sequencer = new ViewerSequencer(this);
+
     }
 
     initialize(canvas) {
@@ -67,7 +80,7 @@ class SceneViewer {
         that.registerProjectionForCoords(coords);
 
         // Associate a Babylon Engine to it.
-        let engine = new BABYLON.Engine(canvas, true, { stencil: true });
+        let engine = new BABYLON.Engine(canvas, true); // , { stencil: true });
         that.engine = engine;
 
         that.scene = new BABYLON.Scene(engine);
@@ -105,7 +118,7 @@ class SceneViewer {
         //this.scene.environmentTexture = new BABYLON.CubeTexture("/textures/TropicalSunnyDay", this.scene);  // freezes
 
 
-        this.scene.ambientColor = new BABYLON.Color3(0.70, 0.70, 0.7);
+        this.scene.ambientColor = this.ambientColorDay.clone();
         //this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
         /*
         that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
@@ -118,6 +131,8 @@ class SceneViewer {
         that.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
         that.light.specular = new BABYLON.Color3(1, 1, 0.95);
         that.light.intensity = 2.5;
+
+
         /*
         that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
         that.light.diffuse = new BABYLON.Color3(223 / 255, 242 / 255, 196 / 255);
@@ -137,6 +152,20 @@ class SceneViewer {
             //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
             that.shadowGenerator.splitFrustum();
         }
+
+
+        this.lensFlareEmitter = new BABYLON.Mesh("lensFlareEmitter", that.scene);
+        this.lensFlareSystem = new BABYLON.LensFlareSystem("lensFlareSystem", this.lensFlareEmitter, that.scene);
+        const flareScale = 0.5;
+        var flare00 = new BABYLON.LensFlare(flareScale * 0.2, 0, new BABYLON.Color3(1, 1, 1), "/textures/Flare2.png", this.lensFlareSystem);
+        var flare01 = new BABYLON.LensFlare(flareScale * 0.5, 0.2, new BABYLON.Color3(0.5, 0.5, 1), "/textures/flare3.png", this.lensFlareSystem);
+        var flare02 = new BABYLON.LensFlare(flareScale * 0.2, 1.0, new BABYLON.Color3(1, 1, 1), "/textures/flare3.png", this.lensFlareSystem);
+        var flare03 = new BABYLON.LensFlare(flareScale * 0.4, 0.4, new BABYLON.Color3(1, 0.5, 1), "/textures/flare.png", this.lensFlareSystem);
+        var flare04 = new BABYLON.LensFlare(flareScale * 0.1, 0.6, new BABYLON.Color3(1, 1, 1), "/textures/flare3.png", this.lensFlareSystem);
+        var flare05 = new BABYLON.LensFlare(flareScale * 0.3, 0.8, new BABYLON.Color3(1, 1, 1), "/textures/Flare2.png", this.lensFlareSystem);
+
+        // Setup lighting, flares, etc.
+        this.lightSetupFromDatePos();
 
         //var ssao = new BABYLON.SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
@@ -186,7 +215,7 @@ class SceneViewer {
         // Render every frame
         engine.runRenderLoop(() => {
             if (! that.scene) { return; }
-            that.update();
+            that.update(that.engine.getDeltaTime() / 1000.0);
             that.scene.render();
         });
 
@@ -415,6 +444,8 @@ class SceneViewer {
         if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
             let metadata = mesh.metadata.gltf.extras;
 
+            mesh.isBlocker = true;
+
             if (metadata['ddd:material']) {
                 let key = metadata['ddd:material'];
                 let mat = this.catalog_materials[key];
@@ -423,6 +454,7 @@ class SceneViewer {
                         //mesh.material.dispose();
                     }
                     mesh.material = mat;
+
 
                 } else {
                     //console.debug("Material not found in catalog: " + key);
@@ -613,7 +645,7 @@ class SceneViewer {
         }
     }
 
-    update() {
+    update(deltaTime) {
 
         let positionWGS84 = this.positionWGS84();
         if (positionWGS84) {
@@ -661,10 +693,27 @@ class SceneViewer {
         positionScene = [positionScene[0], positionScene[1], positionScene[2]];  // Copy array
         this.viewerState.positionScene = positionScene;
 
-        this.layerManager.update();
+        this.sequencer.update(deltaTime);
+        this.layerManager.update(deltaTime);
 
         this.viewerState.sceneFPS = this.engine.getFps().toFixed(1);
         this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current.toString() : null;
+
+        // Run time
+        const updateInterval = 0; // 5000;
+        if (true) {
+            var currentDateUpdate = new Date().getTime();
+
+            if (currentDateUpdate - this.lastDateUpdate > updateInterval) {
+                var scaledElapsed = ((currentDateUpdate - this.lastDateUpdate) / 1000) * (24 * 2);  // 24 * 2 = 48x faster (1 day = 30 min)
+                if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
+                this.viewerState.positionDate.setSeconds(this.viewerState.positionDate.getSeconds() + scaledElapsed);
+
+                this.lastDateUpdate = currentDateUpdate;
+                this.lightSetupFromDatePos();
+            }
+
+        }
 
     }
 
@@ -690,6 +739,47 @@ class SceneViewer {
       const extent = this.map.getView().calculateExtent(this.map.getSize());
       let point = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
       */
+    }
+
+    parsePositionString(posString) {
+        //console.debug("Parsing: " + posString);
+
+        let result = {};
+
+        try {
+            // Parse at location
+            //http://localhost:8080/maps/@42.1354407,-0.4126472,17.0z
+            let href = posString;
+            const regexp = /.*@([0-9.\-]+),([0-9.\-]+)((,(([0-9.\-]+)[ayhtz]))*).*/;
+            let matches = href.match(regexp);
+            //console.debug(matches);
+
+            if (matches.length >= 3) {
+                result.positionWGS84 = [parseFloat(matches[2]),parseFloat(matches[1])];
+            }
+            if (matches.length >= 4) {
+                for (let match of matches[3].split(",")) {
+                    if (match === "") { continue; }
+                    let value = parseFloat(match.slice(0, -1));
+                    let code = match.slice(-1);
+                    if (code === 'z') {
+                        result.positionTileZoomLevel = value;
+                    } else if (code === 'a') {
+                        result.positionGroundHeight = value;
+                    } else if (code === 'h') {
+                        result.positionHeading = value;
+                    } else if (code === 't') {
+                        result.positionTilt = value;
+                    }
+                    //console.debug(value, code);
+                }
+            }
+        } catch(e) {
+            console.debug("Error parsing location from href: " + e);
+        }
+
+        //let positionWgs84 = this.getViewerState().positionWGS84;
+        return result;
     }
 
     positionString() {
@@ -1027,6 +1117,62 @@ class SceneViewer {
           }
     }
 
+    lightSetupFromDatePos() {
+
+        var times = SunCalc.getTimes(this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+
+        var sunriseStr = times.sunrise.getHours() + ':' + times.sunrise.getMinutes();
+        var sunsetStr = times.sunset.getHours() + ':' + times.sunset.getMinutes();
+
+        // get position of the sun (azimuth and altitude) at today's sunrise
+        var sunrisePos = SunCalc.getPosition(times.sunrise, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        var sunriseAzimuth = sunrisePos.azimuth * 180 / Math.PI;
+
+        var sunsetPos = SunCalc.getPosition(times.sunset, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        var sunsetAzimuth = sunsetPos.azimuth * 180 / Math.PI;
+
+        var currentPos = SunCalc.getPosition(this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0], this.viewerState.positionScene[1]);
+        var currentElevation = currentPos.altitude * 180 / Math.PI;
+        var currentAzimuth = currentPos.azimuth * 180 / Math.PI;
+
+        //console.debug("Sun azimuth: " + currentAzimuth + " ele: " + currentElevation + " Date: " + this.viewerState.positionDate + " Sunrise: " + sunriseStr + " azimuth: " + sunriseAzimuth + " Sunset: " + sunsetStr + " azimuth: " + sunsetAzimuth);
+
+        var lightRot = BABYLON.Quaternion.FromEulerAngles(currentPos.altitude, currentPos.azimuth, 0);
+
+        var sunlightAmountNorm = Math.sin(currentPos.altitude);
+        if (sunlightAmountNorm < 0) { sunlightAmountNorm = 0; }
+        sunlightAmountNorm = 1 - (1 - sunlightAmountNorm) * (1 - sunlightAmountNorm);
+
+        //this.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -0.5, 0.5).normalizeToNew(), this.scene);
+        //this.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
+        //this.light.specular = new BABYLON.Color3(1, 1, 0.95);
+        const minLightDay = 0.0;
+        const maxLightDay = 3.0;
+
+        var lightIntensity = minLightDay + (maxLightDay - minLightDay) * sunlightAmountNorm;
+
+        //console.debug("Sunlight amount norm: " + sunlightAmountNorm + " lightIntensity: " + lightIntensity);
+
+        // Set light dir and intensity
+        BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightRot, this.light.direction);
+        this.light.intensity = lightIntensity;
+        this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
+        this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
+        BABYLON.Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        this.skybox.rotation.y = currentPos.azimuth - (19 * (Math.PI / 180.0));
+
+        BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightRot, this.lensFlareEmitter.position);
+        this.lensFlareEmitter.position.scaleInPlace(-1400.0);
+        this.lensFlareSystem.setEmitter(this.lensFlareEmitter);
+
+        var flareEnabled = sunlightAmountNorm > 0;
+        if (this.lensFlareSystem.isEnabled !== flareEnabled) {
+            this.lensFlareSystem.isEnabled = flareEnabled;
+        }
+
+        //console.debug(this.scene.ambientColor);
+
+    }
 
 }
 

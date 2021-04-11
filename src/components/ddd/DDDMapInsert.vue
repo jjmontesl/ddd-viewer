@@ -45,7 +45,7 @@ export default {
         let el = this.$el.querySelector('.ddd-map-insert').firstChild;
         if (el) {
             console.debug("Unmounting DDD map insert.");
-            document.getElementById('ddd-map').appendChild(el);
+            document.getElementById('ddd-map').insertBefore(el, document.getElementById('ddd-map').firstChild);  // Must be the first child, as used in Mount
         }
       }
 

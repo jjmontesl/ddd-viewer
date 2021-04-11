@@ -4,7 +4,7 @@
 
         <div style="color: white; pointer-events: auto;">
             <v-btn @click="showMapInsert" class="" style="margin-right: 10px; padding: 2px;" dark color="primary"><small><v-icon dark>mdi-map</v-icon></small></v-btn>
-            <b>{{ viewerState.positionName }}</b>
+            <b :style="[!isPositionNameCurrent ? {'color': 'gray'} : {}]">{{ lastPositionName }}</b>
         </div>
 
     </div>
@@ -35,12 +35,21 @@ export default {
   */
   data() {
     return {
-      //name: this.$store.state.auth.user.name,
-      //showVerifyDialog: !this.$store.state.verify.emailVerified
-      //placeName: this.$route.params.name.replace(",", ", ")
+      lastPositionName: null,
+      isPositionNameCurrent: false,
     }
   },
   components: {
+  },
+  watch: {
+    'viewerState.positionName': function() {
+        if (this.viewerState.positionName) {
+            this.lastPositionName = this.viewerState.positionName;
+            this.isPositionNameCurrent = true;
+        } else {
+            this.isPositionNameCurrent = false;
+        }
+    }
   },
   methods: {
         showMapInsert() {

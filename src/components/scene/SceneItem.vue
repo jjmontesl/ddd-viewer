@@ -1,6 +1,6 @@
 <template>
 
-    <div style="padding: 0px;">
+    <div style="padding: 0px;" ref="dddViewPanel">
 
       <v-row style="margin: 0px;">
         <v-col style="padding: 0px; pointer-events: auto;" sm="6" offset-sm="6" md="5" offset-md="7" lg="4" offset-lg="8" >
@@ -58,9 +58,9 @@
 
                     <v-card-text class="text-left">
                         <h3>View</h3>
-                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</v-btn>
+                        <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit Item</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
-                        <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn>
+                        <!-- <v-btn @click="selectCameraWalk" class="mx-2" dark color="primary"><v-icon dark>mdi-walk</v-icon> Walk</v-btn> -->
                     </v-card-text>
 
 

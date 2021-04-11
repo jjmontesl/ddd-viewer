@@ -19,6 +19,10 @@ export default {
 
       resize: function() {
           this.checkMountScene();
+
+          if (this.getViewerState().sceneViewer) {
+              this.getViewerState().sceneViewer.engine.resize();
+          }
       },
 
       checkMountScene: function() {
@@ -27,19 +31,28 @@ export default {
             let visible = window.getComputedStyle(el).display !== 'none'; // ; (el.parentNode.parentOffset !== null);
 
             if (visible) {
-                this.mountScene();
+                if (this.mountedScene === null) {
+                    this.mountScene();
+                }
             } else {
-                this.unmountScene();
+                if (this.mountedScene !== null) {
+                    this.unmountScene();
+                }
             }
       },
 
       mountScene: function() {
-        let el = document.getElementById('ddd-scene-parent').firstChild;
+        let el = document.getElementById('ddd-scene-parent'); //.firstChild;
         if (el) {
             console.debug('Mounting DDD scene insert.');
+
+            this.renderBackEl = el.parentNode;
             this.$el.querySelector('.ddd-scene-insert').appendChild(el);
+            this.mountedScene = el;
+
 
             el.style.height = 400 + 'px';
+            el.style.width = '100%';
             //el.style.height = this.$el.querySelector('.ddd-scene-insert').height + "px";
             //if (el.querySelector('canvas')) { el.querySelector('canvas').height = 400; }
             //this.sceneViewer.engine.resize();
@@ -51,7 +64,10 @@ export default {
         let el = this.$el.querySelector('.ddd-scene-insert').firstChild;
         if (el) {
             console.debug("Unmounting DDD scene insert.");
-            document.getElementById('ddd-scene-parent').appendChild(el);
+            //document.getElementById('ddd-scene-parent').insertBefore(el, document.getElementById('ddd-scene-parent').firstChild);  // Must be first child as used in mount
+            this.renderBackEl.appendChild(el);  // Must be first child as used in mount
+            this.mountedScene = null;
+            this.renderBackEl = null;
 
             window.dispatchEvent(new Event('resize'));
         }
@@ -61,6 +77,7 @@ export default {
 
 
   mounted() {
+      this.mountedScene = null;
     this.checkMountScene();
     window.addEventListener('resize', this.resize);
   },

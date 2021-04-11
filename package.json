@@ -34,6 +34,7 @@
   "dependencies": {
     "@babylonjs/loaders": "^4.2.0",
     "@mdi/font": "^5.1.45",
+    "@types/suncalc": "^1.8.0",
     "axios": "^0.19.2",
     "babylonjs": "^5.0.0-alpha.10",
     "babylonjs-gltf2interface": "^4.2.0",
@@ -44,6 +45,7 @@
     "ol": "^6.4.2",
     "proj4": "^2.7.0",
     "remark-cli": "^8.0.0",
+    "suncalc": "^1.8.0",
     "vee-validate": "^3.3.0",
     "vue": "^2.6.11",
     "vue-analytics": "^5.22.1",

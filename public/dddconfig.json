@@ -9,10 +9,10 @@
         "es-pnoa": {"text": "ES - PNOA (Orthophotos)", "url": "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"}
     },
 
-    "_defaultCoords_Salamanca": [[-5.666, 40.960]],
-    "_defaultCoords_Hercules": [[-8.406568, 43.385890]],
-    "_defaultCoords_Vigo_Castro": [[-8.723, 42.238]],
+    "_defaultCoords_Salamanca": [-5.666, 40.960],
+    "_defaultCoords_Hercules": [-8.406568, 43.385890],
+    "_defaultCoords_Vigo_Castro": [-8.723, 42.238],
 
-    "defaultCoords": [[-8.723, 42.238]]
+    "defaultCoords": [-8.723, 42.238]
 
 }

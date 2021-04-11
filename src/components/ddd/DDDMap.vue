@@ -76,9 +76,9 @@ export default {
 
           //this.$router.replace('/maps/' + posString);
           if (this.$route.name === 'mapMain') {
-              this.$router.push('/maps/' + posString).catch(()=>{});
+              this.$router.replace('/maps/' + posString).catch(()=>{});
           } else if (this.$route.name === 'mapPlace')  {
-              this.$router.push('/maps/place/' + this.$route.params.name + '/' + posString).catch(()=>{});
+              this.$router.replace('/maps/place/' + this.$route.params.name + '/' + posString).catch(()=>{});
           }
 
           const that = this;

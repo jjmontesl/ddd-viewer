@@ -193,7 +193,7 @@ export default class {
 
           //console.debug("Loading: " + tileUrl);
 
-          let pivot = new BABYLON.TransformNode("chunk_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
+          let pivot = new BABYLON.TransformNode("chunk_" + tileKey, this.layerManager.sceneViewer.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
           //let reversePivot = new BABYLON.TransformNode("chunk_reverse_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
           //let rawPivot = new BABYLON.TransformNode("chunk_raw_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
           //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
@@ -374,13 +374,13 @@ export default class {
         let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
         let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
-        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
+        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene);
 
         marker.position = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new BABYLON.Vector3(Math.PI * 0.5, 0, 0);
 
         //Creation of a repeated textured material
-        let materialPlane = new BABYLON.StandardMaterial("textureTile_" + tileKey, this.scene);
+        let materialPlane = new BABYLON.StandardMaterial("textureTile_" + tileKey, this.layerManager.sceneViewer.scene);
         //materialPlane.diffuseTexture = new BABYLON.Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.scene);
         materialPlane.diffuseColor = color;
         materialPlane.specularColor = BABYLON.Color3.Black();
@@ -417,14 +417,14 @@ export default class {
         let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         //console.debug(sizeWidth, sizeHeight);
-        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.scene);
+        const marker = BABYLON.MeshBuilder.CreatePlane('placeholder_' + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene);
 
         marker.position = new BABYLON.Vector3(tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new BABYLON.Vector3(Math.PI * 0.5, 0, 0);
 
         //Creation of a repeated textured material
-        let materialPlane = new BABYLON.StandardMaterial("textureTile_" + tileKey, this.scene);
-        materialPlane.diffuseTexture = new BABYLON.Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.scene);
+        let materialPlane = new BABYLON.StandardMaterial("textureTile_" + tileKey, this.layerManager.sceneViewer.scene);
+        materialPlane.diffuseTexture = new BABYLON.Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.layerManager.sceneViewer.scene);
 
         //if (!color) color = BABYLON.Color3.Black; //new BABYLON.Color3(0, 0, 0);
         materialPlane.specularColor = BABYLON.Color3.Black();
@@ -466,14 +466,14 @@ export default class {
             //console.debug("Creating material for ground texture: " + url);
             const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
             let url = this.replaceTileCoordsUrl(tileCoords, this.groundTextureLayerUrl);
-            materialGround = new BABYLON.StandardMaterial("materialGround_" + tileKey, this.scene);
+            materialGround = new BABYLON.StandardMaterial("materialGround_" + tileKey, this.layerManager.sceneViewer.scene);
             materialGround.roughness = 0.95;
             materialGround.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15); // BABYLON.Color3.Black();
             //materialGround.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2); // BABYLON.Color3.Black();
             //materialGround.emissiveColor = BABYLON.Color3.White();  // new BABYLON.Color3(1.0, 1.0, 1.);
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
-            materialGround.diffuseTexture = new BABYLON.Texture(url, this.scene);
+            materialGround.diffuseTexture = new BABYLON.Texture(url, this.layerManager.sceneViewer.scene);
             materialGround.diffuseTexture.uScale = 1.0 / (sizeWidth + 0);  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.vScale = 1.0 / (sizeHeight + 1);  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.uOffset = -0.5;
@@ -530,6 +530,20 @@ export default class {
 
             this.groundTextureLayerProcessNode(tile.coordsTileGrid, tile.node);
         }
+    }
+
+    createTextMaterial(text) {
+
+        //Create dynamic texture
+        const texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + text , {width:512, height:256}, this.layerManager.sceneViewer.scene);
+        //var textureContext = texture.getContext();
+        const font = "bold 44px monospace";
+        texture.drawText("Generating...\nPlease try again later (5+ min).", 75, 135, font, "green", "white", true, true);
+
+        const material = new BABYLON.StandardMaterial("Mat" + text, this.layerManager.sceneViewer.scene);
+        material.diffuseTexture = texture;
+
+        return material
     }
 
 }
