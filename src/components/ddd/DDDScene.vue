@@ -81,9 +81,10 @@ export default {
     // Filter drag event for clicks
     let drag = false;
     let that = this;
-    canvas.addEventListener('mousedown', () => {drag = false;});
-    canvas.addEventListener('mousemove', () => {drag = true;});
-    canvas.addEventListener('mouseup', () => {if (!drag) { that.click(); } } );
+    canvas.addEventListener('pointerdown', () => {drag = false;});
+    canvas.addEventListener('pointermove', () => {drag = true;});
+    canvas.addEventListener('pointerup', () => {if (!drag) { that.click(); } } );
+    //canvas.addEventListener('click', () => { that.click(); } );
 
     //canvas.addEventListener('keydown', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
     canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });

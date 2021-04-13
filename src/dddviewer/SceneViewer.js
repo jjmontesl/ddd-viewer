@@ -1,5 +1,8 @@
 
 import * as BABYLON from 'babylonjs';
+import {WaterMaterial} from 'babylonjs-materials';
+import 'babylonjs-materials';
+import '@babylonjs/core/Animations/animatable';
 import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
 import proj4 from 'proj4';
 //import {register} from 'ol/proj/proj4';
@@ -9,6 +12,8 @@ import 'babylonjs-loaders';
 
 /// <reference types="suncalc" />
 import * as SunCalc from 'suncalc';
+
+import TerrainMaterialWrapper from '@/dddviewer/render/TerrainMaterial.js';
 
 import LayerManager from '@/dddviewer/layers/LayerManager.js';
 import QueueLoader from '@/dddviewer/loading/QueueLoader.js';
@@ -183,20 +188,24 @@ class SceneViewer {
         //    that.scene.activeCamera.alpha += Math.PI; // camera +180°
         //});
 
+        let water = new WaterMaterial("water", that.scene, new BABYLON.Vector2(512, 512));
+        //water.backFaceCulling = true;
+        //water.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", that.scene);
+        water.windForce = 5;
+        water.waveHeight = 0.1;
+        water.waveSpeed = 100.0;
+        water.bumpHeight = 0.1;
+        water.waveLength = 0.25;
 
-        /*
-        let water = new BABYLON.WaterMaterial("water", that.scene, new BABYLON.Vector2(1024, 1024));
-        water.backFaceCulling = true;
-        water.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", scene);
-        water.windForce = -5;
-        water.waveHeight = 1.5;
-        water.bumpHeight = 0.5;
-        water.waveLength = 1.1;
+        water.alpha = 0.7;
+        water.transparencyMode = 2;  // ALPHA_BLEND
+        water.useSpecularOverAlpha = true;
+        water.useReflectionOverAlpha = true;
+
         water.colorBlendFactor = 0.2;
-        water.addToRenderList(skybox);
-        water.addToRenderList(ground);
-        waterMesh.material = water;
-        */
+        water.addToRenderList(this.skybox);
+        //water.addToRenderList(ground);
+        this.materialWater = water;
 
         /*
         that.materialGrass = new BABYLON.StandardMaterial("bawl", that.scene);
@@ -344,18 +353,24 @@ class SceneViewer {
                 let metadata = mesh.metadata.gltf.extras;
 
                 if (metadata['ddd:material'] === 'WaterBasicDaytime') {
+                    /*
                     mesh.material.alpha = 0.7;
                     mesh.material.transparencyMode = 2;  // ALPHA_BLEND
                     mesh.material.useSpecularOverAlpha = true;
                     mesh.material.useReflectionOverAlpha = true;
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+                    */
+                    this.catalog_materials[key] = this.materialWater;
 
                 } else if (metadata['ddd:material'] === 'Water4Advanced') {
+                    /*
                     mesh.material.alpha = 0.8;
                     mesh.material.transparencyMode = 2;  // ALPHA_BLEND
                     mesh.material.useSpecularOverAlpha = true;
                     mesh.material.useReflectionOverAlpha = true;
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+                    */
+                    this.catalog_materials[key] = this.materialWater;
 
                 } else if (mesh.material.albedoTexture) {
 
@@ -439,6 +454,13 @@ class SceneViewer {
 
     processMesh(root, mesh) {
         //console.debug("Processing mesh: " + mesh.id)
+
+        if (!('_splatmapMaterial' in root)) {
+            var matwrapper = new TerrainMaterialWrapper(this.scene);
+            root._splatmapMaterial = matwrapper.material;
+            console.debug("Created splat material: ", root._splatmapMaterial);
+        }
+
         var replaced = false;
         if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
             let metadata = mesh.metadata.gltf.extras;
@@ -448,12 +470,32 @@ class SceneViewer {
             if (metadata['ddd:material']) {
                 let key = metadata['ddd:material'];
                 let mat = this.catalog_materials[key];
-                if (mat) {
+
+                const useSplatMap = true;
+                if (useSplatMap &&
+                    (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
+                     metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt')) {
+
+                    mesh.material = root._splatmapMaterial;
+
+                    let uvScale = [113.36293971960356 * 2, 112.94475604662343 * 2]
+                    mesh.material.albedoTexture.uScale = 1.0 / uvScale[0];
+                    mesh.material.albedoTexture.vScale = 1.0 / uvScale[1];
+                    mesh.material.albedoTexture.uOffset = 0.5;
+                    mesh.material.albedoTexture.vOffset = 0.5;
+                    if (mesh.material.bumpTexture) {
+                        mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
+                        mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
+                        mesh.material.bumpTexture.uOffset = 0.5;
+                        mesh.material.bumpTexture.vOffset = 0.5;
+                    }
+
+                } else if (mat) {
+
                     if (mesh.material && mesh.material !== mat) {
                         //mesh.material.dispose();
                     }
                     mesh.material = mat;
-
 
                 } else {
                     //console.debug("Material not found in catalog: " + key);
