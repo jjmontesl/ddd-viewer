@@ -256,9 +256,9 @@ class SceneViewer {
         }`;
         */
 
-        this.splatmapAtlasTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-512.png", this.scene);
+        this.splatmapAtlasTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-512.png", this.scene,  false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR); // , BABYLON.Texture.NEAREST_SAMPLINGMODE);
         //this.splatmapAtlasTexture = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/atlas3.jpg", this.scene);
-        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-512.png", this.scene);
+        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-256-fake.png", this.scene);
 
     }
 
@@ -486,7 +486,8 @@ class SceneViewer {
                 if (this.useSplatMap &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
                      metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
-                     metadata['ddd:material'] === 'Asphalt')) {
+                     metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' ||
+                     metadata['ddd:material'] === 'WayPedestrian' || metadata['ddd:material'] === 'Asphalt')) {
 
                     mesh.material = root._splatmapMaterial;
 
@@ -494,9 +495,9 @@ class SceneViewer {
                     let uvScale = [113.36293971960356 * 2, 112.94475604662343 * 2];
 
                     // Seems to work well (+1 +1 / +1 -1)
-                    mesh.material.albedoTexture.uScale = 1.0 / (uvScale[0] + 1);
-                    mesh.material.albedoTexture.vScale = 1.0 / (uvScale[1] + 1);
-                    mesh.material.albedoTexture.uOffset = 0.5 + (1 / uvScale[0]);
+                    mesh.material.albedoTexture.uScale = 1.0 / (uvScale[0] + 1); // + 1
+                    mesh.material.albedoTexture.vScale = 1.0 / (uvScale[1] + 1); // + 1
+                    mesh.material.albedoTexture.uOffset = 0.5; //  + (1 / uvScale[0]);
                     mesh.material.albedoTexture.vOffset = 0.5 - (1 / uvScale[1]);
                     if (mesh.material.bumpTexture) {
                         mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
@@ -768,11 +769,12 @@ class SceneViewer {
         this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current.toString() : null;
 
         // Run time
-        const updateInterval = 0; // 5000;
+        // TODO: this currently requires a minimum elapsed time so Date.setSeconds work. This approach accumulates error.
+        const updateInterval = 100; // 5000;
         if (true) {
             var currentDateUpdate = new Date().getTime();
 
-            if (currentDateUpdate - this.lastDateUpdate > updateInterval) {
+            if ((currentDateUpdate - this.lastDateUpdate) > updateInterval) {
                 var scaledElapsed = ((currentDateUpdate - this.lastDateUpdate) / 1000) * (24 * 2);  // 24 * 2 = 48x faster (1 day = 30 min)
                 if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
                 this.viewerState.positionDate.setSeconds(this.viewerState.positionDate.getSeconds() + scaledElapsed);

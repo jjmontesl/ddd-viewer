@@ -64,7 +64,7 @@ class ViewerState {
         this.sceneTextureSet = textureSet ? JSON.parse(textureSet) : this.sceneTextureSet;
 
         // Start at 10:00 AM always
-        this.positionDate.setHours(10);
+        this.positionDate.setHours(11);
         this.positionDate.setMinutes(0);
 
     }

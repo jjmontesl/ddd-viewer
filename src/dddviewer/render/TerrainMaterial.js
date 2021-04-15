@@ -72,13 +72,15 @@ class TerrainMaterialWrapper {
                 numSplatTilesVertical:2,
                 //tileScale:[[20.0,20.0],[20.0,20.0],[20.0,20.0]],
                 splatInfos: {  // Positions is X / Y, Y grows upwards
-                    positions:[[0.0, 2.0], [1.0, 2.0], [2.0, 2.0], [3.0, 2.0],
-                               [0.0, 3.0], [1.0, 3.0], [2.0, 3.0], [3.0, 3.0], // encoded by !second? splat (up left), first row (index 3 from bottom)
+                    positions:[
+                               [0.0, 3.0], [1.0, 3.0], [2.0, 3.0], [3.0, 3.0], // encoded by first splat (top left), first row (index 3 from bottom)
+                               [0.0, 2.0], [1.0, 2.0], [2.0, 2.0], [3.0, 2.0], // encoded by splat (top right), second row (index 2 from bottom)
                                [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [3.0, 1.0], // encoded by third splat (down left), third row (index 1 starting from bottom)
-                               [0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]],
+                               [0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0], // encoded by splat (down right), last row (index 0 from bottom)
+                              ],
                     scales:[[defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale,defScale],
                              [defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale,defScale],
-                             [defScale * 2,defScale * 2], [defScale,defScale], [defScale,defScale], [defScale,defScale],  // Grass
+                             [defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale,defScale],  // Grass
                              [defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale,defScale]]
                 }
             };
@@ -106,30 +108,25 @@ class TerrainMaterialWrapper {
         this.shaderinjectpoint1 += 'vec2 scale = vec2('+this.tileScale.x+','+this.tileScale.y+');\r\n';
 
         this.shaderinjectpoint3 += 'vec4 finalColor1 = baseColor1;\r\n';
-        this.shaderinjectpoint3 += 'finalColor1.a = 0.0;\r\n';
+        //this.shaderinjectpoint3 += 'finalColor1.a *= heightval(finalColor1.rgb) * 0.01;\r\n';
 
         var v = 0.0, h = 0.0;
         for (let i=0; i < this.totalTiles; i++){
 
+            var tpos = Math.floor(i / 4);
+            h = tpos % this.numSplatTilesHorizontal;
+            v = (this.numSplatTilesHorizontal - 1) - Math.floor(tpos / this.numSplatTilesHorizontal);
+
             if (i < this.totalTiles-1) {
                  this.shaderinjectpoint3 += (`
                      `+ 'vec4 finalColor' + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalColor' + (i + 1) + ' : baseColor' + (i + 2) + `;
-                     finalColor` + (i + 2) + `.a *= 0.9;
+                     finalColor` + (i + 2) + `.a *= 0.95;
                  `);
             }
 
             // Get basecolors from tiles
-            this.shaderinjectpoint2 += 'vec2 uv' + (i + 1) + ' = vec2((vAlbedoUV.x + '+v+'.0) * splatScale.x, (vAlbedoUV.y + '+h+'.0) * splatScale.y);\r\n';
+            this.shaderinjectpoint2 += 'vec2 uv' + (i + 1) + ' = vec2((vAlbedoUV.x + '+h+'.0) * splatScale.x, (vAlbedoUV.y + '+v+'.0) * splatScale.y);\r\n';
             this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = col(vAlbedoUV, uv' + (i + 1) + ', vec2('+this.options.splatInfos.scales[i][0]+','+this.options.splatInfos.scales[i][1]+'), vec2('+this.options.splatInfos.positions[i][0] + ','+this.options.splatInfos.positions[i][1]+'), ' + (i % 4) + ', scale, splatmap, albedoSampler);\r\n';
-
-            if (i % 4 === 3) {
-                h++;
-            }
-
-            if(h > this.numSplatTilesHorizontal){
-                v++;
-                h = 0.0;
-            }
 
         }
 
@@ -215,17 +212,22 @@ class TerrainMaterialWrapper {
             +"vec4 col(vec2 vAlbedoUV, vec2 uvT, vec2 tile1Scale, vec2 tile1Position, int chanIdx, vec2 scale, sampler2D splatmap, sampler2D atlas) {"
 
                 + `
-                vec2 offset = vec2(perlinNoise2D(uvT.x, uvT.y), perlinNoise2D(uvT.x + 0.1231412, -uvT.y + 0.231783));
+                vec2 offset = vec2(perlinNoise2D(uvT.x + 0.1 * tile1Position.x, uvT.y + 0.1 * tile1Position.y),
+                                   perlinNoise2D(uvT.x + 0.12 * tile1Position.y + 0.1231412, -uvT.y + 0.1 * tile1Position.x + 0.231783));
 
                 //vAlbedoUV = vAlbedoUV + offset * 0.2;  // Careful, used in UV, not only in Splat uvT
                 `
 
-                +'vec2 scaledUv1 = fract((vAlbedoUV + offset * 0.4) * tile1Scale);'
-                //+'scaledUv1 = scaledUv1 * 0.8 + 0.1;'
+                +'vec2 scaledUv1 = fract((vAlbedoUV + offset * 0.3) * tile1Scale);'  // Curvy antitiling factor
+                +'scaledUv1 = scaledUv1 * (254.0/256.0) + vec2(1.0 / 256.0, 1.0 / 256.0);'
                 +'vec2 uv1 = vec2((scaledUv1.x + tile1Position.x) * scale.x, (scaledUv1.y + tile1Position.y) * scale.y);'
-                +'vec4 splatColor1 = texture2D(splatmap, uvT + offset * 0.5 * (1.0 / 225.0));\r\n'
+
+                +'vec4 splatColor1 = texture2D(splatmap, uvT);\r\n'
 
                 /*
+
+                + offset * (1.0 / 225.0)
+
                 +'vec2 scaledUv2 = fract((vAlbedoUV - offset * 0.15) * tile2Scale);'
                 +'vec2 uv2 = vec2((scaledUv2.x + tile2Position.x) * scale.x, (scaledUv2.y * scale.y) + tile2Position.y * scale.y);'
 
@@ -250,7 +252,10 @@ class TerrainMaterialWrapper {
 
                 //diffuse1Color.rgb = splatColor1.rgb;
                 //diffuse1Color.a = blend;
+
                  diffuse1Color.a = heightval(diffuse1Color.rgb) * blend;
+                 //diffuse1Color.a = clamp(heightval(diffuse1Color.rgb) - (1.0 - blend), 0.0, 1.0);
+
                 `)
 
                 +"return diffuse1Color;"
