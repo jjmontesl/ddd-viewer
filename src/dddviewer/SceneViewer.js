@@ -37,6 +37,8 @@ class SceneViewer {
         this.highlightMeshes = [];
         this.materialHighlight = null;
 
+        this.useSplatMap = true;
+
         this.layerManager = new LayerManager(this);
         this.queueLoader = new QueueLoader(this);
 
@@ -254,6 +256,9 @@ class SceneViewer {
         }`;
         */
 
+        this.splatmapAtlasTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-512.png", this.scene);
+        //this.splatmapAtlasTexture = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/atlas3.jpg", this.scene);
+        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-512.png", this.scene);
 
     }
 
@@ -455,10 +460,17 @@ class SceneViewer {
     processMesh(root, mesh) {
         //console.debug("Processing mesh: " + mesh.id)
 
-        if (!('_splatmapMaterial' in root)) {
-            var matwrapper = new TerrainMaterialWrapper(this.scene);
-            root._splatmapMaterial = matwrapper.material;
-            console.debug("Created splat material: ", root._splatmapMaterial);
+        if (!('_splatmapMaterial' in root) && this.useSplatMap) {
+            if (('metadata' in mesh) && ('tileCoords' in mesh.metadata)) {
+                let coords = root.metadata['tileCoords'];
+                console.debug("Creating splat material for: ", coords);
+
+                var splatmapUrl = "http://localhost:8000/cache/ddd_http/17/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
+                var splatmapTexture = new BABYLON.Texture(splatmapUrl, this.scene);
+
+                var matwrapper = new TerrainMaterialWrapper(this.scene, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture);
+                root._splatmapMaterial = matwrapper.material;
+            }
         }
 
         var replaced = false;
@@ -467,22 +479,25 @@ class SceneViewer {
 
             mesh.isBlocker = true;
 
-            if (metadata['ddd:material']) {
+            if (metadata['ddd:material'] && !('ddd:text' in metadata)) {
                 let key = metadata['ddd:material'];
                 let mat = this.catalog_materials[key];
 
-                const useSplatMap = true;
-                if (useSplatMap &&
+                if (this.useSplatMap &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
-                     metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt')) {
+                     metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
+                     metadata['ddd:material'] === 'Asphalt')) {
 
                     mesh.material = root._splatmapMaterial;
 
-                    let uvScale = [113.36293971960356 * 2, 112.94475604662343 * 2]
-                    mesh.material.albedoTexture.uScale = 1.0 / uvScale[0];
-                    mesh.material.albedoTexture.vScale = 1.0 / uvScale[1];
-                    mesh.material.albedoTexture.uOffset = 0.5;
-                    mesh.material.albedoTexture.vOffset = 0.5;
+                    //let uvScale = root.metadata['tileSize'];
+                    let uvScale = [113.36293971960356 * 2, 112.94475604662343 * 2];
+
+                    // Seems to work well (+1 +1 / +1 -1)
+                    mesh.material.albedoTexture.uScale = 1.0 / (uvScale[0] + 1);
+                    mesh.material.albedoTexture.vScale = 1.0 / (uvScale[1] + 1);
+                    mesh.material.albedoTexture.uOffset = 0.5 + (1 / uvScale[0]);
+                    mesh.material.albedoTexture.vOffset = 0.5 - (1 / uvScale[1]);
                     if (mesh.material.bumpTexture) {
                         mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
                         mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
@@ -521,28 +536,40 @@ class SceneViewer {
 
             } else if (metadata['ddd:text']) {
 
-                // TODO: requires fixing Marker export form DDD. Also reuse materials.
+                let newMesh = null;
                 /*
-                let newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 5, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
-                newMesh.position = mesh.position;
-                newMesh.rotationQuaternion = mesh.rotationQuaternion;
-                newMesh.scaling = mesh.scaling;
+                // TODO: requires fixing Marker export form DDD. Also reuse materials.
+                newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 2.4, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
                 newMesh.parent = null;
                 newMesh.parent = mesh.parent; // .parent;
+                newMesh.scaling = mesh.scaling.clone();
+                newMesh.rotationQuaternion = mesh.rotationQuaternion.clone();
+                newMesh.position = mesh.position.clone();
+
+                newMesh.rotate(BABYLON.Vector3.Right(), Math.PI / 2.0, BABYLON.Space.LOCAL);
+                newMesh.scaling.y *= 0.35;
 
                 //Create dynamic texture
-                var texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + mesh.id , {width:512, height:256}, this.scene);
+                var texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + mesh.id , {width:256, height:128}, this.scene);
                 //var textureContext = texture.getContext();
-                var font = "bold 44px monospace";
-                texture.drawText(metadata['ddd:text'], 75, 135, font, "green", "white", true, true);
+                var font = "bold 18px serif";
+                let text = metadata['ddd:text'];
+                texture.drawText(text, 128.0 - (text.length * 3), 60, font, "blue", "transparent", true, true);
 
                 var material = new BABYLON.StandardMaterial("Mat" + mesh.id, this.scene);
                 material.diffuseTexture = texture;
+                material.diffuseTexture.hasAlpha = true;
+                material.useAlphaFromDiffuseTexture = true;
+                material.transparencyMode = 1;  // ALPHA_TEST
                 newMesh.material = material;
+
+                newMesh.isPickable = false;
+                //newMesh.metadata = {gltf: {extras: metadata}};  // Doesn't seem to work and/or freezes the app
+                //delete newMesh.metadata['ddd:text'];
                 */
 
                 mesh.dispose();
-                //mesh = newMesh;
+                mesh = newMesh;
 
             } else if (metadata['ddd:instance:key']) {
                 replaced = true;
@@ -563,11 +590,11 @@ class SceneViewer {
 
         //mesh.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
-        //if (!replaced) {
+        if (mesh) {  // && !replaced
             for (let children of mesh.getChildren()) {
                 this.processMesh(root, children);
             }
-        //}
+        }
     }
 
     instanceAsThinInstance(root, key, node) {

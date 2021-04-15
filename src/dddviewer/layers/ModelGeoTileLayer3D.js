@@ -165,6 +165,16 @@ export default class {
           const y = tileCoords[2];
           const tileKey = z + "/" + x + "/" + y;
 
+          let tileExtent = this.tileGrid.getTileCoordExtent(tileCoords);
+          let tileCenter = extent.getCenter(tileExtent);
+          let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+          let tileCenterScene = this.layerManager.sceneViewer.projection.forward(tileCenterWGS84);
+
+          let tileExtentMinScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getBottomLeft(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+          let tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward(olProj.transform(extent.getTopRight(tileExtent), 'EPSG:3857', 'EPSG:4326'));
+          let sizeWidth = Math.abs(tileExtentMaxScene[0] - tileExtentMinScene[0]);
+          let sizeHeight = Math.abs(tileExtentMaxScene[1] - tileExtentMinScene[1]);
+
           if (tileKey in this.tiles) {
               let tile = this.tiles[tileKey];
               if (tile.status !== "loading" && !tile.node.isEnabled(false)) {
@@ -300,6 +310,10 @@ export default class {
                   }
 
                   // Replace materials, instancing...
+                  pivot.metadata = {
+                      'tileCoords': tileCoords,
+                      'tileSize': [sizeWidth, sizeHeight]
+                  };
                   that.layerManager.sceneViewer.processMesh(pivot, pivot);
 
                   //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
