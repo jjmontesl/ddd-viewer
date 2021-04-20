@@ -143,7 +143,9 @@ export default {
         //this.$set(this, 'mapVisible', mode === 'map');
         //this.$set(this, 'sceneVisible', mode === 'scene');
 
-        window.dispatchEvent(new Event('resize'));
+        setTimeout(function() {
+            window.dispatchEvent(new Event('resize'));
+        }, 200);
       },
 
       dddPosition(coords, zoom) {

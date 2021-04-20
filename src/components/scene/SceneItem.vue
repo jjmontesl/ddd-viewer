@@ -37,6 +37,9 @@
                                     <div v-else-if="key === 'osm:id'">
                                         {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmLink" target="_blank">OpenStreetMap</a>
                                     </div>
+                                    <div v-else-if="key === 'osm:wikidata'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="wikidataLink" target="_blank">WikiData</a>
+                                    </div>
                                     <div v-else>
                                         {{ metadata[key] }}
                                     </div>
@@ -182,6 +185,16 @@ export default {
         }
         return url;
     },
+    wikidataLink: function() {
+        this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
+        let url = null;
+        if (this.metadata['osm:wikidata']) {
+            let wikidata = this.metadata['osm:wikidata'];
+            url = 'https://www.wikidata.org/wiki/' + wikidata;
+        }
+        return url;
+    }
   },
   props: [
       'viewerState',

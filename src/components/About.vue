@@ -26,9 +26,12 @@
                         <p>
                             In the 3D view:
                             <ul>
-                                <li>Free & walk mode: Left click to view around. Use W,A,S,D or cursor keys to move. Q and W to move up / down.</li>
+                                <li>Free & walk mode: Left click to view around. Use <b>W,A,S,D</b> or cursor keys to move. Q and W to move up / down.</li>
                                 <li>Orbit mode: Left click to orbit. Right click to pan. Mouse wheel to zooms in/out.</li>
-                                <li>SHIFT key: change movement speed.</li>
+                            </ul>
+                            <ul>
+                                <li><b>SHIFT</b> key: change movement speed.</li>
+                                <li><b>Keypad +/-</b>: change time (affects light direction).</li>
                             </ul>
                         </p>
                         <p>
@@ -44,8 +47,7 @@
                             (try reloading or switching to 2D and back to 3D to restore performance). <b>Camera
                             may appear far below or above surface</b> at times during loading. If this happens,
                             try switching to <i>walk</i> mode as it will set the camera above the ground.
-                            Textures are not assigned to models after initial load. Orthophotos layer
-                            may not be available.
+                            Orthophotos layer may not be available.
                         </p>
 
 
@@ -57,18 +59,21 @@
                         </p>
 
                         <p>
-                            Everybody can contribute to OpenStreetMap, so if one of your areas of interest is not entirely mapped, you can always step in and contribute to one of the larger collaborative open-data projects in the world. Head to OpenStreetMap site, contact your local OSM Mapping community and start mapping!
+                            Everybody can contribute to OpenStreetMap, so if one of your areas of interest is not entirely mapped,
+                            you can always step in and contribute to one of the larger collaborative open-data projects in the world.
+                            Head to OpenStreetMap site, contact your local OSM Mapping community and start mapping!
                         </p>
 
                         <h3>DDD</h3>
 
                         <p>
-                            OSM 3D data is rendered using the <a href="https://github.com/jjmontesl/ddd">DDD(123) Procedural Geometry Generation Tool</a>.
+                            OSM 3D data is rendered using the <a href="https://github.com/jjmontesl/ddd">DDD123 Procedural Geometry Generation Tool</a>.
                         </p>
 
                         <p>
-                            DDD is an Open Source library, the project looking for contributors. If you are interested in the development of DDD or
-                            this HTML5 viewer, please head over to the GitHub site and get in contact with the developer community.
+                            DDD is an Open Source library, looking for contributors. If you are interested in the development of DDD or
+                            this HTML5 viewer, please head over to the GitHub site and get in contact with the developer community
+                            or contact me.
                         </p>
 
                         <h3><!--Patreon / Buymeacoffee-->Author</h3>

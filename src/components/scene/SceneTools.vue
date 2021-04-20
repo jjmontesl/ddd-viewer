@@ -18,7 +18,7 @@
                     <div style="height: 20px;"> </div>
 
                     <v-card-text class="text-left">
-                           <v-slider v-model="sceneTime" @change="sceneTimeChange" step="0.1" min="0" max="24" thumb-label ticks label="Scene Time"></v-slider>
+                           <v-slider v-model="sceneTime" @change="sceneTimeChange" step="0.1" min="0" max="24" thumb-label ticks label="Hour (Day/Night)"></v-slider>
                     </v-card-text>
 
                     <!--

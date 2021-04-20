@@ -157,6 +157,26 @@ export default class {
         }
     }
 
+    /**
+    * Gets tile metadata.
+    * It does this recursively searching for a "Metadata" named node, as the path exporting root metadata to the root node or scene itself hasn't been found to work.
+    */
+    getTileMetadata(node) {
+        /*if (node.id.startsWith("Metadata")) {
+            return node.metadata.gltf.extras;
+        }*/
+        for (let child of node.getChildren()) {
+            if (child.id.indexOf("Metadata") > 0) {
+                return child.metadata.gltf.extras;
+            }
+        }
+        for (let child of node.getChildren()) {
+            let md = this.getTileMetadata(child);
+            if (md !== null) { return md; }
+        }
+        return null;
+    }
+
     loadTile(tileCoords) {
 
           //console.debug(tileCoords);
@@ -309,10 +329,14 @@ export default class {
                          }
                   }
 
+                  let tileMetadata = that.getTileMetadata(pivot);
+                  //console.debug("Tile metadata: ", tileMetadata);
+
                   // Replace materials, instancing...
                   pivot.metadata = {
                       'tileCoords': tileCoords,
-                      'tileSize': [sizeWidth, sizeHeight]
+                      'tileSize': [sizeWidth, sizeHeight],
+                      'tileInfo': tileMetadata,
                   };
                   that.layerManager.sceneViewer.processMesh(pivot, pivot);
 

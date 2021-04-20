@@ -122,6 +122,16 @@ class SceneViewer {
         this.scene.environmentTexture = hdrTexture;
         //this.scene.environmentTexture = new BABYLON.CubeTexture("/textures/TropicalSunnyDay", this.scene);  // freezes
 
+        /*
+        // Fog
+        //this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+        //this.scene.fogDensity = 0.005;  // default is 0.1
+        this.scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+        this.scene.fogStart = 250.0;
+        this.scene.fogEnd = 500.0;
+        this.scene.fogColor = new BABYLON.Color3(0.75, 0.75, 0.85);
+        */
+
 
         this.scene.ambientColor = this.ambientColorDay.clone();
         //this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
@@ -258,7 +268,8 @@ class SceneViewer {
 
         this.splatmapAtlasTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-512.png", this.scene,  false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR); // , BABYLON.Texture.NEAREST_SAMPLINGMODE);
         //this.splatmapAtlasTexture = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/atlas3.jpg", this.scene);
-        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-256-fake.png", this.scene);
+        //this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-256-fake.png", this.scene);
+        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-512.png", this.scene);
 
     }
 
@@ -280,6 +291,7 @@ class SceneViewer {
             skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
             skybox.material = skyboxMaterial;
             skybox.infiniteDistance = true;
+            skybox.applyFog = false;
             this.skybox = skybox;
         }
     }
@@ -432,6 +444,8 @@ class SceneViewer {
                     mesh.material.detailMap.diffuseBlendLevel = 0.3; // between 0 and 1
                     mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                     mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
+
+                    mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
                 }
 
                 if (metadata['zoffset']) {
@@ -460,6 +474,8 @@ class SceneViewer {
     processMesh(root, mesh) {
         //console.debug("Processing mesh: " + mesh.id)
 
+        let rootmd = root.metadata.tileInfo;
+
         if (!('_splatmapMaterial' in root) && this.useSplatMap) {
             if (('metadata' in mesh) && ('tileCoords' in mesh.metadata)) {
                 let coords = root.metadata['tileCoords'];
@@ -470,11 +486,34 @@ class SceneViewer {
 
                 var matwrapper = new TerrainMaterialWrapper(this.scene, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture);
                 root._splatmapMaterial = matwrapper.material;
+
+
+                let uvScale = [225, 225]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
+                let bounds = rootmd ? rootmd['tile:bounds_m'] : null;
+                if (!!bounds) {
+                    //console.debug("Bounds: ", bounds);
+                    uvScale = [bounds[2] - bounds[0], bounds[3] - bounds[1]];
+                }
+
+                // Seems to work well (+1 +1 / +1 -1)
+                root._splatmapMaterial.albedoTexture.uScale = ((1.0 / (uvScale[0])) * (127/128)) ; // + 1
+                root._splatmapMaterial.albedoTexture.vScale = ((1.0 / (uvScale[1])) * (127/128)) ; // + 1
+                root._splatmapMaterial.albedoTexture.uOffset = 0.5; //  + (1 / uvScale[0]);
+                root._splatmapMaterial.albedoTexture.vOffset = 0.5 - (0.5/128); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
+                /*if (mesh.material.bumpTexture) {
+                    mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
+                    mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
+                    mesh.material.bumpTexture.uOffset = 0.5;
+                    mesh.material.bumpTexture.vOffset = 0.5;
+                }*/
+
+
             }
         }
 
         var replaced = false;
         if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
+
             let metadata = mesh.metadata.gltf.extras;
 
             mesh.isBlocker = true;
@@ -486,25 +525,11 @@ class SceneViewer {
                 if (this.useSplatMap &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
                      metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
-                     metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' ||
-                     metadata['ddd:material'] === 'WayPedestrian' || metadata['ddd:material'] === 'Asphalt')) {
+                     metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' || metadata['ddd:material'] === 'Rock' ||
+                     (metadata['ddd:material'] === 'WayPedestrian' && metadata['ddd:area:type'] !== 'stairs') ||
+                     metadata['ddd:material'] === 'Asphalt')) {
 
                     mesh.material = root._splatmapMaterial;
-
-                    //let uvScale = root.metadata['tileSize'];
-                    let uvScale = [113.36293971960356 * 2, 112.94475604662343 * 2];
-
-                    // Seems to work well (+1 +1 / +1 -1)
-                    mesh.material.albedoTexture.uScale = 1.0 / (uvScale[0] + 1); // + 1
-                    mesh.material.albedoTexture.vScale = 1.0 / (uvScale[1] + 1); // + 1
-                    mesh.material.albedoTexture.uOffset = 0.5; //  + (1 / uvScale[0]);
-                    mesh.material.albedoTexture.vOffset = 0.5 - (1 / uvScale[1]);
-                    if (mesh.material.bumpTexture) {
-                        mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
-                        mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
-                        mesh.material.bumpTexture.uOffset = 0.5;
-                        mesh.material.bumpTexture.vOffset = 0.5;
-                    }
 
                 } else if (mat) {
 
@@ -731,7 +756,7 @@ class SceneViewer {
             // Fix viewer to floor
             if (this.walkMode) {
                 if (terrainElevation !== null) {
-                    this.camera.position.y = terrainElevation + 3.0;
+                    this.camera.position.y = terrainElevation + 3.0; // 3.0;
                 }
             } else {
                 if (terrainElevation && this.camera.position.y < (terrainElevation + 1.0)) {
@@ -1079,7 +1104,7 @@ class SceneViewer {
         camera.keysUpward += [81];
         camera.keysDownward += [69];
         camera.attachControl(this.engine.getRenderingCanvas(), true);
-        camera.fov = 35.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default
+        camera.fov = 40.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default  // 35
         let positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
         camera.position = new BABYLON.Vector3(positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
         camera.rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
@@ -1089,16 +1114,16 @@ class SceneViewer {
 
         // Postprocess
         //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
-        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.0, camera);
+        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.2, camera);
 
         /*
         var curve = new BABYLON.ColorCurves();
         curve.globalHue = 0;
         curve.globalDensity = 80;
         curve.globalSaturation = 5;
-        curve.highlightsHue = 20;
+        curve.highlightsHue = 220;
         curve.highlightsDensity = 80;
-        curve.highlightsSaturation = -80;
+        curve.highlightsSaturation = 40;
         curve.shadowsHue = 2;
         curve.shadowsDensity = 80;
         curve.shadowsSaturation = 40;
@@ -1106,7 +1131,6 @@ class SceneViewer {
         this.scene.imageProcessingConfiguration.colorCurves = curve;
         var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
         */
-
     }
 
     selectCameraWalk() {
@@ -1207,11 +1231,15 @@ class SceneViewer {
 
         //console.debug("Sun azimuth: " + currentAzimuth + " ele: " + currentElevation + " Date: " + this.viewerState.positionDate + " Sunrise: " + sunriseStr + " azimuth: " + sunriseAzimuth + " Sunset: " + sunsetStr + " azimuth: " + sunsetAzimuth);
 
-        var lightRot = BABYLON.Quaternion.FromEulerAngles(currentPos.altitude, currentPos.azimuth, 0);
 
-        var sunlightAmountNorm = Math.sin(currentPos.altitude);
+        let altitudeLessHorizonAtmAprox = (currentPos.altitude + 0.25) / (Math.PI + 0.5) * Math.PI; // 0.25~15rad
+        var sunlightAmountNorm = Math.sin(altitudeLessHorizonAtmAprox);
         if (sunlightAmountNorm < 0) { sunlightAmountNorm = 0; }
-        sunlightAmountNorm = 1 - (1 - sunlightAmountNorm) * (1 - sunlightAmountNorm);
+        sunlightAmountNorm = 1 - Math.pow(1 - sunlightAmountNorm, 4);
+
+        let lightAltitude = altitudeLessHorizonAtmAprox >= 0 && altitudeLessHorizonAtmAprox < Math.PI ? altitudeLessHorizonAtmAprox : Math.PI - altitudeLessHorizonAtmAprox;
+        var lightRot = BABYLON.Quaternion.FromEulerAngles(lightAltitude, currentPos.azimuth, 0);
+        var lightSunAndFlareRot = BABYLON.Quaternion.FromEulerAngles(currentPos.altitude, currentPos.azimuth, 0);
 
         //this.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -0.5, 0.5).normalizeToNew(), this.scene);
         //this.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
@@ -1229,9 +1257,10 @@ class SceneViewer {
         this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
         this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         BABYLON.Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        //this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
         this.skybox.rotation.y = currentPos.azimuth - (19 * (Math.PI / 180.0));
 
-        BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightRot, this.lensFlareEmitter.position);
+        BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightSunAndFlareRot, this.lensFlareEmitter.position);
         this.lensFlareEmitter.position.scaleInPlace(-1400.0);
         this.lensFlareSystem.setEmitter(this.lensFlareEmitter);
 
