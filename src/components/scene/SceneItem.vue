@@ -17,7 +17,7 @@
 
                     <div v-if="loading" style="text-align: center;">Loading...</div>
 
-                    <OSMImage v-if="metadata['osm:image']" :imageUrl="metadata['osm:image']" />
+                    <OSMImage v-if="imageHref" :imageUrl="imageHref" />
 
                     <v-card-text class="text-left">
                         <div>
@@ -28,17 +28,23 @@
                             <tr v-for="key in sortedMetadata" :key="key">
                                 <td style="max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" :title="key"><b :style="[key.indexOf('osm:') !== 0 ? {'color': 'gray'} : {}]">{{key}}</b></td>
                                 <td style="white-space: nowrap;">
-                                    <div v-if="metadata[key] && metadata[key].indexOf && (metadata[key].indexOf('http://') === 0 || metadata[key].indexOf('https://') === 0)" >
-                                        <a :href="metadata[key]" target="_blank">{{ metadata[key] }}</a>
+                                    <div v-if="key === 'osm:id'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmLink" target="_blank">OpenStreetMap</a>
                                     </div>
                                     <div v-else-if="key === 'osm:changeset'">
                                         {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmchaLink" target="_blank">OSMCha</a>
                                     </div>
-                                    <div v-else-if="key === 'osm:id'">
-                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="osmLink" target="_blank">OpenStreetMap</a>
-                                    </div>
                                     <div v-else-if="key === 'osm:wikidata'">
                                         {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="wikidataLink" target="_blank">WikiData</a>
+                                    </div>
+                                    <div v-else-if="key === 'osm:image'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="metadata[key]" target="_blank">Link</a>
+                                    </div>
+                                    <div v-else-if="key === 'osm:mapillary'">
+                                        {{ metadata[key] }}  <v-icon small>mdi-link-box-variant</v-icon> <a :href="mapillaryLink" target="_blank">Mapillary</a>
+                                    </div>
+                                    <div v-else-if="metadata[key] && metadata[key].indexOf && (metadata[key].indexOf('http://') === 0 || metadata[key].indexOf('https://') === 0)" >
+                                        <a :href="metadata[key]" target="_blank">{{ metadata[key] }}</a>
                                     </div>
                                     <div v-else>
                                         {{ metadata[key] }}
@@ -53,8 +59,9 @@
                     <v-card-text class="text-left">
                         <div>
                             <h3>Links</h3>
-                            <div><a :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
-                            <div><a :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
+                            <div><a v-if="osmLink" :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
+                            <div><a v-if="osmchaLink" :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
+                            <div><a v-if="mapillaryLink" :href="mapillaryLink" target="_blank">Mapillary Picture</a></div>
                             <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
@@ -165,6 +172,18 @@ export default {
         }
         return url;
     },
+    imageHref: function() {
+        this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
+        let url = null;
+        if (this.metadata['osm:image']) {
+            url = this.metadata['osm:image'];
+        } else if (this.metadata['osm:mapillary']) {
+            let code = this.mapillaryCode(this.metadata['osm:mapillary']);
+            url = "https://images.mapillary.com/" + code + "/thumb-1024.jpg";
+        }
+        return url;
+    },
     osmchaLink: function() {
         this.$route;  // force dependency on property
         this.viewerState.sceneSelectedMeshId;
@@ -194,7 +213,23 @@ export default {
             url = 'https://www.wikidata.org/wiki/' + wikidata;
         }
         return url;
+    },
+    mapillaryLink: function() {
+        this.$route;  // force dependency on property
+        this.viewerState.sceneSelectedMeshId;
+        let url = null;
+        // Ex: https://www.mapillary.com/app/?lat=42.23703499999999&lng=-8.726672000000008&z=17&pKey=L_VNKSomHYS2OemeuQ4h6g
+
+        if (this.metadata['osm:mapillary']) {
+            let code = this.mapillaryCode(this.metadata['osm:mapillary']);
+            url = "https://www.mapillary.com/app/?lat=" + this.viewerState.positionWGS84[0].toFixed(14) + "&lng=" + this.viewerState.positionWGS84[1].toFixed(14) + "&z=17&pKey=" + code;
+        }
+        return url;
     }
+
+
+
+
   },
   props: [
       'viewerState',
@@ -238,6 +273,20 @@ export default {
         let el = this.$el.querySelector('.v-card');
         //this.$el.style.height = '' + (window.innerHeight - 40) + 'px';
         el.style.minHeight = '' + (window.innerHeight - 38) + 'px';
+      },
+
+      mapillaryCode(value) {
+        // Sometimes seen: https://www.mapillary.com/map/im/eiHLqwNJWAgjrp1tEDduUA
+          if (!value) { return null; }
+          let code = value;
+          console.debug(code);
+          if (value.indexOf("/map/im/") > 0) {
+              const regex = /^.*\/map\/im\/([^\/?]+).*$/gm;
+              const m = regex.exec(value);
+              console.debug(m);
+              code = m[1];
+          }
+          return code;
       },
 
       selectCameraOrbit() {

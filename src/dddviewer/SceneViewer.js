@@ -1311,7 +1311,7 @@ class SceneViewer {
 
         // Lamps
         if ('LightLampOff' in this.catalog_materials) {
-            let lampMatOn = sunlightAmountNorm > 0.2;
+            let lampMatOn = sunlightAmountNorm > 0.1;  // 0.2 is more logical, 0.1 exagerates the change
             let lampMat = this.catalog_materials['LightLampOff'];
             if (lampMatOn !== this._previousLampPatOn) {
                 this._previousLampPatOn = lampMatOn;
@@ -1321,7 +1321,7 @@ class SceneViewer {
                 } else {
                     lampMat.emissiveColor = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
                 }
-                lampMat.freeze();
+                //lampMat.freeze();
             }
 
         }
