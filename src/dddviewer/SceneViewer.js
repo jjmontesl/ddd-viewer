@@ -68,6 +68,8 @@ class SceneViewer {
         // TODO: Sequencer would better belong to the app
         this.sequencer = new ViewerSequencer(this);
 
+        this._previousLampPatOn = null;
+
     }
 
     initialize(canvas) {
@@ -84,11 +86,13 @@ class SceneViewer {
 
         that.registerProjectionForCoords(coords);
 
-        // Associate a Babylon Engine to it.
-        let engine = new BABYLON.Engine(canvas, true); // , { stencil: true });
+        // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
+        let engine = new BABYLON.Engine(canvas, true); // , null, true); // , { stencil: true });
         that.engine = engine;
 
-        that.scene = new BABYLON.Scene(engine);
+        that.scene = new BABYLON.Scene(engine,  {
+            'useGeometryIdsMap': true
+        });
         //that.scene = createScene(engine, canvas);
 
         //this.sceneInstru = null;
@@ -271,6 +275,13 @@ class SceneViewer {
         //this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-256-fake.png", this.scene);
         this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-512.png", this.scene);
 
+
+        // Performance
+        // Avoid clear calls, as there's always a skybox
+        this.scene.autoClear = false; // Color buffer
+        this.scene.autoClearDepthAndStencil = false; // Depth and stencil
+        this.scene.blockMaterialDirtyMechanism = true;
+
     }
 
     loadSkybox(baseUrl) {
@@ -446,6 +457,8 @@ class SceneViewer {
                     mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
 
                     mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
+
+                    mesh.material.freeze();
                 }
 
                 if (metadata['zoffset']) {
@@ -507,6 +520,7 @@ class SceneViewer {
                     mesh.material.bumpTexture.vOffset = 0.5;
                 }*/
 
+                root._splatmapMaterial.freeze();
 
             }
         }
@@ -534,7 +548,7 @@ class SceneViewer {
                 } else if (mat) {
 
                     if (mesh.material && mesh.material !== mat) {
-                        //mesh.material.dispose();
+                        mesh.material.dispose();
                     }
                     mesh.material = mat;
 
@@ -617,6 +631,11 @@ class SceneViewer {
         //mesh.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
         if (mesh) {  // && !replaced
+
+            mesh.cullingStrategy = BABYLON.AbstractMesh.CULLINGSTRATEGY_BOUNDINGSPHERE_ONLY;
+            mesh.freezeWorldMatrix();
+            //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
+
             for (let children of mesh.getChildren()) {
                 this.processMesh(root, children);
             }
@@ -648,11 +667,13 @@ class SceneViewer {
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
                 //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
                 meshInstanceRoot.toLeftHanded();
-                //meshInstanceRoot.position = root.computeWorldMatrix(true);
                 //meshInstanceRoot.rotate(BABYLON.Vector3.Up(), Math.PI / 2);
                 //meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
                 this.instanceRoots[instanceRootKey] = meshInstanceRoot;
                 meshInstanceRoot.parent = root;
+                //meshInstanceRoot.position = root.computeWorldMatrix(true);  // Seems to cause problems, but should not :? (freezing may be involved)
+
+                this.processMesh(meshInstanceRoot, meshInstanceRoot);
 
                 // Enable shadows for the instances if shadows are set
                 if (this.shadowGenerator) {
@@ -1113,18 +1134,34 @@ class SceneViewer {
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
 
         // Postprocess
+        /*
+        // The default pipeline applies other settings, we'd better off using Bloom independently if possible
+        // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
+        var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, this.scene, [this.camera]);
+        defaultPipeline.bloomEnabled = true;
+        defaultPipeline.fxaaEnabled = true;
+        defaultPipeline.bloomWeight = 0.5;
+        defaultPipeline.cameraFov = camera.fov;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        */
+
+
         //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
         //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.2, camera);
+
+        // See: https://doc.babylonjs.com/divingDeeper/postProcesses/postProcessRenderPipeline
+        //var effectBloom = new BABYLON.BloomEffect("bloom", 1.0, 0.5, 5.0, 1.2);
+        //var effectDepthOfField =
 
         /*
         var curve = new BABYLON.ColorCurves();
         curve.globalHue = 0;
         curve.globalDensity = 80;
         curve.globalSaturation = 5;
-        curve.highlightsHue = 220;
+        curve.highlightsHue 0;
         curve.highlightsDensity = 80;
         curve.highlightsSaturation = 40;
-        curve.shadowsHue = 2;
+        curve.shadowsHue = 0;
         curve.shadowsDensity = 80;
         curve.shadowsSaturation = 40;
         this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
@@ -1231,7 +1268,6 @@ class SceneViewer {
 
         //console.debug("Sun azimuth: " + currentAzimuth + " ele: " + currentElevation + " Date: " + this.viewerState.positionDate + " Sunrise: " + sunriseStr + " azimuth: " + sunriseAzimuth + " Sunset: " + sunsetStr + " azimuth: " + sunsetAzimuth);
 
-
         let altitudeLessHorizonAtmAprox = (currentPos.altitude + 0.25) / (Math.PI + 0.5) * Math.PI; // 0.25~15rad
         var sunlightAmountNorm = Math.sin(altitudeLessHorizonAtmAprox);
         if (sunlightAmountNorm < 0) { sunlightAmountNorm = 0; }
@@ -1254,11 +1290,13 @@ class SceneViewer {
         // Set light dir and intensity
         BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightRot, this.light.direction);
         this.light.intensity = lightIntensity;
-        this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
         this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         BABYLON.Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
         //this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
-        this.skybox.rotation.y = currentPos.azimuth - (19 * (Math.PI / 180.0));
+        if (this.skybox) {
+            this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
+            this.skybox.rotation.y = currentPos.azimuth - (19 * (Math.PI / 180.0));
+        }
 
         BABYLON.Vector3.Forward().rotateByQuaternionToRef(lightSunAndFlareRot, this.lensFlareEmitter.position);
         this.lensFlareEmitter.position.scaleInPlace(-1400.0);
@@ -1270,6 +1308,25 @@ class SceneViewer {
         }
 
         //console.debug(this.scene.ambientColor);
+
+        // Lamps
+        if ('LightLampOff' in this.catalog_materials) {
+            let lampMatOn = sunlightAmountNorm > 0.2;
+            let lampMat = this.catalog_materials['LightLampOff'];
+            if (lampMatOn !== this._previousLampPatOn) {
+                this._previousLampPatOn = lampMatOn;
+                lampMat.unfreeze();
+                if (lampMatOn) {
+                    lampMat.emissiveColor = BABYLON.Color3.Black();
+                } else {
+                    lampMat.emissiveColor = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
+                }
+                lampMat.freeze();
+            }
+
+        }
+
+
     }
 
     sceneShadowsSetEnabled(value) {

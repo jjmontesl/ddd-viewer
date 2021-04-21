@@ -338,7 +338,10 @@ export default class {
                       'tileSize': [sizeWidth, sizeHeight],
                       'tileInfo': tileMetadata,
                   };
+
+                  that.layerManager.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = true;
                   that.layerManager.sceneViewer.processMesh(pivot, pivot);
+                  that.layerManager.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = false;
 
                   //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
                   pivot.freezeWorldMatrix();
