@@ -139,6 +139,7 @@ export default {
       skyBoxItems: [
           {value: '/textures/TropicalSunnyDay', text: 'Sunny'},
           {value: '/textures/skybox', text: 'Cloudy'},
+          {value: '@dynamic', text: 'Dynamic Sky (slower)'},
           {value: null, text: 'None'},
       ]
     }

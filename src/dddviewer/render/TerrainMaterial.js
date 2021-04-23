@@ -85,6 +85,7 @@ class TerrainMaterialWrapper {
         this.shaderinjectpoint1 = '';
         this.shaderinjectpoint2 = '';
         this.shaderinjectpoint3 = '';
+        this.shaderinjectpoint4 = '';
 
         // 4x4 = 16
         this.numTilesHorizontal = options.numTilesHorizontal;
@@ -107,6 +108,9 @@ class TerrainMaterialWrapper {
         this.shaderinjectpoint3 += 'vec3 finalNormal1 = baseNormal1;\r\n';
         //this.shaderinjectpoint3 += 'finalColor1.a = 0.01;\r\n';
 
+        this.shaderinjectpoint4 += 'vec4 finalColor1 = baseColor1;\r\n';
+        this.shaderinjectpoint4 += 'float finalRough1 = baseRough1;\r\n';
+
         var v = 0.0, h = 0.0;
         for (let i=0; i < this.totalTiles; i++){
 
@@ -118,15 +122,18 @@ class TerrainMaterialWrapper {
                  this.shaderinjectpoint3 += (`
                      `+ '//vec4 finalColor' + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalColor' + (i + 1) + ' : baseColor' + (i + 2) + `;
                      `+ '//vec4 finalColor' + (i + 2) + ' = finalColor' + (i + 1) + ' * (1.0 - baseColor' + (i + 2) + '.a) + baseColor' + (i + 2) + ' * baseColor' + (i + 2) + `.a;
-
                      `+ 'vec4 finalColor' + (i + 2) + ' = blend(finalColor' + (i + 1) + ', ' + this.options.splatInfos.displScales[i].toFixed(5) + ', baseColor' + (i + 2) + ', ' + this.options.splatInfos.displScales[i + 1].toFixed(5) + '); ' + `
 
                      //finalColor` + (i + 2) + `.a *= 0.95;
 
-
-
                      vec3 finalNormal` + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalNormal' + (i + 1) + ' : baseNormal' + (i + 2) + `;
                  `);
+
+                 this.shaderinjectpoint4 += (`
+                     `+ 'vec4 finalColor' + (i + 2) + ' = blend(finalColor' + (i + 1) + ', ' + this.options.splatInfos.displScales[i].toFixed(5) + ', baseColor' + (i + 2) + ', ' + this.options.splatInfos.displScales[i + 1].toFixed(5) + '); ' + `
+                     float finalRough` + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalRough' + (i + 1) + ' : baseRough' + (i + 2) + `;
+                 `);
+
             }
 
             // Get basecolors from tiles
@@ -135,6 +142,7 @@ class TerrainMaterialWrapper {
             //this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = col(vAlbedoUV, uv' + (i + 1) + ', vec2('+this.options.splatInfos.scales[i][0]+','+this.options.splatInfos.scales[i][1]+'), vec2('+this.options.splatInfos.positions[i][0] + ','+this.options.splatInfos.positions[i][1]+'), ' + (i % 4) + ', scale, splatmap, albedoSampler, bumpSampler);\r\n';
             this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = chanInfo' + (i + 1) + '[0];\r\n';
             this.shaderinjectpoint2 += 'vec3 baseNormal' + (i + 1) +' = vec3(chanInfo' + (i + 1) + '[1].x, chanInfo' + (i + 1) + '[1].y, chanInfo' + (i + 1) + '[1].z);\r\n';
+            this.shaderinjectpoint2 += 'float baseRough' + (i + 1) +' = chanInfo' + (i + 1) + '[1].a;\r\n';
 
         }
 
@@ -142,18 +150,21 @@ class TerrainMaterialWrapper {
 
         //this.shaderinjectpoint3 += 'normalW = perturbNormal(cotangentFrame, finalNormal' + (this.totalTiles) + ', 1.0);';
         this.shaderinjectpoint3 += 'normalW = normalW + finalNormal' + (this.totalTiles) + ';';  // TODO: adding these vectors is incorrect
+        //this.shaderinjectpoint3 += 'normalW = normalW;';
         //this.shaderinjectpoint3 += 'normalW.y *= -1.0;';
-
         //this.shaderinjectpoint3 += 'result = finalNormal' + (this.totalTiles) + ';';
         this.shaderinjectpoint3 += 'result = finalColor' + (this.totalTiles) + '.rgb;';
+
+        //this.shaderinjectpoint4 += 'normalW = normalW + finalNormal' + (this.totalTiles) + ';';  // TODO: adding these vectors is incorrect
+        this.shaderinjectpoint4 += 'reflectivityOut.roughness = finalRough' + (this.totalTiles) + ';';
 
         this.splatMap = splatMap;
 
         this.needsUpdating = true;
 
         this.material = new BABYLONMAT.PBRCustomMaterial("splatMaterial", scene);
-        this.material.metallic = 0.1;
-        this.material.roughness = 0.95;
+        this.material.metallic = 0.0;
+        //this.material.roughness = 0.95;
         //this.material.twoSidedLighting = true;
         //this.material.disableLighting = false;
         //this.material.ambientColor = new BABYLON.Color3(1.0, 0.0, 0.0); // BABYLON.Color3.Black();
@@ -161,8 +172,10 @@ class TerrainMaterialWrapper {
         //this.material.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15); // BABYLON.Color3.Black();
         //this.material.emissiveColor = new BABYLON.Color3(0.0, 0.0, 0.0); // BABYLON.Color3.Black();
         //this.material.emissiveIntensity = 0.0;
-        //this.material.usePhysicalLightFalloff = false;
-        this.material.environmentIntensity = 0.1;  // This one is needed to avoid saturation due to env
+        //this.material.usePhysicalLightFalloff= false;
+
+        // this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+
 
 
         this.material.albedoTexture = atlas;
@@ -282,7 +295,8 @@ class TerrainMaterialWrapper {
 
                 +'vec4 diffuse1Color = texture2D(atlas, uv1);\r\n'
                 //+'vec4 diffuse1Color = texture2DLodEXT(atlas, uv1, -1.0);\r\n'
-                +'vec4 diffuse1Normal = texture2D(atlasNormals, uv1) * 2.0 - 1.0;\r\n'
+                +'vec4 diffuse1Normal = texture2D(atlasNormals, uv1);\r\n'
+                +'diffuse1Normal.rgb = diffuse1Normal.rgb * 2.0 - 1.0;\r\n'
 
 
                 //+'vec4 diffuse2Color = texture2D(atlas, uv2);\r\n'
@@ -304,7 +318,7 @@ class TerrainMaterialWrapper {
 
                  diffuse1Color.a = ((blend > 0.0) ? (heightval(diffuse1Color) + blend) : 0.0);
 
-                 mat4 chanInfo = mat4(diffuse1Color, vec4(diffuse1Normal.x, diffuse1Normal.y, diffuse1Normal.z, 0.0), vec4(0.0), vec4(0.0));
+                 mat4 chanInfo = mat4(diffuse1Color, vec4(diffuse1Normal.x, diffuse1Normal.y, diffuse1Normal.z, diffuse1Normal.a), vec4(0.0), vec4(0.0));
 
                 `)
 
@@ -321,6 +335,10 @@ class TerrainMaterialWrapper {
             this.shaderinjectpoint3
         );
 
+        this.material.Fragment_Custom_MetallicRoughness(
+            this.shaderinjectpoint4
+        );
+
         this.material.onBindObservable.add(function () {
             that.update();
         });
@@ -331,6 +349,7 @@ class TerrainMaterialWrapper {
     update = function(){
         this.material.getEffect().setTexture('splatmap', this.splatMap);
         this.material.getEffect().setTexture('atlasNormalsSampler', this.atlasBumpTexture);
+        //this.material.reflectionTexture = ;
     }
 
 }

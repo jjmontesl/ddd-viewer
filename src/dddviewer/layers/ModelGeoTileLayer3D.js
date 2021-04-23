@@ -223,7 +223,7 @@ export default class {
 
           //console.debug("Loading: " + tileUrl);
 
-          let pivot = new BABYLON.TransformNode("chunk_" + tileKey, this.layerManager.sceneViewer.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+          let pivot = new BABYLON.TransformNode("chunk_" + tileKey.replace("/", "_"), this.layerManager.sceneViewer.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
           //let reversePivot = new BABYLON.TransformNode("chunk_reverse_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
           //let rawPivot = new BABYLON.TransformNode("chunk_raw_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
           //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
@@ -281,6 +281,7 @@ export default class {
 
                   // Reparent root
                   newMeshes[0].parent = pivot;
+                  newMeshes[0].id = tileKey.replace("/", "_");
                   that.tiles[tileKey].node = pivot;
                   that.tiles[tileKey].status = 'loaded';
 

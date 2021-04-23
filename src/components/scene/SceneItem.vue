@@ -225,6 +225,10 @@ export default {
             url = "https://www.mapillary.com/app/?lat=" + this.viewerState.positionWGS84[0].toFixed(14) + "&lng=" + this.viewerState.positionWGS84[1].toFixed(14) + "&z=17&pKey=" + code;
         }
         return url;
+    },
+    f4mapLink: function() {
+        // https://demo.f4map.com/#lat=47.4312176&lon=19.0443469&zoom=18&camera.theta=76.276&camera.phi=99.351
+        return null;
     }
 
 

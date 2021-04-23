@@ -48,7 +48,8 @@ class ViewerState {
 
     sceneMoveSpeed = 5;
 
-    sceneSkybox = "/textures/TropicalSunnyDay";
+    sceneEnvironmentProbe = 16;  // null to use a static environment (should be associated to the skybox, but it's currently fixed)
+    sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
 
     sceneTextureSet = "default256";
 

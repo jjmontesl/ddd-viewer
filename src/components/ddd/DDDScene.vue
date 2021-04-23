@@ -197,7 +197,7 @@ export default {
         //const pointString = point[1].toFixed(7) + "," + point[0].toFixed(7);
         //const posString = this.positionString();
 
-        if (pickResult.pickedMesh.id === "skyBox") {
+        if (!pickResult.pickedMesh || pickResult.pickedMesh.id === "skyBox") {
             this.$router.push('/3d/pos/').catch(()=>{});
             return;
         } else {
