@@ -266,9 +266,6 @@ class SceneViewer {
 
         this.loadTextures();
 
-        // Show BabylonJS Inspector
-        //that.scene.debugLayer.show();
-
         // Render every frame
         engine.runRenderLoop(() => {
             if (! that.scene) { return; }
@@ -368,7 +365,8 @@ class SceneViewer {
     }
 
     showDebugView() {
-        this.scene.debugLayer.show();
+        // Show BabylonJS Inspector
+        this.scene.debugLayer.show({overlay: true});
     }
 
     loadCatalog(filename, loadMaterials) {
@@ -408,7 +406,21 @@ class SceneViewer {
         if (mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
             let metadata = mesh.metadata.gltf.extras;
 
+            // Add color material
+            /*
+            let key = metadata['ddd:material'];
+            let mat = this.catalog_materials[key];
+            if (key.startsWith("Color_") && mesh.material && ) {
+                console.debug("Adding color material " + mesh.material + " to catalog: " + key);
+                mat = mesh.material;
+                mat.name = key;
+                this.catalog_materials[key] = mat;
+                mesh.material = null;
+            }
+            */
+
             if (metadata['ddd:instance:key']) {
+                //this.processMesh(mesh, mesh);
                 this.addMeshToCatalog(metadata['ddd:instance:key'], mesh);
             }
 
@@ -513,7 +525,8 @@ class SceneViewer {
 
                     //mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
 
-                    mesh.material.freeze();  // Careful: may prevent environment texture change (?)
+                    //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
+
                 }
 
                 if (metadata['zoffset']) {
@@ -575,7 +588,7 @@ class SceneViewer {
                     mesh.material.bumpTexture.vOffset = 0.5;
                 }*/
 
-                root._splatmapMaterial.freeze();
+                //root._splatmapMaterial.freeze();
 
             }
         }
@@ -587,9 +600,19 @@ class SceneViewer {
 
             mesh.isBlocker = true;
 
+
             if (metadata['ddd:material'] && !('ddd:text' in metadata)) {
                 let key = metadata['ddd:material'];
                 let mat = this.catalog_materials[key];
+
+                // Add color material
+                if (key.startsWith("Color_") && mesh.material && !mat) {
+                    console.debug("Adding color material " + mesh.material + " to catalog: " + key);
+                    mat = mesh.material;
+                    mat.name = key;
+                    this.catalog_materials[key] = mat;
+                    mesh.material = null;
+                }
 
                 if (this.useSplatMap && metadata['ddd:layer'] === "0" &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
@@ -598,18 +621,25 @@ class SceneViewer {
                      (metadata['ddd:material'] === 'WayPedestrian' && metadata['ddd:area:type'] !== 'stairs') ||
                      metadata['ddd:material'] === 'Asphalt')) {
 
+                    if (mesh.material && mesh.material !== root._splatmapMaterial) {
+                        mesh.material.dispose();
+                    }
+
                     mesh.material = root._splatmapMaterial;
 
-                } else if (mat) {
+                } else if (mat) {  // && mesh.material
 
                     if (mesh.material && mesh.material !== mat) {
-                        mesh.material.dispose();
+                        let mmat = mesh.material;
+                        mesh.material = null;
+                        mmat.dispose();
                     }
                     mesh.material = mat;
 
                 } else {
                     //console.debug("Material not found in catalog: " + key);
                     // TODO: Will never happen if not showing materials (dependencies should be to the particular instance or material)
+
                     this.depends.push(root);
                 }
             }
@@ -627,6 +657,7 @@ class SceneViewer {
                 light.specular = new BABYLON.Color3(0, 1, 0);
                 */
 
+                mesh.parent = null;
                 mesh.dispose();
 
             } else if (metadata['ddd:text']) {
@@ -663,6 +694,7 @@ class SceneViewer {
                 //delete newMesh.metadata['ddd:text'];
                 */
 
+                mesh.parent = null;
                 mesh.dispose();
                 mesh = newMesh;
 
@@ -672,7 +704,7 @@ class SceneViewer {
                 if (this.catalog[key]) {
 
                     //this.instanceAsNode(root, key, mesh);
-                    this.instanceAsThinInstance(root, key, mesh);
+                    this.instanceAsThinInstance(root, key, mesh);  // note this removes the mesh
 
                 } else {
                     // Instance not found. Mark this root for re processing and exit.
@@ -687,14 +719,23 @@ class SceneViewer {
 
         if (mesh) {  // && !replaced
 
+            /*
+            if (mesh.simplify && mesh.getTotalVertices() > 0 && !replaced) {
+                mesh.simplify([{ quality: 0.1, distance: 100 }, ], false, BABYLON.SimplificationType.QUADRATIC);
+            }
+            */
+
             mesh.cullingStrategy = BABYLON.AbstractMesh.CULLINGSTRATEGY_BOUNDINGSPHERE_ONLY;
-            mesh.freezeWorldMatrix();
+            //mesh.freezeWorldMatrix();
+
             //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
 
             for (let children of mesh.getChildren()) {
                 this.processMesh(root, children);
             }
         }
+
+        return mesh;
     }
 
     instanceAsThinInstance(root, key, node) {
@@ -736,9 +777,7 @@ class SceneViewer {
                 }
 
                 //meshInstanceRoot.setEnabled(false);
-                meshInstanceRoot.addLODLevel(200, null);
-
-
+                //meshInstanceRoot.addLODLevel(200, null);
 
                 instance.setEnabled(false);
                 //instance.dispose();
@@ -772,6 +811,7 @@ class SceneViewer {
 
         }
 
+        node.parent = null;
         node.dispose();
 
     }

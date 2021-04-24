@@ -118,8 +118,6 @@ import NodeHierarchy from '@/components/scene/NodeHierarchy.vue';
 export default {
   mounted() {
 
-    window.addEventListener('resize', this.resize);
-    this.resize();
 
     this.$emit('dddViewerMode', 'scene');
     this.setMesh(this.viewerState.selectedMesh);
@@ -128,6 +126,9 @@ export default {
         let urlNodeId = this.$route.params.id;
         this.viewerState.sceneSelectedMeshId = urlNodeId;
     }
+
+    window.addEventListener('resize', this.resize);
+    this.resize();
 
   },
 

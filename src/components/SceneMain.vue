@@ -14,6 +14,8 @@ export default {
     console.debug('Enabling DDD Scene');
     this.$emit('dddViewerMode', 'scene');
 
+    this.viewerState.scenePickingEnabled = true;
+
     //dddViewer.setMode('scene');
     //dddViewer.showScene(true);
       //const that = this;

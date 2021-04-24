@@ -154,6 +154,7 @@ export default class {
         let tile = this.tiles[tileKey];
         if (tile.status !== "loading" && tile.node.isEnabled(false)) {
             tile.node.setEnabled(false);
+            tile.parent = null;
         }
     }
 
@@ -198,6 +199,7 @@ export default class {
           if (tileKey in this.tiles) {
               let tile = this.tiles[tileKey];
               if (tile.status !== "loading" && !tile.node.isEnabled(false)) {
+                  tile.parent = this.layerManager.sceneViewer.scene;
                   tile.node.setEnabled(true);
               }
               return;
