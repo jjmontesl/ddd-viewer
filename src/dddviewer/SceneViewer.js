@@ -14,6 +14,9 @@ import 'babylonjs-loaders';
 import * as SunCalc from 'suncalc';
 
 import TerrainMaterialWrapper from '@/dddviewer/render/TerrainMaterial.js';
+//import UniversalTerrainMaterialWrapper from '@/dddviewer/render/UniversalTerrainMaterialWrapper.js';
+//import createOceanMaterial from '@/dddviewer/render/OceanMaterial.js';
+
 import SkyMaterialWrapper from '@/dddviewer/render/SkyboxMaterial.js';
 
 
@@ -70,7 +73,10 @@ class SceneViewer {
         // TODO: Sequencer would better belong to the app
         this.sequencer = new ViewerSequencer(this);
 
+        this.selectedMesh = null;
+
         this._previousLampPatOn = null;
+
 
     }
 
@@ -120,6 +126,9 @@ class SceneViewer {
 
         water.colorBlendFactor = 0.2;
         //water.addToRenderList(ground);
+
+        //let waterOcean = createOceanMaterial(this.scene);
+
         this.materialWater = water;
 
         /*
@@ -174,23 +183,11 @@ class SceneViewer {
         //this.selectCameraWalk();
         //this.selectCameraOrbit();
 
+        // Render Pipeline config and Postprocessing
+        //this.updateRenderPipeline();
 
-        /*
-        // Fog
-        //this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-        //this.scene.fogDensity = 0.005;  // default is 0.1
-        this.scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
-        this.scene.fogStart = 250.0;
-        this.scene.fogEnd = 500.0;
-        this.scene.fogColor = new BABYLON.Color3(0.75, 0.75, 0.85);
-        */
-        /*
-        pixels = rp.cubeTexture.readPixels(0,0)
-        // i take the first pixel of the reflection probe texture for fog color.
-        // since pixels are stored as buffer array, first pixel are first 4 values of array [r,g,b,a....]
-        scene.fogColor = new Color3(pixels[0]/255, pixels[1]/255, pixels[2]/255)
-        */
 
+        // Lighting
 
         //this.scene.ambientColor = this.ambientColorDay.clone();
         this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
@@ -444,7 +441,7 @@ class SceneViewer {
             if (this.catalog_materials[key]) {
                 console.debug("Material already in catalog: " + key)
             } else {
-                console.debug("Adding material to catalog: " + key);
+                //console.debug("Adding material to catalog: " + key);
                 this.catalog_materials[key] = mesh.material;
                 let metadata = mesh.metadata.gltf.extras;
 
@@ -761,6 +758,13 @@ class SceneViewer {
                 instance.setEnabled(true);
                 meshInstanceRoot = mesh.clone(instanceRootKey, null, true);
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
+
+                let cloneMat = meshInstanceRoot.material;
+                if (cloneMat) {
+                    meshInstanceRoot.material = null;
+                    cloneMat.dispose();
+                }
+
                 //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
                 meshInstanceRoot.toLeftHanded();
                 //meshInstanceRoot.rotate(BABYLON.Vector3.Up(), Math.PI / 2);
@@ -878,7 +882,7 @@ class SceneViewer {
             // Fix viewer to floor
             if (this.walkMode) {
                 if (terrainElevation !== null) {
-                    this.camera.position.y = terrainElevation + 3.0; // 3.0;
+                    this.camera.position.y = terrainElevation + this.viewerState.sceneCameraWalkHeight; // 3.0;
                 }
             } else {
                 if (terrainElevation && this.camera.position.y < (terrainElevation + 1.0)) {
@@ -1109,7 +1113,7 @@ class SceneViewer {
     }
 
     deselectMesh() {
-        if (this.viewerState.selectedMesh) {
+        if (this.selectedMesh) {
             //this.viewerState.selectedMesh.showBoundingBox = false;
 
             for (var mesh of this.highlightMeshes) {
@@ -1125,7 +1129,7 @@ class SceneViewer {
         this.deselectMesh();
 
         if (mesh) {
-            this.viewerState.selectedMesh = mesh;
+            this.selectedMesh = mesh;
             this.viewerState.sceneSelectedMeshId = mesh.id;
             //this.viewerState.selectedMesh.showBoundingBox = true;
             //console.debug(this.viewerState.selectedMesh.metadata.gltf.extras);
@@ -1205,6 +1209,77 @@ class SceneViewer {
         return null;
     }
 
+    updateRenderPipeline() {
+        // Postprocess
+        // The default pipeline applies other settings, we'd better off using Bloom independently if possible
+        // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
+        var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, this.scene, [this.camera]);
+        defaultPipeline.fxaaEnabled = true;
+        defaultPipeline.bloomEnabled = true;
+        defaultPipeline.bloomWeight = 1.0;  // 1.5 is exagerated but maybe usable for pics
+        defaultPipeline.cameraFov = this.camera.fov;
+        defaultPipeline.imageProcessing.toneMappingEnabled = true;
+
+        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
+        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.2, camera);
+
+        // See: https://doc.babylonjs.com/divingDeeper/postProcesses/postProcessRenderPipeline
+        /*
+        var standardPipeline = new BABYLON.PostProcessRenderPipeline(this.engine, "standardPipeline");
+        var effectBloom = new BABYLON.BloomEffect(this.scene, 4, 5.0, 2.0);
+        //var effectDepthOfField = new BABYLON.DepthOfFieldEffect(this.scene);
+        var postProcessChain = new BABYLON.PostProcessRenderEffect(this.engine, "postProcessChain", function() { return [effectBloom, effectDepthOfField] });
+        standardPipeline.addEffect(effectBloom);
+        this.scene.postProcessRenderPipelineManager.addPipeline(standardPipeline);
+        */
+
+        var lensEffect = new BABYLON.LensRenderingPipeline('lens', {
+            edge_blur: 0.25,				// 1.0 is too distorted in the borders for walk/view mode (maybe for pictures)
+            chromatic_aberration: 1.0,
+            distortion: 0.5,				// (dilate effect)
+            dof_focus_distance: 60,
+            dof_aperture: 1.0,			// 1.2 is already too blurry for OSM, 6.0 is very high
+            grain_amount: 0.0, // 0.5,
+            dof_pentagon: false, // true,
+            dof_gain: 1.0,
+            dof_threshold: 1.0,
+            dof_darken: 0.25
+        }, this.scene, 1.0, this.camera);
+        //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
+
+        /*
+        var curve = new BABYLON.ColorCurves();
+        curve.globalHue = 0;
+        curve.globalDensity = 80;
+        curve.globalSaturation = 5;
+        curve.highlightsHue 0;
+        curve.highlightsDensity = 80;
+        curve.highlightsSaturation = 40;
+        curve.shadowsHue = 0;
+        curve.shadowsDensity = 80;
+        curve.shadowsSaturation = 40;
+        this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
+        this.scene.imageProcessingConfiguration.colorCurves = curve;
+        var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
+        */
+
+        /*
+        // Fog
+        //this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+        //this.scene.fogDensity = 0.005;  // default is 0.1
+        this.scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+        this.scene.fogStart = 250.0;
+        this.scene.fogEnd = 500.0;
+        this.scene.fogColor = new BABYLON.Color3(0.75, 0.75, 0.85);
+        */
+        /*
+        pixels = rp.cubeTexture.readPixels(0,0)
+        // i take the first pixel of the reflection probe texture for fog color.
+        // since pixels are stored as buffer array, first pixel are first 4 values of array [r,g,b,a....]
+        scene.fogColor = new Color3(pixels[0]/255, pixels[1]/255, pixels[2]/255)
+        */
+    }
+
     selectCameraFree() {
         if (this.camera) {
             this.camera.customRenderTargets = [];
@@ -1238,42 +1313,6 @@ class SceneViewer {
         this.camera = camera;
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
 
-        // Postprocess
-        /*
-        // The default pipeline applies other settings, we'd better off using Bloom independently if possible
-        // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
-        var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, this.scene, [this.camera]);
-        defaultPipeline.bloomEnabled = true;
-        defaultPipeline.fxaaEnabled = true;
-        defaultPipeline.bloomWeight = 0.5;
-        defaultPipeline.cameraFov = camera.fov;
-        defaultPipeline.imageProcessing.toneMappingEnabled = true;
-        */
-
-
-        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
-        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.2, camera);
-
-        // See: https://doc.babylonjs.com/divingDeeper/postProcesses/postProcessRenderPipeline
-        //var effectBloom = new BABYLON.BloomEffect("bloom", 1.0, 0.5, 5.0, 1.2);
-        //var effectDepthOfField =
-
-        /*
-        var curve = new BABYLON.ColorCurves();
-        curve.globalHue = 0;
-        curve.globalDensity = 80;
-        curve.globalSaturation = 5;
-        curve.highlightsHue 0;
-        curve.highlightsDensity = 80;
-        curve.highlightsSaturation = 40;
-        curve.shadowsHue = 0;
-        curve.shadowsDensity = 80;
-        curve.shadowsSaturation = 40;
-        this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
-        this.scene.imageProcessingConfiguration.colorCurves = curve;
-        var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
-        */
-
         this.updateRenderTargets();
     }
 
@@ -1289,9 +1328,9 @@ class SceneViewer {
         this.walkMode = false;
 
         let targetCoords = BABYLON.Vector3.Zero();
-        if (this.viewerState.selectedMesh) {
-            let boundingBox = this.getBoundsRecursively(this.viewerState.selectedMesh);
-            //targetCoords = this.viewerState.selectedMesh.absolutePosition;
+        if (this.selectedMesh) {
+            let boundingBox = this.getBoundsRecursively(this.selectedMesh);
+            //targetCoords = this.selectedMesh.absolutePosition;
             let minWorld = boundingBox.minimumWorld;
             let maxWorld = boundingBox.maximumWorld;
             targetCoords = new BABYLON.Vector3((minWorld.x + maxWorld.x) / 2, (minWorld.y + maxWorld.y) / 2, (minWorld.z + maxWorld.z) / 2);
@@ -1334,6 +1373,7 @@ class SceneViewer {
         if (this.envReflectionProbe) {
             this.camera.customRenderTargets.push(this.envReflectionProbe.cubeTexture);
         }
+        //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("standardPipeline", this.camera);
     }
 
     groundTextureLayerSetKey(key) {

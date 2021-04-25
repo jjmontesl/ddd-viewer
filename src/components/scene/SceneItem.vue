@@ -120,9 +120,9 @@ export default {
 
 
     this.$emit('dddViewerMode', 'scene');
-    this.setMesh(this.viewerState.selectedMesh);
+    this.setMesh(this.getSceneViewer().selectedMesh);
 
-    if (!this.viewerState.selectedMesh) {
+    if (!this.getSceneViewer().selectedMesh) {
         let urlNodeId = this.$route.params.id;
         this.viewerState.sceneSelectedMeshId = urlNodeId;
     }
@@ -139,7 +139,7 @@ export default {
     }
   },
   inject: [
-      //'getViewerState',
+    'getSceneViewer',
   ],
   data() {
     return {
@@ -150,7 +150,7 @@ export default {
       nodeName: null,
       metadata: {},
       loading: true,
-      nodeGetter: () => { return this.viewerState.selectedMesh; },
+      nodeGetter: () => { return (this.viewerState.sceneSelectedMeshId ? this.getSceneViewer().selectedMesh : null); },
     }
   },
   computed: {
@@ -168,8 +168,8 @@ export default {
         this.$route;  // force dependency on property
         this.viewerState.sceneSelectedMeshId;
         let url = null;
-        if (this.viewerState.sceneViewer) {
-            url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
+        if (this.getSceneViewer()) {
+            url = 'https://www.google.com/maps/' +  this.getSceneViewer().positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
         }
         return url;
     },
@@ -241,11 +241,11 @@ export default {
   ],
   watch: {
     '$route' () {
-        this.setMesh(this.viewerState.selectedMesh);
+        this.setMesh(this.getSceneViewer().selectedMesh);
     },
     'viewerState.sceneSelectedMeshId' () {
         this.$forceUpdate();
-        this.setMesh(this.viewerState.selectedMesh);
+        this.setMesh(this.getSceneViewer().selectedMesh);
         //if (! this.metadata['_updated']) {this.metadata['_updated'] = 0;}
         //this.metadata['_updated']++;
     }
@@ -270,7 +270,7 @@ export default {
                   this.nodeName = this.metadata['osm:name'];
               }
           }
-          this.nodeGetter = () => { return this.viewerState.selectedMesh; };
+          this.nodeGetter = () => { return this.getSceneViewer().selectedMesh; };
           //console.debug("Scene Item setMesh called.");
       },
 
@@ -295,19 +295,19 @@ export default {
       },
 
       selectCameraOrbit() {
-          this.viewerState.sceneViewer.selectCameraOrbit();
+          this.getSceneViewer().selectCameraOrbit();
       },
       selectCameraFree() {
-          this.viewerState.sceneViewer.selectCameraFree();
+          this.getSceneViewer().selectCameraFree();
       },
       selectCameraWalk() {
-          this.viewerState.sceneViewer.selectCameraWalk();
+          this.getSceneViewer().selectCameraWalk();
       },
 
       removeNode() {
          //this.getViewerState().sceneViewer.selectMesh(node);
-         let mesh = this.viewerState.selectedMesh;
-         this.viewerState.sceneViewer.deselectMesh();
+         let mesh = this.getSceneViewer().selectedMesh;
+         this.getSceneViewer().deselectMesh();
          mesh.setParent(null);
          mesh.dispose();
       }

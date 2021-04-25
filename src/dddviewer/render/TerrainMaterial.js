@@ -75,7 +75,7 @@ class TerrainMaterialWrapper {
                     displScales: [-0.5, 0, 0, 0,
                                   0, 0, 0, 0,
                                   0, 0, 0, 0,
-                                  0.2, -0.2, 0, 0,]
+                                  0.2, 0.0, 0, 0,]
                 }
             };
         }
@@ -106,10 +106,11 @@ class TerrainMaterialWrapper {
 
         this.shaderinjectpoint3 += 'vec4 finalColor1 = baseColor1;\r\n';
         this.shaderinjectpoint3 += 'vec3 finalNormal1 = baseNormal1;\r\n';
-        //this.shaderinjectpoint3 += 'finalColor1.a = 0.01;\r\n';
+        //this.shaderinjectpoint3 += 'finalColor1.a = 0.05;\r\n';
 
         this.shaderinjectpoint4 += 'vec4 finalColor1 = baseColor1;\r\n';
         this.shaderinjectpoint4 += 'float finalRough1 = baseRough1;\r\n';
+        //this.shaderinjectpoint4 += 'finalColor1.a = 0.05;\r\n';
 
         var v = 0.0, h = 0.0;
         for (let i=0; i < this.totalTiles; i++){

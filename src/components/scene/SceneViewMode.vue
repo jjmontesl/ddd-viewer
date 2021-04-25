@@ -69,23 +69,26 @@ export default {
   props: [
       'viewerState',
   ],
+  inject: [
+    'getSceneViewer',
+  ],
 
   methods: {
 
       selectCameraOrbit() {
-          this.viewerState.sceneViewer.selectCameraOrbit();
+          this.getSceneViewer().selectCameraOrbit();
       },
 
       selectCameraFree() {
-          this.viewerState.sceneViewer.selectCameraFree();
+          this.getSceneViewer().selectCameraFree();
       },
 
       selectCameraWalk() {
-          this.viewerState.sceneViewer.selectCameraWalk();
+          this.getSceneViewer().selectCameraWalk();
       },
 
       cycleMoveSpeed() {
-          this.viewerState.sceneViewer.cycleMoveSpeed();
+          this.getSceneViewer().cycleMoveSpeed();
       }
 
   },

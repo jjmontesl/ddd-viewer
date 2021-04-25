@@ -59,7 +59,7 @@ import tiles from '@/services/ddd_http/tiles.js';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
-    if (this.viewerState.sceneViewer) {this.viewerState.sceneViewer.deselectMesh();}
+    if (this.getSceneViewer()) {this.getSceneViewer().deselectMesh();}
   },
   metaInfo() {
     return {
@@ -71,12 +71,11 @@ export default {
   props: [
       'viewerState',
   ],
-  /*
   inject: [
-      'getViewerState'
+      'getSceneViewer'
   ],
+  /*
   computed: {
-      'viewerState': function() { return this.getViewerState(); }
   },
   */
   data() {

@@ -114,7 +114,7 @@ export default {
     }
   },
   inject: [
-      //'getViewerState',
+    'getSceneViewer',
   ],
   data() {
     return {
@@ -170,8 +170,8 @@ export default {
         this.$route;  // force dependency on property
         this.viewerState.sceneSelectedMeshId;
         let url = null;
-        if (this.viewerState.sceneViewer) {
-            url = 'https://www.google.com/maps/' +  this.viewerState.sceneViewer.positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
+        if (this.getSceneViewer()) {
+            url = 'https://www.google.com/maps/' +  this.getSceneViewer().positionString() + '/data=!3m1!1e3';  // ?hl=es-ES
         }
         return url;
     },
@@ -241,43 +241,43 @@ export default {
 
 
       selectCameraOrbit() {
-          this.viewerState.sceneViewer.selectCameraOrbit();
+          this.getSceneViewer().selectCameraOrbit();
       },
       selectCameraFree() {
-          this.viewerState.sceneViewer.selectCameraFree();
+          this.getSceneViewer().selectCameraFree();
       },
       selectCameraWalk() {
-          this.viewerState.sceneViewer.selectCameraWalk();
+          this.getSceneViewer().selectCameraWalk();
       },
 
       sceneFullScreen() {
-            this.viewerState.sceneViewer.showFullScreen();
+            this.getSceneViewer().showFullScreen();
       },
 
       removeNode() {
          //this.getViewerState().sceneViewer.selectMesh(node);
          let mesh = this.viewerState.selectedMesh;
-         this.viewerState.sceneViewer.deselectMesh();
+         this.getSceneViewer().deselectMesh();
          mesh.setParent(null);
          mesh.dispose();
       },
 
       groundTextureLayerChange(value) {
           //console.debug("Changing ground texture: ", value);
-          this.viewerState.sceneViewer.groundTextureLayerSetKey(value);
+          this.getSceneViewer().groundTextureLayerSetKey(value);
       },
 
       skyboxChange(value) {
             //console.debug("Changing skybox: ", value);
-            this.viewerState.sceneViewer.loadSkybox(value);
+            this.getSceneViewer().loadSkybox(value);
       },
 
       sceneShadowsEnabledChange(value) {
-          this.viewerState.sceneViewer.sceneShadowsSetEnabled(value);
+          this.getSceneViewer().sceneShadowsSetEnabled(value);
       },
 
       sceneTextureSetChange(value) {
-          this.viewerState.sceneViewer.sceneTextureSet(value);
+          this.getSceneViewer().sceneTextureSet(value);
       },
 
       sceneTimeChange(value) {

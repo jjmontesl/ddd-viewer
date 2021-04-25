@@ -201,6 +201,7 @@ export default class {
               if (tile.status !== "loading" && !tile.node.isEnabled(false)) {
                   tile.parent = this.layerManager.sceneViewer.scene;
                   tile.node.setEnabled(true);
+                  tile.node.freezeWorldMatrix();
               }
               return;
           } else {
@@ -299,7 +300,7 @@ export default class {
                   pivot.position = new BABYLON.Vector3(tileCenterScene[0], 0, tileCenterScene[1]);
                   pivot.rotation = new BABYLON.Vector3(0, Math.PI, 0);
 
-                  //pivot.freezeWorldMatrix();
+                  pivot.freezeWorldMatrix();
 
                   that.tiles[tileKey].node = pivot;
 

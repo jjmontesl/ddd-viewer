@@ -42,7 +42,7 @@ export default {
     let that = this;
 
     setTimeout(() => {
-        that.viewerState.sceneViewer.sequencer.play(seq);
+        that.getSceneViewer().sequencer.play(seq);
     }, 1000);
 
   },
@@ -54,7 +54,7 @@ export default {
     }
   },
   inject: [
-      //'getViewerState',
+      'getSceneViewer',
   ],
   data() {
     return {

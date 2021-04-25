@@ -38,6 +38,7 @@ const NodeHierarchy = {
   },
   inject: [
       'getViewerState',
+      'getSceneViewer'
   ],
   data() {
     return {
@@ -137,9 +138,9 @@ const NodeHierarchy = {
 
           let node = path[0];
 
-          this.getViewerState().sceneViewer.selectMesh(node);
+          this.getSceneViewer().selectMesh(node);
           let meshName = node.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
-          this.$router.push('/3d/item/' + meshName + '/' + this.getViewerState().sceneViewer.positionString()).catch(()=>{});
+          this.$router.push('/3d/item/' + meshName + '/' + this.getSceneViewer().positionString()).catch(()=>{});
 
     }
   },

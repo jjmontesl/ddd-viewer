@@ -27,12 +27,11 @@ export default {
   props: [
       'viewerState',
   ],
-  /*
   inject: [
-      'getViewerState'
+    'getSceneViewer',
   ],
+  /*
   computed: {
-      'viewerState': function() { return this.getViewerState(); }
   },
   */
   data() {
@@ -54,8 +53,8 @@ export default {
       showDebugView: function() {
           if (this.viewerState) {
                 //console.debug("Show debug view.");
-              this.viewerState.sceneViewer.showDebugView();
               this.viewerState.scenePickingEnabled = false;
+              this.getSceneViewer().showDebugView();
           }
       }
 

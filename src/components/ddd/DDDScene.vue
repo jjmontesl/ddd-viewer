@@ -43,6 +43,7 @@ export default {
   ],
   inject: [
       'getViewerState',
+      'setSceneViewer',
   ],
   computed: {
       'myViewerState': function() {return this.getViewerState();}
@@ -69,8 +70,9 @@ export default {
     const canvas = document.getElementById('ddd-scene');
 
     this.sceneViewer = new SceneViewer(this.getViewerState());
+    this.setSceneViewer(this.sceneViewer);  // Set the reference to App so it can be accessed by other components
     this.sceneViewer.initialize(canvas);
-    this.getViewerState().sceneViewer = this.sceneViewer;
+    //this.getViewerState().sceneViewer = this.sceneViewer;  // Suspicious: setting sceneViewer as part of a Vue component?
 
     const layerDddOsm3d = new ModelGeoTileLayer3D();
     this.sceneViewer.layerManager.addLayer("ddd-osm-3d", layerDddOsm3d);

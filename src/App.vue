@@ -106,6 +106,8 @@ export default {
       const that = this;
       return {
         getViewerState: function() { return that.viewerState; },
+        getSceneViewer: function() { return that.sceneViewer; },
+        setSceneViewer: function(sceneViewer) { that.sceneViewer = sceneViewer; },
       }
   },
   data() {
