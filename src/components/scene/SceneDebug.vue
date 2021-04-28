@@ -14,6 +14,7 @@ import tiles from '@/services/ddd_http/tiles.js';
 export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
+    this.viewerState.sceneViewModeShow = false;
     this.showDebugView();
   },
 

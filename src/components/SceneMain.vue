@@ -16,6 +16,8 @@ export default {
 
     this.viewerState.scenePickingEnabled = true;
 
+    if (this.getSceneViewer() && !this.getSceneViewer().sequencer.playing) {this.viewerState.sceneViewModeShow = true;}
+
     //dddViewer.setMode('scene');
     //dddViewer.showScene(true);
       //const that = this;
@@ -29,6 +31,9 @@ export default {
   },
   props: [
       'viewerState',
+  ],
+  inject: [
+      'getSceneViewer'
   ],
   data() {
     return {

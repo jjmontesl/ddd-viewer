@@ -60,6 +60,7 @@ export default {
   mounted() {
     this.$emit('dddViewerMode', 'scene');
     if (this.getSceneViewer()) {this.getSceneViewer().deselectMesh();}
+    if (!this.getSceneViewer().sequencer.playing) {this.viewerState.sceneViewModeShow = true;}
   },
   metaInfo() {
     return {

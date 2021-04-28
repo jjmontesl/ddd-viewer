@@ -140,11 +140,10 @@ export default {
 
       dddViewerMode(mode) {
         //console.debug("Received Viewer Mode change event to: " + mode);
-        this.viewerState.mapVisible = mode === 'map';
-        this.viewerState.sceneVisible = mode === 'scene';
-        //this.$set(this, 'mapVisible', mode === 'map');
-        //this.$set(this, 'sceneVisible', mode === 'scene');
-
+        if (mode !== null) {
+            this.viewerState.mapVisible = mode === 'map';
+            this.viewerState.sceneVisible = mode === 'scene';
+        }
         setTimeout(function() {
             window.dispatchEvent(new Event('resize'));
         }, 200);

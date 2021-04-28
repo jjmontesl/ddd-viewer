@@ -287,21 +287,22 @@ export default {
         },
          ]
       if (this.viewerState && this.viewerState.sceneVisible) {
+          /*
         links.push({
           title: 'Tools',
           link: (this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools'),
           icon: 'mdi-wrench',
-          class: 'btnSettings'
+          class: 'btnTools'
         });
-      }
-        /*
-        {
+        */
+        links.push({
           title: 'Settings',
-          link: 'settings',
+          link: (this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools'), // Rename to Settings
           icon: 'mdi-cog',
           class: 'btnSettings'
-        },
-        */
+        });
+
+      }
       links.push({
           title: this.$t('menuItems.ABOUT'),
           link: 'about',

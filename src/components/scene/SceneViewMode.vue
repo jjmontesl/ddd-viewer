@@ -1,6 +1,11 @@
 <template>
 
     <div class="ddd-view-mode-selector unselectable" style="text-align: right; pointer-events: auto;">
+
+        <div style="margin-top: 4px;">
+            <small style="color: white;"><v-icon small dark>mdi-clock</v-icon> {{ positionDateFormatted }}</small>
+        </div>
+
         <div style="margin-top: 4px;">
             <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
         </div>
@@ -72,6 +77,16 @@ export default {
   inject: [
     'getSceneViewer',
   ],
+
+  computed: {
+      positionDateFormatted() {
+          this.viewerState.positionDateSeconds; // Force update
+          let hours = this.viewerState.positionDate.getHours();
+          let minutes = this.viewerState.positionDate.getMinutes();
+          return hours + ":" + ((minutes < 10) ? "0" : "") + minutes;
+      }
+
+  },
 
   methods: {
 

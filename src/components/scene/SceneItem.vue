@@ -66,7 +66,7 @@
                         </div>
                     </v-card-text>
 
-                    <v-card-text class="text-left">
+                    <v-card-text v-if="viewerState.sceneViewModeShow" class="text-left">
                         <h3>View</h3>
                         <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit Item</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
@@ -120,11 +120,15 @@ export default {
 
 
     this.$emit('dddViewerMode', 'scene');
-    this.setMesh(this.getSceneViewer().selectedMesh);
 
-    if (!this.getSceneViewer().selectedMesh) {
-        let urlNodeId = this.$route.params.id;
-        this.viewerState.sceneSelectedMeshId = urlNodeId;
+    if (this.getSceneViewer()) {
+
+        this.setMesh(this.getSceneViewer().selectedMesh);
+
+        if (! (this.getSceneViewer().selectedMesh)) {
+            let urlNodeId = this.$route.params.id;
+            this.getSceneViewer().viewerState.sceneSelectedMeshId = urlNodeId;
+        }
     }
 
     window.addEventListener('resize', this.resize);

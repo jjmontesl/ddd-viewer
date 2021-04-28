@@ -9,6 +9,15 @@
         "es-pnoa": {"text": "ES - PNOA (Orthophotos)", "url": "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"}
     },
 
+    "sceneMaterials": [
+        {"value": "defaultsplat256", "text": "Default Set and Splatmaps (256x256)", "textures": "default256", "splatmap": 256},
+        {"value": "defaultsplat512", "text": "Default Set and Splatmaps (512x512)", "textures": "default512", "splatmap": 512},
+        {"value": "default256", "text": "Default Set (256x256)", "textures": "default256", "splatmap": null},
+        {"value": "default512", "text": "Default Set (512x512)", "textures": "default512", "splatmap": null},
+        {"value": "minimal", "text": "Minimal Set", "textures": "minimal", "splatmap": null},
+        {"value": null, "text": "None", "textures": null, "splatmap": null}
+    ],
+
     "_defaultCoords_Salamanca": [-5.666, 40.960],
     "_defaultCoords_Hercules": [-8.406568, 43.385890],
     "_defaultCoords_Vigo_Castro": [-8.723, 42.238],

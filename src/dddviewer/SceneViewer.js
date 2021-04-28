@@ -102,6 +102,12 @@ class SceneViewer {
             'useGeometryIdsMap': true
         });
         //that.scene = createScene(engine, canvas);
+        //this.scene.freezeActiveMeshes(true);  // affects too many things, causes wrong behavior (skybox, etc)
+
+        this.octree = null;
+
+        this.scene.pointerMovePredicate = function() { return false; }
+        this.scene.pointerDownPredicate = function() { return false; }
 
         //this.sceneInstru = null;
         this.sceneInstru = new BABYLON.SceneInstrumentation(that.scene);
@@ -119,8 +125,8 @@ class SceneViewer {
         water.bumpHeight = 0.1;
         water.waveLength = 0.25;
 
-        water.alpha = 0.7;
-        water.transparencyMode = 2;  // ALPHA_BLEND
+        water.alpha = 0.8;
+        water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
         water.useSpecularOverAlpha = true;
         water.useReflectionOverAlpha = true;
 
@@ -145,8 +151,10 @@ class SceneViewer {
             this.envReflectionProbe.refreshRate = 6;
             this.envReflectionProbe.position = new BABYLON.Vector3(0, 0, 0);
 
-            var pbr = new BABYLON.PBRMaterial('envReflectionTestMaterial', this.scene);
-            pbr.reflectionTexture = this.envReflectionProbe.cubeTexture;
+            // Assign to a material to see it
+            //var pbr = new BABYLON.PBRMaterial('envReflectionTestMaterial', this.scene);
+            //pbr.reflectionTexture = this.envReflectionProbe.cubeTexture;
+
             // Force PBR material udpate and show for debugging
             //var sphere = BABYLON.Mesh.CreateSphere("envReflectionTestSphere", 16, 5, this.scene);
             //sphere.position.y = 150;
@@ -184,14 +192,15 @@ class SceneViewer {
         //this.selectCameraOrbit();
 
         // Render Pipeline config and Postprocessing
+        //this.initRenderPipeline();
         //this.updateRenderPipeline();
 
 
         // Lighting
 
         //this.scene.ambientColor = this.ambientColorDay.clone();
-        this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
-        //this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+        //this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
+        this.scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
         /*
         that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
         that.lightHemi.intensity = 1.15;
@@ -297,12 +306,6 @@ class SceneViewer {
         }`;
         */
 
-        this.splatmapAtlasTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-512.png", this.scene,  false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR); // , BABYLON.Texture.NEAREST_SAMPLINGMODE);
-        //this.splatmapAtlasTexture = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/atlas3.jpg", this.scene);
-        //this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-256-fake.png", this.scene);
-        this.splatmapAtlasNormalsTexture = new BABYLON.Texture("/assets/splatmap-textures-atlas-normals-512.png", this.scene);
-
-
         // Performance
         // Avoid clear calls, as there's always a skybox
         this.scene.autoClear = false; // Color buffer
@@ -390,7 +393,7 @@ class SceneViewer {
     }
 
     processDepends() {
-        //console.debug("Processing dependencies");
+        console.debug("Processing dependencies");
         let dependsCopy = [...this.depends];
         for (let dep of dependsCopy) {
             this.depends = this.depends.filter(item => item !== dep);
@@ -407,12 +410,15 @@ class SceneViewer {
             /*
             let key = metadata['ddd:material'];
             let mat = this.catalog_materials[key];
-            if (key.startsWith("Color_") && mesh.material && ) {
+            if (key && key.startsWith("Color") && mesh.material && !mat) {
                 console.debug("Adding color material " + mesh.material + " to catalog: " + key);
                 mat = mesh.material;
                 mat.name = key;
                 this.catalog_materials[key] = mat;
-                mesh.material = null;
+                //mesh.material = mat;
+            } else if (key && mat) {
+                //mesh.material.dispose();
+                //mesh.material = mat;
             }
             */
 
@@ -421,9 +427,9 @@ class SceneViewer {
                 this.addMeshToCatalog(metadata['ddd:instance:key'], mesh);
             }
 
-            if (loadMaterials && metadata['ddd:material']) {
+            if (metadata['ddd:material'] && (loadMaterials || (!(metadata['ddd:material'] in this.catalog_materials)))) {
                 try {
-                    this.addMaterialToCatalog(metadata['ddd:material'], mesh);
+                    this.addMaterialToCatalog(metadata['ddd:material'], mesh, true);
                 } catch (e) {
                     console.debug("Error adding material to catalog: ", mesh, e);
                 }
@@ -435,15 +441,21 @@ class SceneViewer {
         }
     }
 
-    addMaterialToCatalog(key, mesh) {
+    addMaterialToCatalog(key, mesh, force) {
         if (mesh.material) {
             //console.debug(mesh.material);
-            if (this.catalog_materials[key]) {
+            //mesh.material.id = key;
+            mesh.material.name = key;
+
+            if (this.catalog_materials[key] && !force) {
                 console.debug("Material already in catalog: " + key)
             } else {
+
                 //console.debug("Adding material to catalog: " + key);
                 this.catalog_materials[key] = mesh.material;
                 let metadata = mesh.metadata.gltf.extras;
+
+                let dontFreeze = false;
 
                 if (metadata['ddd:material'] === 'WaterBasicDaytime') {
                     /*
@@ -453,7 +465,15 @@ class SceneViewer {
                     mesh.material.useReflectionOverAlpha = true;
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
                     */
+
+                    // This "WaterInstanced" is to avoid WaterMaterial from being used in instances (seems to fail, causing the material to disappear).
+                    this.catalog_materials["WaterInstanced"] = mesh.material;
+                    this.catalog_materials["WaterInstanced"].alpha = 0.7;
+                    this.catalog_materials["WaterInstanced"].transparencyMode = 2;
+                    this.catalog_materials["WaterInstanced"].freeze();
+
                     this.catalog_materials[key] = this.materialWater;
+                    dontFreeze = true;
 
                 } else if (metadata['ddd:material'] === 'Water4Advanced') {
                     /*
@@ -464,6 +484,7 @@ class SceneViewer {
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
                     */
                     this.catalog_materials[key] = this.materialWater;
+                    dontFreeze = true;
 
                 } else if (mesh.material.albedoTexture) {
 
@@ -485,6 +506,8 @@ class SceneViewer {
                     }
                     if ((metadata['ddd:material'] === 'Fence')) {
                         uvScale = 0.5;
+                        mesh.material.albedoTexture.vOffset = 0.0725;
+                        if (mesh.material.bumpTexture) { mesh.material.bumpTexture.vOffset = 0.0725; }
                     }
 
                     if (uvScale !== 1.0) {
@@ -527,10 +550,13 @@ class SceneViewer {
                 }
 
                 if (metadata['zoffset']) {
-                    mesh.material.zOffset = metadata['zoffset'];
+                    this.catalog_materials[key].zOffset = metadata['zoffset'];
                 }
 
                 //mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
+                if (!dontFreeze) {
+                    this.catalog_materials[key].freeze();
+                }
 
             }
         } else {
@@ -554,7 +580,9 @@ class SceneViewer {
 
         let rootmd = root.metadata.tileInfo;
 
-        if (!('_splatmapMaterial' in root) && this.useSplatMap) {
+        //mesh.isPickable = false;
+
+        if (!('_splatmapMaterial' in root) && this.useSplatMap && this.viewerState.sceneTextureSet && this.viewerState.sceneTextureSet.indexOf("default") >= 0) {
             if (('metadata' in mesh) && ('tileCoords' in mesh.metadata)) {
                 let coords = root.metadata['tileCoords'];
                 console.debug("Creating splat material for: ", coords);
@@ -562,7 +590,7 @@ class SceneViewer {
                 var splatmapUrl = "http://localhost:8000/cache/ddd_http/17/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
                 var splatmapTexture = new BABYLON.Texture(splatmapUrl, this.scene);
 
-                var matwrapper = new TerrainMaterialWrapper(this.scene, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture);
+                var matwrapper = new TerrainMaterialWrapper(this, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture);
                 root._splatmapMaterial = matwrapper.material;
 
 
@@ -600,18 +628,40 @@ class SceneViewer {
 
             if (metadata['ddd:material'] && !('ddd:text' in metadata)) {
                 let key = metadata['ddd:material'];
+
+                if (key === "WaterBasicDaytime") {
+                    console.debug(mesh);
+                    if (metadata['ddd:path'].startsWith('Catalog Group')) {
+                        key = "WaterInstanced";
+                      }
+                }
+
                 let mat = this.catalog_materials[key];
 
+                if (!(key in this.catalog_materials) && mesh.material) {
+                    mesh.material.id = key + "(Auto)";
+                    mesh.material.name = key;
+                    this.addMaterialToCatalog(metadata['ddd:material'], mesh)
+                    mat = this.catalog_materials[key];
+
+                    if (!(root in this.depends)) {
+                        this.depends.push(root);
+                    }
+                }
+
                 // Add color material
-                if (key.startsWith("Color_") && mesh.material && !mat) {
+                /*
+                if (key.startsWith("Color") && mesh.material && !mat) {
                     console.debug("Adding color material " + mesh.material + " to catalog: " + key);
                     mat = mesh.material;
                     mat.name = key;
                     this.catalog_materials[key] = mat;
-                    mesh.material = null;
+                    //mesh.material = null;
                 }
+                */
 
-                if (this.useSplatMap && metadata['ddd:layer'] === "0" &&
+                // TODO: Indicate when to splat in metadata
+                if (this.useSplatMap && this.viewerState.sceneTextureSet && metadata['ddd:layer'] === "0" &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
                      metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
                      metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' || metadata['ddd:material'] === 'Rock' ||
@@ -624,14 +674,16 @@ class SceneViewer {
 
                     mesh.material = root._splatmapMaterial;
 
-                } else if (mat) {  // && mesh.material
+                } else if ((key in this.catalog_materials)) {  // && mesh.material
 
-                    if (mesh.material && mesh.material !== mat) {
+                    if (mesh.material && mesh.material !== mat && mat) {
                         let mmat = mesh.material;
                         mesh.material = null;
-                        mmat.dispose();
+                        mmat.dispose();  // Causes white materials, but cleans all outstanding materials
                     }
-                    mesh.material = mat;
+                    if (mat) {
+                        mesh.material = mat;
+                    }
 
                 } else {
                     //console.debug("Material not found in catalog: " + key);
@@ -710,6 +762,9 @@ class SceneViewer {
                     return;
                 }
             }
+
+            this.depends.push(root);
+
         }
 
         //mesh.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
@@ -731,6 +786,13 @@ class SceneViewer {
                 this.processMesh(root, children);
             }
         }
+
+
+        /*
+        if (mesh === root) {
+            this.octree = this.scene.createOrUpdateSelectionOctree(); // capacity, maxDepth);
+        }
+        */
 
         return mesh;
     }
@@ -807,6 +869,7 @@ class SceneViewer {
             matrix = matrix.multiply(BABYLON.Matrix.Invert(meshInstanceRootMatrix));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
             var idx = meshInstanceRoot.thinInstanceAdd(matrix);
+            meshInstanceRoot.freezeWorldMatrix();
 
             //let tmpcopy = meshInstanceRoot.clone();
             //tmpcopy.position = localPos;
@@ -913,6 +976,12 @@ class SceneViewer {
         positionScene = [positionScene[0], positionScene[1], positionScene[2]];  // Copy array
         this.viewerState.positionScene = positionScene;
 
+
+        if (this.envReflectionProbe !== null) {
+            this.envReflectionProbe.position = this.camera.position.clone();
+        }
+
+
         this.sequencer.update(deltaTime);
         this.layerManager.update(deltaTime);
 
@@ -927,17 +996,22 @@ class SceneViewer {
             var currentDateUpdate = new Date().getTime();
 
             if ((currentDateUpdate - this.lastDateUpdate) > updateInterval) {
+
                 var updateElapsed = (currentDateUpdate - this.lastDateUpdate);
+                this.lastDateUpdate = currentDateUpdate;
+
                 if (updateElapsed > maxUpdateElapsed) { updateElapsed = maxUpdateElapsed; }
                 var scaledElapsed = (updateElapsed / 1000) * (24 * 2);  // 24 * 2 = 48x faster (1 day = 30 min)
-                if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
+                //if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
                 this.viewerState.positionDate.setSeconds(this.viewerState.positionDate.getSeconds() + scaledElapsed);
+                this.viewerState.positionDateSeconds = this.viewerState.positionDate / 1000;
 
-                this.lastDateUpdate = currentDateUpdate;
                 this.lightSetupFromDatePos();
             }
 
         }
+
+        //this.skybox.computeWorldMatrix();  // only needed if scene.freezeActiveMeshes is true
 
     }
 
@@ -1043,6 +1117,7 @@ class SceneViewer {
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
         const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
         const pickResult = this.scene.pickWithRay(ray);
+        //const pickResult = null;
         if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
 
             if (pickResult.pickedMesh.metadata && pickResult.pickedMesh.metadata.gltf && pickResult.pickedMesh.metadata.gltf.extras && pickResult.pickedMesh.metadata.gltf.extras['osm:name']) {
@@ -1210,6 +1285,15 @@ class SceneViewer {
     }
 
     updateRenderPipeline() {
+
+        this.scene.postProcessesEnabled = this.viewerState.scenePostprocessingEnabled;
+
+        if (!this.viewerState.scenePostprocessingEnabled) {
+            return;
+        }
+    }
+
+    initRenderPipeline() {
         // Postprocess
         // The default pipeline applies other settings, we'd better off using Bloom independently if possible
         // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
@@ -1461,6 +1545,7 @@ class SceneViewer {
 
 
         //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
+        //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         //BABYLON.Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
 
         if (this.skybox && this.skybox.material && this.skybox.material.reflectionTexture) {
@@ -1512,7 +1597,16 @@ class SceneViewer {
                 }
                 //lampMat.freeze();
             }
-
+        }
+        if ('LightRed' in this.catalog_materials) {
+            let lampMatOn = sunlightAmountNorm > 0.2;  // 0.2 is more logical, 0.1 exagerates the change
+            let lampMat = this.catalog_materials['LightRed'];
+            if (lampMatOn !== this._previousLampPatOn) {
+                this._previousLampPatOn = lampMatOn;
+                lampMat.unfreeze();
+                lampMat.emissiveColor = lampMatOn ? BABYLON.Color3.Black() : new BABYLON.Color3(255 / 255, 0 / 255, 0 / 255);
+                //lampMat.freeze();
+            }
         }
 
 
@@ -1524,12 +1618,36 @@ class SceneViewer {
         alert('Reload the viewer for changes to take effect.');
     }
 
+    scenePostprocessingSetEnabled(value) {
+        this.viewerState.scenePostprocessingEnabled = value;
+        //localStorage.setItem('dddScenePostprocessingSetEnabled', value);
+        //alert('Reload the viewer for changes to take effect.');
+
+        this.updateRenderPipeline();
+    }
+
+
+
     /**
     */
     loadTextures() {
-        if (this.viewerState.sceneTextureSet !== null) {
-            this.loadCatalog('/assets/catalog_materials-' + this.viewerState.sceneTextureSet + '.glb', true);
+
+        let texturesConfig = this.viewerState.dddConfig.sceneMaterials.filter(item => item.value === this.viewerState.sceneTextureSet)[0];
+
+        if (texturesConfig.textures !== null) {
+            this.loadCatalog('/assets/catalog_materials-' + texturesConfig.textures + '.glb', true);
         }
+
+        if (texturesConfig.splatmap !== null) {
+            this.useSplatMap = true;
+            let atlasTextureUrl = "/assets/splatmap-textures-atlas-" + texturesConfig.splatmap + ".png";
+            let atlasNormalsTextureUrl = "/assets/splatmap-textures-atlas-normals-" + texturesConfig.splatmap + ".png";
+            this.splatmapAtlasTexture = new BABYLON.Texture(atlasTextureUrl, this.scene,  false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR); // , BABYLON.Texture.NEAREST_SAMPLINGMODE);
+            this.splatmapAtlasNormalsTexture = new BABYLON.Texture(atlasNormalsTextureUrl, this.scene, false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR);
+        } else {
+            this.useSplatMap = false;
+        }
+
     }
 
     sceneTextureSet(value) {
@@ -1539,7 +1657,7 @@ class SceneViewer {
         if (value !== null) {
             this.loadTextures();
         }
-        alert('Changes will apply when the app is reloaded.');
+        alert('Reload the app to apply changes.');
     }
 
 }

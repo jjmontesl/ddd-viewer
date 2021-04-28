@@ -31,7 +31,7 @@
                             </ul>
                             <ul>
                                 <li><b>SHIFT</b> key: change movement speed.</li>
-                                <li><b>Keypad +/-</b>: change time (affects light direction).</li>
+                                <li><b>N/M</b>: change time (affects light).</li>
                             </ul>
                         </p>
                         <p>
@@ -45,9 +45,9 @@
                             <b>NOTE this software is in development stage.</b> Loading and generation times vary
                             depending on server load. <b>Performance degrades after loading a few tiles</b>
                             (try reloading or switching to 2D and back to 3D to restore performance). <b>Camera
-                            may appear far below or above surface</b> at times during loading. If this happens,
+                            may appear far above surface</b> at times during loading. If this happens,
                             try switching to <i>walk</i> mode as it will set the camera above the ground.
-                            Orthophotos layer may not be available.
+                            Orthophotos layers may not be available.
                         </p>
 
 
@@ -73,25 +73,34 @@
                         <p>
                             DDD is an Open Source library, looking for contributors. If you are interested in the development of DDD or
                             this HTML5 viewer, please head over to the GitHub site and get in contact with the developer community
-                            or contact me.
+                            or <a href="https://twitter.com/jjmontes" target="_blank">contact me</a>.
                         </p>
 
                         <h3><!--Patreon / Buymeacoffee-->Author</h3>
 
                         <p>
-                            This site is run by <a href="https://twitter.com/jjmontes" target="_blank">Jose Juan Montes</a>.
                             I have developed the viewer and software used for 3D generation, and I also
                             maintain this demostration server. You can contribute to the codebase
                             of the generator (DDD), this viewer, or to the OpenStreetMap database.
                         </p>
                         <p>
-                            You can also <a href="https://twitter.com/jjmontes" target="_blank">follow Jose Juan Montes on Twitter</a> to stay up to date.
+                            You can also <a href="https://twitter.com/jjmontes" target="_blank">follow on Twitter</a> to stay up to date.
                         </p>
 
                         <h3>Coverage</h3>
                         <p>
                              <center><i>Current Coverage (limited by disk space available for elevation data)</i></center>
                              <center><img src="/img/about-map.png" style="height: 300px;" /></center>
+                        </p>
+
+                        <h3>Copyright and Attribution</h3>
+
+                        <p>
+                            <ul>
+                                <li>Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap Contributors</a></li>
+                                <li>Textures by <a href="https://cc0textures.com/">CC0Textures</a></li>
+                                <!-- li>Icons by <a href="https://cc0textures.com/"></a></li> -->
+                            </ul>
                         </p>
 
                     </div>
@@ -122,6 +131,12 @@ export default {
       title: this.$store.getters.appTitle,
       titleTemplate: `${this.$t('about.TITLE')} - %s`
     }
-  }
+  },
+  mounted() {
+
+    this.$emit('dddViewerMode', null);
+
+  },
+
 }
 </script>

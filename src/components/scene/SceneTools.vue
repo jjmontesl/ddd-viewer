@@ -13,12 +13,13 @@
 
                     <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" to="/3d" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
 
-                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">Tools</v-card-title>
+                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">Config</v-card-title>
 
                     <div style="height: 20px;"> </div>
 
                     <v-card-text class="text-left">
-                           <v-slider v-model="sceneTime" @change="sceneTimeChange" step="0.1" min="0" max="24" thumb-label ticks label="Hour (Day/Night)"></v-slider>
+                           <div style="text-align: right; margin-bottom: 0px;"><i>You can also use N and M keys to shift time</i></div>
+                           <v-slider v-model="sceneTime" @change="sceneTimeChange" style="margin-top: 0px;" step="0.1" min="0" max="24" thumb-label ticks label="Hour (Day/Night)"></v-slider>
                     </v-card-text>
 
                     <!--
@@ -43,6 +44,9 @@
                         <v-checkbox label="Items" disabled style="margin-top: 2px;"></v-checkbox>
                         -->
                         <v-checkbox v-model="viewerState.sceneShadowsEnabled" @change="sceneShadowsEnabledChange" label="Shadows" style="margin-top: 2px;"></v-checkbox>
+                        <!--
+                        <v-checkbox v-model="viewerState.scenePostprocessingEnabled" @change="scenePostprocessingEnabledChange" label="Postprocessing" style="margin-top: 2px;"></v-checkbox>
+                        -->
                     </v-card-text>
 
                     <v-card-text class="text-left">
@@ -95,6 +99,8 @@ export default {
     window.addEventListener('resize', this.resize);
     this.resize();
 
+    window.addEventListener('beforeunload', this.beforeUnload);
+
     this.$emit('dddViewerMode', 'scene');
     this.setMesh(this.viewerState.selectedMesh);
 
@@ -105,6 +111,10 @@ export default {
 
     window.dispatchEvent(new Event('resize'));
 
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resize);
+    window.removeEventListener('beforeunload', this.beforeUnload);
   },
 
   metaInfo() {
@@ -128,13 +138,6 @@ export default {
       nodeGetter: () => { return this.viewerState.selectedMesh; },
 
       sceneTime: this.viewerState.positionDate.getHours(),
-
-      textureModeItems: [
-          //{value: 'minimal', text: 'Minimal'},
-          {value: 'default256', text: 'Default Set (256x256)'},
-          {value: 'default512', text: 'Default Set (512x512)'},
-          {value: null, text: 'None'},
-      ],
 
       skyBoxItems: [
           {value: '/textures/TropicalSunnyDay', text: 'Sunny'},
@@ -163,6 +166,16 @@ export default {
         for (let key in this.dddConfig.sceneGroundLayers) {
             result.push({value: key, text: this.dddConfig.sceneGroundLayers[key].text},)
         }
+        return result;
+    },
+
+    textureModeItems: function() {
+        let result = [];
+        for (let conf of this.dddConfig.sceneMaterials) {
+            result.push({value: conf.value, text: conf.text})
+        }
+        //result.push({value: 'divider1', divider: true});
+        //result.push({value: null, text: 'None'});
         return result;
     },
 
@@ -208,6 +221,12 @@ export default {
         this.setMesh(this.viewerState.selectedMesh);
         //if (! this.metadata['_updated']) {this.metadata['_updated'] = 0;}
         //this.metadata['_updated']++;
+    },
+    'viewerState.positionDateSeconds' () {
+        this.sceneTime = this.viewerState.positionDate.getHours() + this.viewerState.positionDate.getMinutes() / 60;
+        this.$forceUpdate();
+        //if (! this.metadata['_updated']) {this.metadata['_updated'] = 0;}
+        //this.metadata['_updated']++;
     }
   },
 
@@ -238,6 +257,9 @@ export default {
         el.style.minHeight = '' + (window.innerHeight - 38) + 'px';
       },
 
+      beforeUnload() {
+          //this.$router.push('/3d/' + this.getSceneViewer().positionString()).catch(()=>{});
+      },
 
 
       selectCameraOrbit() {
@@ -275,6 +297,9 @@ export default {
       sceneShadowsEnabledChange(value) {
           this.getSceneViewer().sceneShadowsSetEnabled(value);
       },
+      scenePostprocessingEnabledChange(value) {
+          this.getSceneViewer().scenePostprocessingSetEnabled(value);
+      },
 
       sceneTextureSetChange(value) {
           this.getSceneViewer().sceneTextureSet(value);
@@ -284,7 +309,8 @@ export default {
             let currentDate = this.viewerState.positionDate;
             currentDate.setHours(parseInt(value));
             currentDate.setMinutes(parseInt((value - parseInt(value)) * 60));
-            //this.viewerState.positionDate = currentDate;
+            this.viewerState.positionDate = currentDate;
+            this.viewerState.positionDateSeconds = this.viewerState.positionDate / 1000;
       }
 
   },

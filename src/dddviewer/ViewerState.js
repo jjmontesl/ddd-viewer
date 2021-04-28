@@ -25,6 +25,7 @@ class ViewerState {
     positionName = "";
 
     positionDate = new Date();
+    positionDateSeconds = this.positionDate / 1000;
 
 
 
@@ -40,6 +41,8 @@ class ViewerState {
 
     sceneShadowsEnabled = false;
 
+    scenePostprocessingEnabled = false;
+
     scenePickingEnabled = true;
 
     sceneViewModeShow = true;
@@ -53,7 +56,7 @@ class ViewerState {
     sceneEnvironmentProbe = 16;  // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
 
-    sceneTextureSet = "default256";
+    sceneTextureSet = "defaultsplat256";
 
     sceneGroundTextureOverride = null;
 

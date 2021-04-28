@@ -92,8 +92,8 @@ export default {
     canvas.addEventListener('keyup', (e) => { if (e.keyCode === 16) { that.cycleMoveSpeed(); } });
 
     let timeSkipIntervalSec = 30 * 60;
-    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 109) { that.cycleTime(-timeSkipIntervalSec); } });
-    canvas.addEventListener('keyup', (e) => { if (e.keyCode === 107) { that.cycleTime(timeSkipIntervalSec); } });
+    canvas.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'N') { that.cycleTime(-timeSkipIntervalSec); } });
+    canvas.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'M') { that.cycleTime(timeSkipIntervalSec); } });
 
     this._timeout = setTimeout(this.checkUpdateHref, 1500);
 
@@ -175,6 +175,7 @@ export default {
 
       cycleTime: function(seconds) {
             this.sceneViewer.viewerState.positionDate.setSeconds(this.sceneViewer.viewerState.positionDate.getSeconds() + seconds);
+            this.sceneViewer.viewerState.positionDateSeconds = this.sceneViewer.viewerState.positionDate / 1000;
             this.sceneViewer.lightSetupFromDatePos();
       },
 
