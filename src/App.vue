@@ -175,6 +175,15 @@ export default {
                 let matches = href.match(regexp);
                 //console.debug(matches);
 
+                if (! matches || matches.length < 3) {
+                    // Try last
+                    const dddLastPositionString = localStorage.getItem('dddLastPositionString');
+                    console.debug("Using last known position in this viewer: " + dddLastPositionString);
+                    matches = dddLastPositionString.match(regexp);
+                }
+
+                if (!matches) { return; }
+
                 if (matches.length >= 3) {
                     this.viewerState.positionWGS84 = [parseFloat(matches[2]),parseFloat(matches[1])];
                 }
@@ -197,7 +206,7 @@ export default {
 
                 }
             } catch(e) {
-                //console.debug("Error parsing location from href: " + e);
+                console.debug("Error parsing location from href: " + e);
             }
 
           //let positionWgs84 = this.getViewerState().positionWGS84;

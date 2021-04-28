@@ -630,10 +630,10 @@ class SceneViewer {
                 let key = metadata['ddd:material'];
 
                 if (key === "WaterBasicDaytime") {
-                    console.debug(mesh);
+                    //console.debug(mesh);
                     if (metadata['ddd:path'].startsWith('Catalog Group')) {
                         key = "WaterInstanced";
-                      }
+                    }
                 }
 
                 let mat = this.catalog_materials[key];

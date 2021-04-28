@@ -114,6 +114,8 @@ export default {
 
           if (posString !== null) {
 
+              localStorage.setItem('dddLastPositionString', posString);
+
               //this.$router.replace('/maps/' + posString);
               if (this.$route.name === 'sceneMain') {
                   this.$router.replace('/3d/' + posString).catch(()=>{});
