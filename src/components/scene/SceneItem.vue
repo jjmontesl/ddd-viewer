@@ -245,7 +245,14 @@ export default {
   ],
   watch: {
     '$route' () {
-        this.setMesh(this.getSceneViewer().selectedMesh);
+        //this.setMesh(this.getSceneViewer().selectedMesh);
+        let urlNodeId = this.$route.params.id;
+        if (urlNodeId !== this.getSceneViewer().viewerState.sceneSelectedMeshId) {
+            this.loading = true;
+            this.getSceneViewer().selectMeshById(urlNodeId);
+            this.setMesh(this.getSceneViewer().selectedMesh);
+        }
+
     },
     'viewerState.sceneSelectedMeshId' () {
         this.$forceUpdate();

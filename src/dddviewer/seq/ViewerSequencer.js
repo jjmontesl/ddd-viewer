@@ -1,6 +1,9 @@
 
 
+
 import * as BABYLON from 'babylonjs';
+import CameraMoveAnimationProcess from '@/dddviewer/seq/CameraMoveAnimationProcess.js';
+import DateTimeAnimationProcess from '@/dddviewer/seq/DateTimeAnimationProcess.js';
 
 export default class {
 
@@ -10,6 +13,8 @@ export default class {
     playing = false;
     currentTasks = [];
 
+    waitTime = 0.0;
+
     constructor(sceneViewer) {
 
         this.sceneViewer = sceneViewer;
@@ -18,6 +23,7 @@ export default class {
         this.playing = false;
         this.time = 0.0;
         this.index = 0;
+        this.waitTime = 0.0;
 
         this.currentTasks = [];
     }
@@ -28,74 +34,54 @@ export default class {
 
         this.time += deltaTime;
 
-        // Start all steps up to current time
-        while (this.index < this.seq.length && this.seq[this.index][0] < this.time) {
-            this.startTask(this.seq[this.index]);
+        if (this.waitTime > 0.0) {
+            this.waitTime -= deltaTime;
+            return;
+        }
+
+        // Run all possible steps
+        while (this.index < this.seq.length && this.waitTime <= 0.0) {
+            let step = this.seq[this.index];
             this.index++;
-        }
-
-        // Update all current steps
-        for (let task of this.currentTasks) {
-            this.updateTask(task);
-        }
-
-        // Remove finished steps
-        // TODO: Use a task class and mark itself as finished
-        this.currentTasks = this.currentTasks.filter((item) => { return (item[0] + item[2] > this.time); } );
-
-        if (this.index >= this.seq.length && this.currentTasks.length === 0) {
-            //this.playing = false;
-            //this.playing = true;
-            this.time = 0.0;
-            this.index = 0;
+            this.runStep(step);
         }
 
     }
 
-    startTask(step) {
+    runStep(step) {
 
-        console.debug("Starting Task: ", step);
+        console.debug("Running step: ", step);
 
-        if (step[1] === "move") {
-            this._move_start = this.sceneViewer.parsePositionString(this.sceneViewer.positionString());
-            this.currentTasks.push(step);
+        let command = step[0];
+
+        if (command === "m") {
+            let move_start = this.sceneViewer.parsePositionString(this.sceneViewer.positionString());
+            let move_end = this.sceneViewer.parsePositionString(step[1]);
+            let animTime = step[2];
+            let moveAnimationProcess = new CameraMoveAnimationProcess(move_start, move_end, animTime);
+            this.sceneViewer.processes.add(moveAnimationProcess);
+        } else if (command === "dt") {
+            let dtStart = this.sceneViewer.viewerState.positionDate;
+            console.debug(dtStart);
+            let dtEnd = new Date(dtStart);
+            console.debug(dtEnd);
+            dtEnd.setHours(parseInt(step[1].split(":")[0]))
+            dtEnd.setMinutes(parseInt(step[1].split(":")[1]))
+            console.debug(dtEnd);
+            let animTime = step[2];
+            let process = new DateTimeAnimationProcess(dtStart, dtEnd, animTime);
+            this.sceneViewer.processes.add(process);
+        } else if (command === "s") {
+            this.waitTime = step[1];
+        } else if (command === "u") {
+            let url = step[1];
+            this.sceneViewer.app.$router.push(url);
+        } else if (command === "goto") {
+            this.index = step[1];
         } else {
             // Unknown step type
+            console.debug("Invalid sequence step: ", step);
         }
-    }
-
-    updateTask(task) {
-        if (task[1] === "move") {
-            this.updateTaskMove(task);
-        } else {
-            // Unknown step type
-        }
-
-    }
-
-    updateTaskMove(task) {
-        // Update camera interpolating between last pos and current
-        let move_start = this._move_start;
-        let move_end = this.sceneViewer.parsePositionString(task[3]);
-
-        let interp_factor = (this.time - task[0]) / task[2];
-        if (interp_factor > 1.0) {
-            interp_factor = 1.0;
-        }
-
-        this.sceneViewer.viewerState.positionWGS84 = [BABYLON.Scalar.Lerp(move_start.positionWGS84[0], move_end.positionWGS84[0], interp_factor),
-                                                        BABYLON.Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], interp_factor)];
-        this.sceneViewer.viewerState.positionGroundHeight = BABYLON.Scalar.Lerp(move_start.positionGroundHeight, move_end.positionGroundHeight, interp_factor);
-        this.sceneViewer.viewerState.positionTilt = BABYLON.Scalar.Lerp(move_start.positionTilt, move_end.positionTilt, interp_factor);
-        this.sceneViewer.viewerState.positionHeading = BABYLON.Scalar.Lerp(move_start.positionHeading, move_end.positionHeading, interp_factor);
-
-        let positionScene = this.sceneViewer.wgs84ToScene(this.sceneViewer.viewerState.positionWGS84);
-        let position = new BABYLON.Vector3(positionScene[0], this.sceneViewer.viewerState.positionGroundHeight + this.sceneViewer.viewerState.positionTerrainElevation + 1, positionScene[2]);
-        let rotation = new BABYLON.Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-
-        this.sceneViewer.camera.position = position;
-        this.sceneViewer.camera.rotation = rotation;
-
     }
 
     play(seq) {

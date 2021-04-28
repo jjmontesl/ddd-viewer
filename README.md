@@ -12,6 +12,15 @@
 ## DDD Viewer Online
 
 
+## Sequences
+
+Sequences require a starting point in the URL. The sequence JSON itself can be encoded using:
+
+    cat trip-xxxx.json  | jq -c -M . | base64 -w0
+
+
+
+
 
 ## Installing
 

@@ -23,13 +23,16 @@ import SkyMaterialWrapper from '@/dddviewer/render/SkyboxMaterial.js';
 import LayerManager from '@/dddviewer/layers/LayerManager.js';
 import QueueLoader from '@/dddviewer/loading/QueueLoader.js';
 import ViewerSequencer from '@/dddviewer/seq/ViewerSequencer.js';
+import ViewerProcesses from '@/dddviewer/seq/ViewerProcesses.js';
 
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 
 class SceneViewer {
 
-    constructor(viewerState) {
+    constructor(viewerState, app) {
+
+        this.app = app;
 
         this.viewerState = viewerState;
 
@@ -72,6 +75,7 @@ class SceneViewer {
 
         // TODO: Sequencer would better belong to the app
         this.sequencer = new ViewerSequencer(this);
+        this.processes = new ViewerProcesses(this);
 
         this.selectedMesh = null;
 
@@ -983,6 +987,7 @@ class SceneViewer {
 
 
         this.sequencer.update(deltaTime);
+        this.processes.update(deltaTime);
         this.layerManager.update(deltaTime);
 
         this.viewerState.sceneFPS = this.engine.getFps().toFixed(1);
@@ -1197,6 +1202,34 @@ class SceneViewer {
             this.highlightMeshes = [];
             this.viewerState.sceneSelectedMeshId = null;
         }
+    }
+
+    findMeshById(meshId, node) {
+        let children = null;
+        if (node) {
+            let nodeUrlId = node.id.split("/").pop().replaceAll('#', '_');
+            if (nodeUrlId === meshId) {
+                return node;
+            }
+            children = node.getChildren();
+        } else {
+            children = this.scene.rootNodes;
+        }
+
+        for (let c of children) {
+            let result = this.findMeshById(meshId, c);
+            if (result !== null) { return result; }
+        }
+
+        return null;
+    }
+
+    selectMeshById(meshId) {
+
+        let mesh = null;
+        mesh = this.findMeshById(meshId);
+
+        this.selectMesh(mesh);
     }
 
     selectMesh(mesh) {
@@ -1497,7 +1530,6 @@ class SceneViewer {
         //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
 
         //console.debug(this.envReflectionProbe.cubeTexture.readPixels(0, 0));
-
         var times = SunCalc.getTimes(this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
 
         var sunriseStr = times.sunrise.getHours() + ':' + times.sunrise.getMinutes();

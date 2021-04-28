@@ -69,7 +69,7 @@ export default {
 
     const canvas = document.getElementById('ddd-scene');
 
-    this.sceneViewer = new SceneViewer(this.getViewerState());
+    this.sceneViewer = new SceneViewer(this.getViewerState(), this);
     this.setSceneViewer(this.sceneViewer);  // Set the reference to App so it can be accessed by other components
     this.sceneViewer.initialize(canvas);
     //this.getViewerState().sceneViewer = this.sceneViewer;  // Suspicious: setting sceneViewer as part of a Vue component?
