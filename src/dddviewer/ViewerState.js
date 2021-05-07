@@ -8,6 +8,8 @@ class ViewerState {
 
     dddConfig = null;
 
+    isMobile = null;
+
     positionTileZoomLevel = 9;
 
     positionWGS84 = [-8.726, 42.233]; // [0.0, 0.0];
@@ -26,6 +28,8 @@ class ViewerState {
 
     positionDate = new Date();
     positionDateSeconds = this.positionDate / 1000;
+
+    geolocationEnabled = false;
 
 
 
@@ -53,6 +57,8 @@ class ViewerState {
 
     sceneCameraWalkHeight = 2.0;
 
+    sceneViewportRescale = 1;
+
     sceneEnvironmentProbe = 16;  // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
 
@@ -60,7 +66,16 @@ class ViewerState {
 
     sceneGroundTextureOverride = null;
 
-    constructor(initialCoords) {
+    sceneTitleText = null;
+
+    constructor(initialCoords, isMobile) {
+
+        this.isMobile = isMobile || false;
+        if (this.isMobile) {
+            this.sceneViewportRescale = 2;
+            this.sceneTextureSet = "default256";
+        }
+
         this.positionWGS84 = initialCoords;
 
         const shadowsEnabled = localStorage.getItem('dddSceneShadowsEnabled');
@@ -69,9 +84,10 @@ class ViewerState {
         const textureSet = localStorage.getItem('dddSceneTextureSet');
         this.sceneTextureSet = textureSet ? JSON.parse(textureSet) : this.sceneTextureSet;
 
-        // Start at 10:00 AM always
+        // Start time
         this.positionDate.setHours(11);
         this.positionDate.setMinutes(0);
+
 
     }
 

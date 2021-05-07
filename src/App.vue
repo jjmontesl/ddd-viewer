@@ -33,6 +33,12 @@
 </template>
 
 <script>
+import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
+import proj4 from 'proj4';
+//import {register} from 'ol/proj/proj4';
+import * as olProj from 'ol/proj';
+import * as extent from 'ol/extent';
+
 import Toolbar from '@/components/core/Toolbar.vue'
 import Loading from '@/components/core/Loading.vue'
 //import Footer from '@/components/core/Footer.vue'
@@ -115,7 +121,7 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
-      viewerState: new ViewerState(this.dddConfig.defaultCoords),
+      viewerState: new ViewerState(this.dddConfig.defaultCoords, this.isMobile()),
       //viewerState: null,
     }
   },
@@ -164,6 +170,14 @@ export default {
 
       },
 
+    isMobile() {
+        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+
       parseHref() {
           //console.debug("Route: " + window.location.href);
 
@@ -173,20 +187,37 @@ export default {
                 let href = window.location.href;
                 const regexp = /.*@([0-9.\-]+),([0-9.\-]+)((,(([0-9.\-]+)[ayhtz]))*).*/;
                 let matches = href.match(regexp);
-                //console.debug(matches);
+                const regexpTile = /.*@([0-9\-]+),([0-9\-]+)t((,(([0-9.\-]+)[ayhtz]))*).*/;
+                let matchesTile = href.match(regexpTile);
 
-                if (! matches || matches.length < 3) {
-                    // Try last
-                    const dddLastPositionString = localStorage.getItem('dddLastPositionString');
-                    console.debug("Using last known position in this viewer: " + dddLastPositionString);
-                    matches = dddLastPositionString.match(regexp);
+                let tileCoords = null;
+                //console.debug(matchesTile);
+
+                if ((! matches || matches.length < 3) || (matchesTile)) {
+                    // Try tile
+
+                    if (matchesTile && matchesTile.length >= 3) {
+                        //console.debug("Loading position from tile grid coords.");
+                        matches = matchesTile;
+                        tileCoords = [17, parseInt(matches[1]), parseInt(matches[2])];
+                    } else {
+                        // Try last
+                        const dddLastPositionString = localStorage.getItem('dddLastPositionString');
+                        //console.debug("Using last known position in this viewer: " + dddLastPositionString);
+                        matches = dddLastPositionString.match(regexp);
+                    }
                 }
 
                 if (!matches) { return; }
 
-                if (matches.length >= 3) {
+                if (matches.length >= 3 && tileCoords !== null) {
+                    //console.debug(tileCoords);
+                    this.viewerState.positionWGS84 = this.positionFromTile(tileCoords);
+                    this.viewerState.positionTileZoomLevel = tileCoords[0];
+                } else if (matches.length >= 3) {
                     this.viewerState.positionWGS84 = [parseFloat(matches[2]),parseFloat(matches[1])];
                 }
+
                 if (matches.length >= 4) {
                     for (let match of matches[3].split(",")) {
                         if (match === "") { continue; }
@@ -206,11 +237,21 @@ export default {
 
                 }
             } catch(e) {
-                console.debug("Error parsing location from href: " + e);
+                //console.debug("Error parsing location from href: " + e);
             }
 
           //let positionWgs84 = this.getViewerState().positionWGS84;
       },
+
+      positionFromTile(tileCoords) {
+        const tileGrid = createXYZ({
+              extent: extentFromProjection('EPSG:3857'),
+        });
+        let tileExtent = tileGrid.getTileCoordExtent(tileCoords);
+        let tileCenter = extent.getCenter(tileExtent);
+        let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+        return tileCenterWGS84;
+      }
   }
 }
 </script>

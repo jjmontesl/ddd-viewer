@@ -6,7 +6,11 @@
         </canvas>
 
         <div class="ddd-scene-overlay" id="ddd-scene-overlay" style="width: 100%; height: 100%; position: absolute; z-index: 2; top: 0px; pointer-events: none;">
+
+            <div v-if="myViewerState.sceneTitleText" id="ddd-scene-overlay-text-title" style="white-space: pre-line; line-height: 130%; text-align: center; font-size: 150%; color: white; z-index: 10; bottom: 20%; width: 100%; font-outline: 1px black; position: absolute; text-shadow: 1px 1px 2px black, 0 0 1em blue, 0 0 0.2em blue;"><h2>{{myViewerState.sceneTitleText}}</h2></div>
+
             <SceneViewMode v-if="myViewerState.sceneVisible && myViewerState.sceneViewModeShow" :viewerState="myViewerState" />
+
         </div>
 
     </div>
@@ -49,7 +53,7 @@ export default {
       'myViewerState': function() {return this.getViewerState();}
   },
   beforeDestroy() {
-      console.debug("Disposing BabylonJS scene.");
+      //console.debug("Disposing BabylonJS scene.");
       window.removeEventListener('resize', this.resize);
       clearTimeout(this._timeout);
       this.sceneViewer.dispose();
@@ -57,7 +61,7 @@ export default {
       this.sceneViewer = null;
   },
   mounted() {
-    console.debug('Creating 3D scene.');
+    //console.debug('Creating 3D scene.');
 
     this.sceneParent = this.$el; // .querySelector('.ddd-scene-parent');
 
@@ -99,7 +103,8 @@ export default {
 
     // Resize initially
     //setTimeout(() => { this.resize(); }, 100);
-    this.sceneViewer.engine.resize();
+    //this.sceneViewer.engine.resize();
+    this.resize();
 
   },
 
@@ -136,11 +141,15 @@ export default {
 
       resize: function() {
 
-        console.debug("Resizing DDDScene.");
+        //console.debug("Resizing DDDScene.");
         if (!this.sceneParent) { return; }
 
         let panel = document.querySelector('.ddd-front .row div');
         //let panel = this.$refs.dddViewPanel;
+
+        // Do not resize (overlay):
+        let overlay = (this.sceneViewer.sequencer.playing);
+        //if (overlay) { return; }
 
 
         let width = null;
@@ -149,15 +158,25 @@ export default {
             width = this.sceneParent.parentNode.clientWidth;
             height = this.sceneParent.parentNode.clientHeight;
         } else {
-            width = document.body.clientWidth - (panel ? panel.offsetWidth : 0);
+            width = document.body.clientWidth - ((panel && !overlay) ? panel.offsetWidth : 0);
             height = window.innerHeight - 40;
         }
 
         let el = this.sceneParent.querySelector('.ddd-scene');
         if (el) {
             //console.debug("Resizing scene: " + width + " " + height);
-            el.style.height = height + "px";
-            el.style.width = width + "px";
+            //el.style.height = parseInt(height / this.myViewerState.sceneViewportRescale) + "px";
+            //el.style.width = parseInt(width / this.myViewerState.sceneViewportRescale) + "px";
+            //el.width = parseInt(width / this.myViewerState.sceneViewportRescale);
+            //el.height = parseInt(height / this.myViewerState.sceneViewportRescale);
+            //this.sceneViewer.engine.resize(true);
+            el.style.height = (height) + "px";
+            el.style.width = (width) + "px";
+
+            el.width = width;
+            el.height = height;
+            this.sceneViewer.engine.setHardwareScalingLevel(this.myViewerState.sceneViewportRescale);
+            this.sceneViewer.engine.resize();
         }
 
         let elOverlay = this.sceneParent.querySelector('.ddd-scene-overlay');
@@ -168,11 +187,11 @@ export default {
             elOverlay.style.width = width + "px";
         }
 
-        this.sceneViewer.engine.resize();
+        //this.sceneViewer.engine.resize(true);
       },
 
       addLayer: function(layer) {
-          console.debug("Adding layer: " + layer);
+          //console.debug("Adding layer: " + layer);
       },
 
       cycleTime: function(seconds) {
@@ -206,13 +225,12 @@ export default {
             this.$router.push('/3d/pos/').catch(()=>{});
             return;
         } else {
-            //that.$router.push('/3d/item/test/').catch(()=>{});
-
-            this.sceneViewer.selectMesh(pickResult.pickedMesh);
 
             // WARN: TODO: this transformation is done in other places
             let meshName = pickResult.pickedMesh.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
             this.$router.push('/3d/item/' + meshName + '/' + this.sceneViewer.positionString()).catch(()=>{});
+
+            this.sceneViewer.selectMesh(pickResult.pickedMesh, true);
 
             return;
         }

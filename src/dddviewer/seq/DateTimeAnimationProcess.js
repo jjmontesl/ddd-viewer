@@ -14,7 +14,7 @@ export default class {
 
         this.time = 0.0;
 
-        console.debug("Datetime anim from " + dtStart + " to " + dtEnd);
+        //console.debug("Datetime anim from " + dtStart + " to " + dtEnd);
     }
 
     update(deltaTime) {
@@ -30,6 +30,7 @@ export default class {
         let interpTime = (this.dtEnd / 1000 - this.dtStart / 1000) * interp_factor;
 
         sceneViewer.viewerState.positionDate = new Date(this.dtStart.getTime() + interpTime * 1000);
+        sceneViewer.lightSetupFromDatePos();
 
         if (interp_factor >= 1.0) {
             this.processes.remove(this);

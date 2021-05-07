@@ -10,7 +10,7 @@
   "scripts": {
     "generate-build-version": "node generate-build-version",
     "serve": "vue-cli-service serve",
-    "serve-pub-https": "vue-cli-service serve --public dddosm.yourcityracing.com:8080 --https",
+    "serve-pub-https": "vue-cli-service serve --public 192.168.0.14:8080 --https",
     "build": "npm run generate-build-version && vue-cli-service build",
     "format": "prettier --write --config .prettierrc \"**/*.js\"",
     "lint": "vue-cli-service lint --fix",
@@ -50,6 +50,7 @@
     "vee-validate": "^3.3.0",
     "vue": "^2.6.11",
     "vue-analytics": "^5.22.1",
+    "vue-browser-geolocation": "^1.8.0",
     "vue-country-flag": "^2.0.1",
     "vue-gtag": "^1.11.0",
     "vue-i18n": "^8.17.3",

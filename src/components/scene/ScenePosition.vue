@@ -15,6 +15,7 @@
                     <!--<div><b>TMS XYZ:</b> </div>-->
 
                     <div style="height: 5px;"></div>
+                    <div><b>Heading:</b> {{ parseFloat(viewerState.positionHeading).toFixed(1) }}</div>
                     <div><b>Altitude MSL:</b> {{ parseFloat(viewerState.positionScene[1]).toFixed(1) }} <span style="color: gray;">m</span></div>
                     <div><b>Altitude Ground:</b> {{ parseFloat(viewerState.positionGroundHeight).toFixed(1) }} <span style="color: gray;">m</span></div>
                     <div><b>Terrain Height:</b> {{ (parseFloat(viewerState.positionScene[1]) - parseFloat(viewerState.positionGroundHeight)).toFixed(0) }} <span style="color: gray;">m</span></div>

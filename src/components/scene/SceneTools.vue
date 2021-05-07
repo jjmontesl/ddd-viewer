@@ -13,7 +13,7 @@
 
                     <v-btn style="position: absolute; z-index: 5; right: 5px; margin-top: 15px;" to="/3d" class="mx-2" fab dark x-small color="primary"><v-icon dark>mdi-close</v-icon></v-btn>
 
-                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">Config</v-card-title>
+                    <v-card-title style="text-align: left; word-break: break-word; width: 95%;">Settings</v-card-title>
 
                     <div style="height: 20px;"> </div>
 
@@ -58,7 +58,7 @@
                             <div><a :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
                             <div><a :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
                             -->
-                            <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
+                            <div v-if="viewerState.dddConfig.showDevelLinks"><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
 

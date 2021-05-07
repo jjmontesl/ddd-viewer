@@ -97,9 +97,12 @@
 
                         <p>
                             <ul>
-                                <li>Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap Contributors</a></li>
-                                <li>Textures by <a href="https://cc0textures.com/">CC0Textures</a></li>
-                                <!-- li>Icons by <a href="https://cc0textures.com/"></a></li> -->
+                                <li>Map Data: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap Contributors</a></li>
+                                <!--<li>Elevation Data:</li>-->
+                                <li>Textures: <a href="https://cc0textures.com/">CC0Textures</a></li>
+                                <li>Vector Icons: <a href="http://fontawesome.com/">FontAwesome</a></li>
+                                <li>Graphic Engine: <a href="https://www.babylonjs.com/">BabylonJS</a></li>
+                                <li>3D OSM Generation: <a href="https://github.com/jjmontesl/ddd"></a></li>
                             </ul>
                         </p>
 

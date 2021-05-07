@@ -18,6 +18,14 @@ Sequences require a starting point in the URL. The sequence JSON itself can be e
 
     cat trip-xxxx.json  | jq -c -M . | base64 -w0
 
+## Running in development
+
+	npm run serve
+
+or
+
+	npm run serve-pub-https
+
 
 
 

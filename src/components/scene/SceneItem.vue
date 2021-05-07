@@ -19,7 +19,11 @@
 
                     <OSMImage v-if="imageHref" :imageUrl="imageHref" />
 
-                    <v-card-text class="text-left">
+                    <v-card-text v-if="showJSON" class="text-left">
+                        <pre style="font-size: 80%; line-height: 100%;">{{ jsonMetadata }}</pre>
+                    </v-card-text>
+
+                    <v-card-text v-if="!showJSON" class="text-left">
                         <div>
                             <!-- <h3>Attributes</h3> -->
 
@@ -53,6 +57,9 @@
                             </tr>
                             </tbody>
                             </v-simple-table>
+
+                            <div style="text-align: right;"><a @click="showJSON = !showJSON;">JSON View</a></div>
+
                         </div>
                     </v-card-text>
 
@@ -62,7 +69,7 @@
                             <div><a v-if="osmLink" :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
                             <div><a v-if="osmchaLink" :href="osmchaLink" target="_blank">OSMCha (Change Analyzer)</a></div>
                             <div><a v-if="mapillaryLink" :href="mapillaryLink" target="_blank">Mapillary Picture</a></div>
-                            <div><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
+                            <div v-if="viewerState.dddConfig.showDevelLinks"><a :href="sceneLinkGoogleMaps" target="_blank">Google Maps View</a></div>
                         </div>
                     </v-card-text>
 
@@ -118,8 +125,9 @@ import NodeHierarchy from '@/components/scene/NodeHierarchy.vue';
 export default {
   mounted() {
 
-
     this.$emit('dddViewerMode', 'scene');
+
+    this.metadata = {};
 
     if (this.getSceneViewer()) {
 
@@ -127,13 +135,18 @@ export default {
 
         if (! (this.getSceneViewer().selectedMesh)) {
             let urlNodeId = this.$route.params.id;
-            this.getSceneViewer().viewerState.sceneSelectedMeshId = urlNodeId;
+            //this.getSceneViewer().viewerState.sceneSelectedMeshId = urlNodeId;
+            this.getSceneViewer().selectMeshById(urlNodeId);
         }
     }
 
     window.addEventListener('resize', this.resize);
     this.resize();
 
+  },
+
+  beforeDestroy() {
+    this.getSceneViewer().deselectMesh();
   },
 
   metaInfo() {
@@ -147,18 +160,21 @@ export default {
   ],
   data() {
     return {
-      //name: this.$store.state.auth.user.name,
-      //showVerifyDialog: !this.$store.state.verify.emailVerified
-      //mesh: null,
-      nodeId: this.$route.params.id,
+      nodeId: null,  // currently this is the nodeId in the URL (last part with # replaced)
       nodeName: null,
       metadata: {},
       loading: true,
       nodeGetter: () => { return (this.viewerState.sceneSelectedMeshId ? this.getSceneViewer().selectedMesh : null); },
+      showJSON: false,
     }
   },
   computed: {
-    sortedMetadata: function () {
+    jsonMetadata: function () {
+      this.viewerState.sceneSelectedMeshId;
+      this.$route;  // force dependency on property
+      return JSON.stringify(this.metadata, null, 2);
+    },
+    sortedMetadata: function() {
       this.viewerState.sceneSelectedMeshId;
       this.$route;  // force dependency on property
       let keys = Object.keys(this.metadata);
@@ -247,9 +263,9 @@ export default {
     '$route' () {
         //this.setMesh(this.getSceneViewer().selectedMesh);
         let urlNodeId = this.$route.params.id;
-        if (urlNodeId !== this.getSceneViewer().viewerState.sceneSelectedMeshId) {
+        if (urlNodeId !== this.nodeId) {
             this.loading = true;
-            this.getSceneViewer().selectMeshById(urlNodeId);
+            this.getSceneViewer().selectMeshById(urlNodeId, ! this.getSceneViewer().sequencer.playing);
             this.setMesh(this.getSceneViewer().selectedMesh);
         }
 
@@ -273,6 +289,7 @@ export default {
       setMesh(mesh) {
           //this.mesh = mesh;
           if (!mesh) { return; }
+          this.nodeId = this.getSceneViewer().viewerState.sceneSelectedMeshId.split("/").pop().replaceAll('#', '_');
           this.loading = false;
           this.nodeName = mesh.id.split("/").pop().replaceAll("_", " ");
           if (mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras) {
@@ -283,6 +300,8 @@ export default {
           }
           this.nodeGetter = () => { return this.getSceneViewer().selectedMesh; };
           //console.debug("Scene Item setMesh called.");
+
+          this.resize();
       },
 
       resize() {
@@ -295,11 +314,11 @@ export default {
         // Sometimes seen: https://www.mapillary.com/map/im/eiHLqwNJWAgjrp1tEDduUA
           if (!value) { return null; }
           let code = value;
-          console.debug(code);
+          //console.debug(code);
           if (value.indexOf("/map/im/") > 0) {
               const regex = /^.*\/map\/im\/([^\/?]+).*$/gm;
               const m = regex.exec(value);
-              console.debug(m);
+              //console.debug(m);
               code = m[1];
           }
           return code;

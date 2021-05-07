@@ -135,6 +135,8 @@ class SceneViewer {
         water.useReflectionOverAlpha = true;
 
         water.colorBlendFactor = 0.2;
+        water.renderingGroupId = 3;
+        this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
         //water.addToRenderList(ground);
 
         //let waterOcean = createOceanMaterial(this.scene);
@@ -316,6 +318,8 @@ class SceneViewer {
         this.scene.autoClearDepthAndStencil = false; // Depth and stencil
         this.scene.blockMaterialDirtyMechanism = true;
 
+        this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);  // For objects in front of layer 0 (buildings and instances)
+
     }
 
     loadSkybox(baseUrl) {
@@ -337,6 +341,7 @@ class SceneViewer {
             var skyboxMaterial = new SkyMaterialWrapper(this.scene).material;
 
             skybox.material = skyboxMaterial;
+            skybox.material.disableDepthWrite = true;
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
@@ -352,12 +357,15 @@ class SceneViewer {
             skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 
             skybox.material = skyboxMaterial;
+            skybox.material.disableDepthWrite = true;
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
         }
 
         if (this.skybox) {
+            this.skybox.renderingGroupId = 0;  // Seems needs to be rendered in group 0 for it to be applied to the reflections on water
+            this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
             this.envReflectionProbe.renderList.push(this.skybox);
             this.materialWater.addToRenderList(this.skybox);
         }
@@ -500,12 +508,14 @@ class SceneViewer {
                     var uvScale = 0.25;
 
                     if ((metadata['ddd:material'] === 'Roadline') ||
+                        (metadata['ddd:material'] === 'Roadmarks') ||
                         (metadata['ddd:material'] === 'Fence') ||
                         (metadata['ddd:material'] === 'TrafficSigns') ||
                         (metadata['ddd:material'] === 'RoadRailway') ||
                         (metadata['ddd:material'] === 'Flowers Blue') ||
                         (metadata['ddd:material'] === 'Flowers Roses') ||
-                        (metadata['ddd:material'] === 'Grass Blade')) {
+                        (metadata['ddd:material'] === 'Grass Blade') ||
+                        (metadata['ddd:material'] === 'Grass Blade Dry')) {
                         uvScale = 1.0;
                     }
                     if ((metadata['ddd:material'] === 'Fence')) {
@@ -539,11 +549,12 @@ class SceneViewer {
                     }
                     */
 
+                    // Detail map
                     mesh.material.detailMap.texture = this.textureDetailSurfaceImp;
                     mesh.material.detailMap.texture.uScale = 1 / 256;
                     mesh.material.detailMap.texture.vScale = 1 / 256;
                     mesh.material.detailMap.isEnabled = true;
-                    mesh.material.detailMap.diffuseBlendLevel = 0.2; // between 0 and 1
+                    mesh.material.detailMap.diffuseBlendLevel = 0.2;
                     //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                     //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
 
@@ -589,9 +600,11 @@ class SceneViewer {
         if (!('_splatmapMaterial' in root) && this.useSplatMap && this.viewerState.sceneTextureSet && this.viewerState.sceneTextureSet.indexOf("default") >= 0) {
             if (('metadata' in mesh) && ('tileCoords' in mesh.metadata)) {
                 let coords = root.metadata['tileCoords'];
-                console.debug("Creating splat material for: ", coords);
+                //console.debug("Creating splat material for: ", coords);
 
-                var splatmapUrl = "http://localhost:8000/cache/ddd_http/17/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
+                const tileUrlBase = this.viewerState.dddConfig.tileUrlBase;
+                const splatmapUrl = tileUrlBase + "17" + "/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png"
+
                 var splatmapTexture = new BABYLON.Texture(splatmapUrl, this.scene);
 
                 var matwrapper = new TerrainMaterialWrapper(this, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture);
@@ -670,13 +683,14 @@ class SceneViewer {
                      metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
                      metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' || metadata['ddd:material'] === 'Rock' ||
                      (metadata['ddd:material'] === 'WayPedestrian' && metadata['ddd:area:type'] !== 'stairs') ||
-                     metadata['ddd:material'] === 'Asphalt')) {
+                     metadata['ddd:material'] === 'Wetland' || metadata['ddd:material'] === 'Asphalt')) {
 
                     if (mesh.material && mesh.material !== root._splatmapMaterial) {
                         mesh.material.dispose();
                     }
 
                     mesh.material = root._splatmapMaterial;
+                    root._splatmapMaterial.renderingGroupId = 1;
 
                 } else if ((key in this.catalog_materials)) {  // && mesh.material
 
@@ -1200,6 +1214,7 @@ class SceneViewer {
                   mesh.dispose();
             }
             this.highlightMeshes = [];
+            this.selectedMesh = null;
             this.viewerState.sceneSelectedMeshId = null;
         }
     }
@@ -1224,15 +1239,15 @@ class SceneViewer {
         return null;
     }
 
-    selectMeshById(meshId) {
+    selectMeshById(meshId, highlight) {
 
         let mesh = null;
         mesh = this.findMeshById(meshId);
 
-        this.selectMesh(mesh);
+        this.selectMesh(mesh, highlight);
     }
 
-    selectMesh(mesh) {
+    selectMesh(mesh, highlight) {
 
         this.deselectMesh();
 
@@ -1242,28 +1257,30 @@ class SceneViewer {
             //this.viewerState.selectedMesh.showBoundingBox = true;
             //console.debug(this.viewerState.selectedMesh.metadata.gltf.extras);
 
-            // Highlight
-            //that.highlightLayer.addMesh(pickResult.pickedMesh, BABYLON.Color3.White()); // , true);
-            //pickResult.pickedMesh.material = that.materialHighlight;
-            //pickResult.pickedMesh.material = that.materialGrass;
+            if (highlight) {
+                // Highlight
+                //that.highlightLayer.addMesh(pickResult.pickedMesh, BABYLON.Color3.White()); // , true);
+                //pickResult.pickedMesh.material = that.materialHighlight;
+                //pickResult.pickedMesh.material = that.materialGrass;
 
-            // Prepare the wireframe mesh
-            // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
-            let highlightClone = mesh.clone();
+                // Prepare the wireframe mesh
+                // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
+                let highlightClone = mesh.clone();
 
-            // Iterate clone recursively to set highlight material to all submeshes
-            let that = this;
-            const setHighlightRecursively = function(submesh) {
-                submesh.material = that.materialHighlight;
-                for (let mc of submesh.getChildren()) {
-                    setHighlightRecursively(mc);
+                // Iterate clone recursively to set highlight material to all submeshes
+                let that = this;
+                const setHighlightRecursively = function(submesh) {
+                    submesh.material = that.materialHighlight;
+                    for (let mc of submesh.getChildren()) {
+                        setHighlightRecursively(mc);
+                    }
                 }
-            }
-            setHighlightRecursively(highlightClone);
+                setHighlightRecursively(highlightClone);
 
-            //highlightClone.material = this.materialHighlight;
-            highlightClone.parent = mesh.parent;
-            this.highlightMeshes.push(highlightClone);
+                //highlightClone.material = this.materialHighlight;
+                highlightClone.parent = mesh.parent;
+                this.highlightMeshes.push(highlightClone);
+            }
 
         }
     }
@@ -1365,6 +1382,13 @@ class SceneViewer {
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
 
         /*
+        const ssao = new BABYLON.SSAO2RenderingPipeline('ssao', this.scene, {
+          ssaoRatio: .5,
+          blurRatio: 1
+        }, [ this.camera ], true)
+        */
+
+        /*
         var curve = new BABYLON.ColorCurves();
         curve.globalHue = 0;
         curve.globalDensity = 80;
@@ -1411,8 +1435,8 @@ class SceneViewer {
         camera.minZ = 1;
         camera.maxZ = 4500;
         //camera.touchMoveSensibility = 0.01;
-        camera.touchAngularSensibility = 500.0;
-        camera.angularSensibility = 500.0;
+        camera.touchAngularSensibility = 1000.0;
+        camera.angularSensibility = 1000.0;
         //camera.inertia = 0.10;
         camera.inertia = 0.5;
         camera.keysUp += [87];
@@ -1438,6 +1462,92 @@ class SceneViewer {
         this.walkMode = true;
         this.camera.inertia = 0.0;
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
+    }
+
+    geolocationPosition() {
+        //this.selectCameraFree();
+        //this.walkMode = true;
+        //this.camera.detachControl();
+
+        /*
+        this.app.$getLocation({enableHighAccuracy: true}).then(coordinates => {
+            console.log(coordinates);
+            let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
+            let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
+            //console.log(scenePos);
+            this.camera.position.x = scenePos[0];
+            this.camera.position.y = altitude;
+            this.camera.position.z = scenePos[2];
+
+            let heading = coordinates.heading;
+            if (heading) {
+                this.sceneViewer.viewerState.positionHeading = heading;
+                let rotation = new BABYLON.Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                this.camera.rotation = rotation;
+            }
+
+        });
+        */
+
+        this.viewerState.geolocationEnabled = true;
+
+        this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0, timeout: 20}).then(coordinates => {
+            //console.log(coordinates);
+            let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
+            let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
+            //console.log(scenePos);
+            this.camera.position.x = scenePos[0];
+            this.camera.position.y = altitude;
+            this.camera.position.z = scenePos[2];
+
+            /*
+            let heading = coordinates.heading;
+            if (heading !== null && !isNaN(heading)) {
+                this.viewerState.positionHeading = heading;
+                let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                this.camera.rotation = rotation;
+                //console.debug(heading);
+            }
+            */
+
+        });
+
+        // Compass
+        let isIOS = false;
+        if (isIOS) {
+            DeviceOrientationEvent.requestPermission().then((response) => {
+                if (response === "granted") {
+                      window.addEventListener("deviceorientation", handler, true);
+                } else {
+                      alert("Compass usage permission not granted.");
+                }
+            }).catch(() => alert("Compass not supported."));
+        } else {
+            window.addEventListener("deviceorientationabsolute", (e) => {
+                let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+                if (heading !== null && !isNaN(heading)) {
+
+                    heading = (heading) % 360.0;
+                    this.viewerState.positionHeading = heading;
+
+                    let tilt = e.webkitCompassTilt || Math.abs(e.beta - 360);
+                    if (tilt !== null && !isNaN(tilt)) {
+                        this.viewerState.positionTilt = (- tilt);
+                    }
+
+                    let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                    this.camera.rotation = rotation;
+                    //console.debug(heading);
+                }
+                //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
+            }, true);
+        }
+
+        // this.$clearLocationWatch(watchID)
+
+
+
+
     }
 
     selectCameraOrbit() {
@@ -1498,10 +1608,7 @@ class SceneViewer {
           this.viewerState.sceneGroundTextureOverride = key;
 
           let url = null;
-          const layers = {
-              'osm': {text: 'OpenStreetMap', url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"},
-              'es-pnoa': {text: 'ES - PNOA (Orthophotos)', url: "http://localhost:8090/wmts/ign_ortho/GLOBAL_WEBMERCATOR/{z}/{x}/{y}.jpeg"},
-          }
+          const layers = this.viewerState.dddConfig.sceneGroundLayers;
           if (layers[key]) {
               url = layers[key].url;
           }

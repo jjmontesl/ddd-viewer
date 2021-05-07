@@ -201,7 +201,7 @@ export default class {
               if (tile.status !== "loading" && !tile.node.isEnabled(false)) {
                   tile.parent = this.layerManager.sceneViewer.scene;
                   tile.node.setEnabled(true);
-                  tile.node.freezeWorldMatrix();
+                  //tile.node.freezeWorldMatrix();
               }
               return;
           } else {

@@ -45,7 +45,7 @@
                             <h3>Links</h3>
                             <div style="margin-left: 10px;">
                                 <div><a :href="mapLinkOSM" target="_blank">OpenStreetMap</a></div>
-                                <div><a :href="mapLinkGoogleMaps" target="_blank">Google Maps</a></div>
+                                <div v-if="viewerState.dddConfig.showDevelLinks"><a :href="mapLinkGoogleMaps" target="_blank">Google Maps</a></div>
                             </div>
                         </div>
                     </v-card-text>
@@ -112,7 +112,7 @@ export default {
     mapLinkGoogleMaps: function() {
         this.$route;  // force dependency on property
         let url = null;
-        console.debug(this.viewerState.dddMap);
+        //console.debug(this.viewerState.dddMap);
         if (this.viewerState.dddMap) {
             url = 'https://www.google.com/maps/' +  this.viewerState.dddMap.positionString();  // ?hl=es-ES
         }
@@ -132,7 +132,7 @@ export default {
   methods: {
 
       request3DTileGenerate: function() {
-          console.debug("Generate");
+          //console.debug("Generate");
           tiles.request3DTileGenerate(this.$route.params.name);
       },
 

@@ -27,23 +27,55 @@ export default {
     this.$emit('dddViewerMode', 'scene');
     //this.setMesh(this.viewerState.selectedMesh);
 
-    /*
-    if (!this.viewerState.selectedMesh) {
-        let urlNodeId = this.$route.params.id;
-        this.viewerState.sceneSelectedMeshId = urlNodeId;
+    if (this.$route.query.sb) {
+        let skybox = decodeURIComponent(this.$route.query.sb)
+        this.$nextTick(function () {
+            this.getSceneViewer().loadSkybox(skybox);
+        });
     }
-    */
 
-    // Get sequence JSON
-    let seqb64 = this.$route.query.s;
-    let seqJSON = atob(seqb64);
-    let seq = JSON.parse(seqJSON);
-
+    let seq = null;
     let that = this;
 
-    setTimeout(() => {
-        that.getSceneViewer().sequencer.play(seq);
-    }, 1000);
+    // Get sequence JSON
+    let seqUrl = this.$route.query.u;
+    if (seqUrl) {
+
+        // Fetch from URL
+        seqUrl = decodeURIComponent(seqUrl);
+        fetch(seqUrl).then((response) => {
+            response.json().then((data) => {
+                  //console.debug(data);
+                  seq = data;
+                  that.getSceneViewer().sequencer.play(seq);
+            })
+        })
+
+    } else {
+
+        // Parse from string
+        let seqb64 = this.$route.query.s;
+        if (seqb64) {
+            let seqJSON = atob(seqb64);
+            let bytes = new Uint8Array(seqJSON.length);
+            for (let i = 0; i < seqJSON.length; ++i) {
+                bytes[i] = seqJSON.charCodeAt(i);
+            }
+            let decoder = new TextDecoder('utf-8');
+            let decodedJSON = decoder.decode(bytes.buffer);
+
+            seq = JSON.parse(decodedJSON);
+
+            if (seq) {
+                setTimeout(() => {
+                    that.getSceneViewer().sequencer.play(seq);
+                }, 1000);
+            }
+
+        }
+    }
+
+
 
   },
 

@@ -10,6 +10,7 @@ import router from '@/router'
 import { store } from '@/store'
 import VuetifyConfirm from 'vuetify-confirm'
 import VueGtag from "vue-gtag";
+import VueGeolocation from 'vue-browser-geolocation';
 
 fetch("/dddconfig.json")  // process.env.BASE_URL +
   .then((response) => {
@@ -23,12 +24,18 @@ fetch("/dddconfig.json")  // process.env.BASE_URL +
 
         Vue.use(VuetifyConfirm, { vuetify })
 
-        Vue.use(VueGtag, {
-          config: { id: "G-C94KZNB3L3" },
-          //params: {
-          //    send_page_view: false
-          //}
-        });
+        if (config.analyticsTag) {
+            Vue.use(VueGtag, {
+              config: { id: config.analyticsTag  },
+              //params: {
+              //    send_page_view: false
+              //}
+            }, router);
+        }
+
+        if (config.geolocation) {
+            Vue.use(VueGeolocation);
+        }
 
         /*
         Vue.prototype.dddConfig = {

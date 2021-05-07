@@ -1,9 +1,10 @@
 
-
-
 import * as BABYLON from 'babylonjs';
 import CameraMoveAnimationProcess from '@/dddviewer/seq/CameraMoveAnimationProcess.js';
 import DateTimeAnimationProcess from '@/dddviewer/seq/DateTimeAnimationProcess.js';
+import TextAnimationProcess from '@/dddviewer/seq/TextAnimationProcess.js';
+
+/* eslint-disable no-console,  */
 
 export default class {
 
@@ -60,6 +61,7 @@ export default class {
             let animTime = step[2];
             let moveAnimationProcess = new CameraMoveAnimationProcess(move_start, move_end, animTime);
             this.sceneViewer.processes.add(moveAnimationProcess);
+
         } else if (command === "dt") {
             let dtStart = this.sceneViewer.viewerState.positionDate;
             console.debug(dtStart);
@@ -71,13 +73,27 @@ export default class {
             let animTime = step[2];
             let process = new DateTimeAnimationProcess(dtStart, dtEnd, animTime);
             this.sceneViewer.processes.add(process);
+
+        } else if (command === "t") {
+            let text = step[1];
+            let animTime = step[2];
+            let process = new TextAnimationProcess(text, animTime);
+            this.sceneViewer.processes.add(process);
+
         } else if (command === "s") {
             this.waitTime = step[1];
+
         } else if (command === "u") {
             let url = step[1];
-            this.sceneViewer.app.$router.push(url);
+            // Do not change URL if in settings
+            if (this.sceneViewer.app.$route.name !== 'sceneTools') {
+                this.sceneViewer.app.$router.push(url);
+            }
         } else if (command === "goto") {
             this.index = step[1];
+
+        } else if (command.startsWith("#")) {
+            // Command is a comment. Ignore.
         } else {
             // Unknown step type
             console.debug("Invalid sequence step: ", step);

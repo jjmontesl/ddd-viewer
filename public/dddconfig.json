@@ -2,7 +2,11 @@
 
     "productionTip": false,
 
-    "tileUrlBase": "http://{{hostname}}:8000/cache/ddd_http/",
+    "tileUrlBase": "https://{{hostname}}:8000/cache/ddd_http/",
+
+    "showDevelLinks": true,
+
+    "analyticsTag": null,
 
     "sceneGroundLayers": {
         "osm": {"text": "OpenStreetMap", "url": "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"},
@@ -22,6 +26,11 @@
     "_defaultCoords_Hercules": [-8.406568, 43.385890],
     "_defaultCoords_Vigo_Castro": [-8.723, 42.238],
 
-    "defaultCoords": [-8.723, 42.238]
+    "defaultCoords": [-8.723, 42.238],
+
+    "_dddHttpApiUrlBase": "http://{{hostname}}:8000/api/",
+
+    "geolocation": true
+
 
 }

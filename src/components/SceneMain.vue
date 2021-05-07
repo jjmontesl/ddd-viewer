@@ -16,7 +16,7 @@ export default {
 
     this.viewerState.scenePickingEnabled = true;
 
-    if (this.getSceneViewer() && !this.getSceneViewer().sequencer.playing) {this.viewerState.sceneViewModeShow = true;}
+    if (this.getSceneViewer() && !(this.getSceneViewer().sequencer.playing)) {this.viewerState.sceneViewModeShow = true;}
 
     //dddViewer.setMode('scene');
     //dddViewer.showScene(true);

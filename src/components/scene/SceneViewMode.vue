@@ -6,6 +6,10 @@
             <small style="color: white;"><v-icon small dark>mdi-clock</v-icon> {{ positionDateFormatted }}</small>
         </div>
 
+        <div v-if="dddConfig.geolocation" style="margin-top: 4px;">
+            <v-btn @click="selectCameraGeolocation" class="" dark :color="viewerState.geolocationEnabled ? 'success': 'primary'"><small><v-icon dark>mdi-crosshairs-gps</v-icon> GPS</small></v-btn>
+        </div>
+
         <div style="margin-top: 4px;">
             <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
         </div>
@@ -100,6 +104,10 @@ export default {
 
       selectCameraWalk() {
           this.getSceneViewer().selectCameraWalk();
+      },
+
+      selectCameraGeolocation() {
+            this.getSceneViewer().geolocationPosition();
       },
 
       cycleMoveSpeed() {
