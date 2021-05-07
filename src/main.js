@@ -17,7 +17,10 @@ fetch("/dddconfig.json")  // process.env.BASE_URL +
 
       response.json().then((config) => {
 
+        Vue.prototype.dddConfig = config;
+
         config.tileUrlBase = config.tileUrlBase.replace('{{hostname}}', location.hostname);
+        config.dddHttpApiUrlBase = config.dddHttpApiUrlBase.replace('{{hostname}}', location.hostname);
         //console.debug(config);
 
         Vue.config.productionTip = config.productionTip
@@ -51,8 +54,6 @@ fetch("/dddconfig.json")  // process.env.BASE_URL +
             //defaultCoords: [-8.406568, 43.385890],  // Torre Hércules
             defaultCoords: [-8.723, 42.238],  // Vigo Castro
         }*/
-
-        Vue.prototype.dddConfig = config;
 
         const app = new Vue({
           vuetify,

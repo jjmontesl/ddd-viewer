@@ -36,7 +36,7 @@ export default {
     }
   },
   components: {
-      SceneViewMode
+      SceneViewMode,
   },
   data() {
     return {
@@ -67,9 +67,11 @@ export default {
 
     const height = window.innerHeight - 40;
     //console.debug("Resizing 3D canvas: " + height);
-    this.$el.querySelector('.ddd-scene').style.height = height + "px";
-    if (this.$el.querySelector('canvas')) { this.$el.querySelector('canvas').height = height; }
-    //this.map.updateSize();
+    if (this.$el) {
+        this.$el.querySelector('.ddd-scene').style.height = height + "px";
+        if (this.$el.querySelector('canvas')) { this.$el.querySelector('canvas').height = height; }
+        //this.map.updateSize();
+    }
 
     const canvas = document.getElementById('ddd-scene');
 
@@ -129,6 +131,15 @@ export default {
               } else if (this.$route.name === 'sceneItem')  {
                   this.$router.replace('/3d/item/' + this.$route.params.id + '/' + posString).catch(()=>{});
               }
+          }
+
+          // Check if projection center is too far away
+          if (Math.abs(this.sceneViewer.viewerState.positionScene[0]) > 50000 ||
+              Math.abs(this.sceneViewer.viewerState.positionScene[2]) > 50000) {
+             // TODO: Recreate or recenter the scene viewer
+             alert('Reloading scene. Please be patient.');
+             this.$router.go(this.$router.currentRoute);
+             return;
           }
 
           this._timeout = setTimeout(this.checkUpdateHref, 1500);

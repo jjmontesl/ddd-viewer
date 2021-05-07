@@ -7,11 +7,11 @@
         </div>
 
         <div v-if="dddConfig.geolocation" style="margin-top: 4px;">
-            <v-btn @click="selectCameraGeolocation" class="" dark :color="viewerState.geolocationEnabled ? 'success': 'primary'"><small><v-icon dark>mdi-crosshairs-gps</v-icon> GPS</small></v-btn>
+            <v-btn @click="switchGeolocationPosition" class="" :color="viewerState.geolocationEnabled ? 'success': 'primary'"><small><v-icon dark>mdi-crosshairs-gps</v-icon> GPS</small></v-btn>
         </div>
 
         <div style="margin-top: 4px;">
-            <v-btn @click="selectCameraOrbit" :disabled="viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
+            <v-btn @click="selectCameraOrbit" :disabled="viewerState.geolocationEnabled || viewerState.sceneSelectedMeshId === null" class="" dark color="primary"><small><v-icon dark>mdi-rotate-orbit</v-icon> Orbit</small></v-btn>
         </div>
         <div style="margin-top: 4px;">
             <v-btn @click="selectCameraFree" class="" dark color="primary"><small><v-icon dark>mdi-axis-arrow</v-icon> Free</small></v-btn>
@@ -23,6 +23,9 @@
         <div style="margin-top: 8px;">
             <v-btn @click="cycleMoveSpeed" class="" dark color="secondary"><small><v-icon dark>mdi-fast</v-icon> Move Speed {{ viewerState.sceneMoveSpeed }}</small></v-btn>
         </div>
+
+        <ServerInfo v-if="viewerState.serverInfoShow" :viewerState="viewerState"></ServerInfo>
+
     </div>
 
 </template>
@@ -61,6 +64,8 @@ import View from 'ol/View';
 import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
 import {ScaleLine, defaults as defaultControls} from 'ol/control';
 
+import ServerInfo from '@/components/ddd/ServerInfo.vue';
+
 export default {
 
   metaInfo() {
@@ -81,6 +86,9 @@ export default {
   inject: [
     'getSceneViewer',
   ],
+  components: {
+      ServerInfo,
+  },
 
   computed: {
       positionDateFormatted() {
@@ -106,8 +114,8 @@ export default {
           this.getSceneViewer().selectCameraWalk();
       },
 
-      selectCameraGeolocation() {
-            this.getSceneViewer().geolocationPosition();
+      switchGeolocationPosition() {
+            this.getSceneViewer().geolocationPosition(!this.viewerState.geolocationEnabled);
       },
 
       cycleMoveSpeed() {

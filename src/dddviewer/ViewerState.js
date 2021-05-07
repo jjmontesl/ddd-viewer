@@ -14,6 +14,7 @@ class ViewerState {
 
     positionWGS84 = [-8.726, 42.233]; // [0.0, 0.0];
 
+    // Position in scene, in engine coordinates (elevation is Y)
     positionScene = [0, 0, 0];
 
     positionGroundHeight = 150.0;
@@ -30,6 +31,8 @@ class ViewerState {
     positionDateSeconds = this.positionDate / 1000;
 
     geolocationEnabled = false;
+
+    serverInfoShow = false;
 
 
 

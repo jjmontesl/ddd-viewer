@@ -44,7 +44,7 @@ export default {
       mountScene: function() {
         let el = document.getElementById('ddd-scene-parent'); //.firstChild;
         if (el) {
-            console.debug('Mounting DDD scene insert.');
+            //console.debug('Mounting DDD scene insert.');
 
             this.renderBackEl = el.parentNode;
             this.$el.querySelector('.ddd-scene-insert').appendChild(el);
@@ -63,7 +63,7 @@ export default {
       unmountScene: function() {
         let el = this.$el.querySelector('.ddd-scene-insert').firstChild;
         if (el) {
-            console.debug("Unmounting DDD scene insert.");
+            //console.debug("Unmounting DDD scene insert.");
             //document.getElementById('ddd-scene-parent').insertBefore(el, document.getElementById('ddd-scene-parent').firstChild);  // Must be first child as used in mount
             this.renderBackEl.appendChild(el);  // Must be first child as used in mount
             this.mountedScene = null;

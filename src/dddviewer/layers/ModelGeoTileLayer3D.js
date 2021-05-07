@@ -385,6 +385,7 @@ export default class {
                         marker = that.loadQuadTile(tileCoords);  // , BABYLON.Color3.Red()
                         that.tiles[tileKey].node = marker; // "notfound";
                         that.tiles[tileKey].status = "notfound";
+                        that.layerManager.sceneViewer.viewerState.serverInfoShow = true;
                 } else {
                       // Error: colour marker red
                       marker.dispose(false, true);

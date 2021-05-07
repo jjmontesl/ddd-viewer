@@ -81,6 +81,8 @@ class SceneViewer {
 
         this._previousLampPatOn = null;
 
+        this._geolocationWatchId = null;
+
 
     }
 
@@ -382,7 +384,7 @@ class SceneViewer {
     }
 
     loadCatalog(filename, loadMaterials) {
-        console.debug("Loading catalog.");
+        console.debug("Loading catalog: " + filename);
         const that = this;
         BABYLON.SceneLoader.ImportMesh(null, filename, '', this.scene, //this.scene,
           // onSuccess
@@ -1464,7 +1466,8 @@ class SceneViewer {
         this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
     }
 
-    geolocationPosition() {
+    geolocationPosition(enabled) {
+
         //this.selectCameraFree();
         //this.walkMode = true;
         //this.camera.detachControl();
@@ -1485,69 +1488,88 @@ class SceneViewer {
                 let rotation = new BABYLON.Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
                 this.camera.rotation = rotation;
             }
-
         });
         */
 
-        this.viewerState.geolocationEnabled = true;
+        this.viewerState.geolocationEnabled = enabled;
 
-        this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0, timeout: 20}).then(coordinates => {
-            //console.log(coordinates);
-            let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
-            let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
-            //console.log(scenePos);
-            this.camera.position.x = scenePos[0];
-            this.camera.position.y = altitude;
-            this.camera.position.z = scenePos[2];
+        if (enabled) {
 
-            /*
-            let heading = coordinates.heading;
-            if (heading !== null && !isNaN(heading)) {
-                this.viewerState.positionHeading = heading;
-                let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-                this.camera.rotation = rotation;
-                //console.debug(heading);
-            }
-            */
+            // Enable geolocation
 
-        });
+            this.selectCameraFree();
 
-        // Compass
-        let isIOS = false;
-        if (isIOS) {
-            DeviceOrientationEvent.requestPermission().then((response) => {
-                if (response === "granted") {
-                      window.addEventListener("deviceorientation", handler, true);
-                } else {
-                      alert("Compass usage permission not granted.");
-                }
-            }).catch(() => alert("Compass not supported."));
-        } else {
-            window.addEventListener("deviceorientationabsolute", (e) => {
-                let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0, timeout: 20}).then(coordinates => {
+                //console.log(coordinates);
+                let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
+                let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
+                //console.log(scenePos);
+                this.camera.position.x = scenePos[0];
+                this.camera.position.y = altitude;
+                this.camera.position.z = scenePos[2];
+
+                if (this.walkMode) { this.camera.position.y = 2.0; }
+                /*
+                let heading = coordinates.heading;
                 if (heading !== null && !isNaN(heading)) {
-
-                    heading = (heading) % 360.0;
                     this.viewerState.positionHeading = heading;
-
-                    let tilt = e.webkitCompassTilt || Math.abs(e.beta - 360);
-                    if (tilt !== null && !isNaN(tilt)) {
-                        this.viewerState.positionTilt = (- tilt);
-                    }
-
                     let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
                     this.camera.rotation = rotation;
                     //console.debug(heading);
                 }
-                //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
-            }, true);
+                */
+            });
+
+            // Compass
+            let that = this;
+            this._onDeviceOrientation = function(e) { that.onDeviceOrientation(e); };
+            this._onDeviceOrientation.bind(that);
+            let isIOS = false;
+            if (isIOS) {
+                DeviceOrientationEvent.requestPermission().then((response) => {
+                    if (response === "granted") {
+                          window.addEventListener("deviceorientation", this._onDeviceOrientation);
+                    } else {
+                          alert("Compass usage permission not granted.");
+                    }
+                }).catch(() => alert("Compass not supported."));
+            } else {
+                window.addEventListener("deviceorientationabsolute", this._onDeviceOrientation);
+            }
+
+        } else  {
+
+            // Disable geolocation
+
+            this.viewerState.geolocationEnabled = false;
+            if (this._geolocationWatchId !== null) {
+                this.app.$clearLocationWatch(this._geolocationWatchId);
+                this._geolocationWatchId = null;
+            }
+            window.removeEventListener("deviceorientationabsolute", this._onDeviceOrientation);
+            window.removeEventListener("deviceorientation", this._onDeviceOrientation);
+            this._onDeviceOrientation = null;
         }
 
-        // this.$clearLocationWatch(watchID)
+    }
 
+    onDeviceOrientation(e) {
+        let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+        if (heading !== null && !isNaN(heading)) {
 
+            heading = (heading) % 360.0;
+            this.viewerState.positionHeading = heading;
 
+            let tilt = e.webkitCompassTilt || Math.abs(e.beta - 360);
+            if (tilt !== null && !isNaN(tilt)) {
+                this.viewerState.positionTilt = (- tilt);
+            }
 
+            let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+            this.camera.rotation = rotation;
+            //console.debug(heading);
+        }
+        //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
     }
 
     selectCameraOrbit() {

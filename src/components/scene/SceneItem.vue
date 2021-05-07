@@ -15,7 +15,7 @@
 
                     <v-card-title style="text-align: left; word-break: break-word; width: 95%;">{{ nodeName }}</v-card-title>
 
-                    <div v-if="loading" style="text-align: center;">Loading...</div>
+                    <div v-if="loading" style="text-align: center; margin-top: 20px;"><v-icon>mdi-loading</v-icon> <i>Loading...</i></div>
 
                     <OSMImage v-if="imageHref" :imageUrl="imageHref" />
 
@@ -58,12 +58,12 @@
                             </tbody>
                             </v-simple-table>
 
-                            <div style="text-align: right;"><a @click="showJSON = !showJSON;">JSON View</a></div>
+                            <div v-if="!loading" style="text-align: right;"><a @click="showJSON = !showJSON;">JSON View</a></div>
 
                         </div>
                     </v-card-text>
 
-                    <v-card-text class="text-left">
+                    <v-card-text v-if="!loading" class="text-left">
                         <div>
                             <h3>Links</h3>
                             <div><a v-if="osmLink" :href="osmLink" target="_blank">OpenStreetMap Object</a></div>
@@ -73,7 +73,7 @@
                         </div>
                     </v-card-text>
 
-                    <v-card-text v-if="viewerState.sceneViewModeShow" class="text-left">
+                    <v-card-text v-if="!loading && viewerState.sceneViewModeShow" class="text-left">
                         <h3>View</h3>
                         <v-btn @click="selectCameraOrbit" class="mx-2" dark color="primary"><v-icon dark>mdi-rotate-orbit</v-icon> Orbit Item</v-btn>
                         <v-btn @click="selectCameraFree" class="mx-2" dark color="primary"><v-icon dark>mdi-axis-arrow</v-icon> Free</v-btn>
@@ -81,14 +81,14 @@
                     </v-card-text>
 
 
-                    <v-card-text class="text-left">
+                    <v-card-text v-if="!loading" class="text-left">
                         <div>
                             <h3>Node Tree</h3>
                             <NodeHierarchy :nodeGetter="nodeGetter" depth="1"></NodeHierarchy>
                         </div>
                     </v-card-text>
 
-                    <v-card-text class="text-left">
+                    <v-card-text v-if="!loading" class="text-left">
                         <h3>Node Actions</h3>
                         <v-btn @click="removeNode" class="mx-2" dark color="primary"><v-icon dark>mdi-delete</v-icon> Remove Node</v-btn>
                     </v-card-text>
@@ -302,6 +302,8 @@ export default {
           //console.debug("Scene Item setMesh called.");
 
           this.resize();
+          setTimeout(function() { window.dispatchEvent(new Event('resize')) }, 200);
+
       },
 
       resize() {

@@ -1,6 +1,13 @@
 import axios from 'axios'
+import Vue from 'vue'
 
 export default {
+
+  getQueueSize() {
+
+    let url = Vue.prototype.dddConfig.dddHttpApiUrlBase + "tasks/status/";
+    return axios.get(url);
+  }
 
   /*
   request3DTileGenerate(coords) {
