@@ -74,15 +74,15 @@ class TerrainMaterialWrapper {
                     scales:[[defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
                              [defScale * 0.5, defScale * 0.5], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
                              [defScale * 1.5, defScale * 1.5], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
-                             [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale,defScale], [defScale,defScale]],
-                    displScales: [-0.5, 0, 0, 0,
+                             [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]],
+                    displScales: [0.0, 0, 0.0, 0,
                                   0, 0, 0, 0,
                                   0, 0, 0, 0,
-                                  0.0, 0.0, 0, 0,],
+                                  0.0, 0.0, 0.0, 0,],
                     dedupScales: [1.0, 1.0, 1.0, 0.0,
                                   0.0, 0.0, 1.0, 1.0,
                                   1.5, 1.5, 1.5, 1.5,
-                                  1.5, 1.5, 1.5, 1.5]
+                                  1.5, 1.5, 0.5, 1.5]
                 }
             };
         }
@@ -358,7 +358,7 @@ class TerrainMaterialWrapper {
                 //diffuse1Color.rgb = splatColor1.rgb;
                 //diffuse1Color.a = blend;
 
-                 diffuse1Color.a = ((blend > 0.0) ? (heightval(diffuse1Color) + blend) : 0.0);
+                 diffuse1Color.a = ((blend > 0.0) ? (heightval(diffuse1Color) * blend) : 0.0);
 
                  mat4 chanInfo = mat4(diffuse1Color, vec4(diffuse1Normal.x, diffuse1Normal.y, diffuse1Normal.z, diffuse1Normal.a), vec4(0.0), vec4(0.0));
 

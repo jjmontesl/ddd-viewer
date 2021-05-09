@@ -556,7 +556,7 @@ class SceneViewer {
                     mesh.material.detailMap.texture.uScale = 1 / 256;
                     mesh.material.detailMap.texture.vScale = 1 / 256;
                     mesh.material.detailMap.isEnabled = true;
-                    mesh.material.detailMap.diffuseBlendLevel = 0.2;
+                    mesh.material.detailMap.diffuseBlendLevel = 0.15; // 0.2
                     //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                     //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
 
@@ -682,8 +682,9 @@ class SceneViewer {
                 // TODO: Indicate when to splat in metadata
                 if (this.useSplatMap && this.viewerState.sceneTextureSet && metadata['ddd:layer'] === "0" &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
-                     metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
-                     metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' || metadata['ddd:material'] === 'Rock' ||
+                     metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Ground Clear' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
+                     metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' ||
+                     metadata['ddd:material'] === 'Rock' || metadata['ddd:material'] === 'Rock Orange' ||
                      (metadata['ddd:material'] === 'WayPedestrian' && metadata['ddd:area:type'] !== 'stairs') ||
                      metadata['ddd:material'] === 'Wetland' || metadata['ddd:material'] === 'Asphalt')) {
 
@@ -1436,9 +1437,9 @@ class SceneViewer {
         const camera = new BABYLON.UniversalCamera("Camera", BABYLON.Vector3.Zero(), this.scene);
         camera.minZ = 1;
         camera.maxZ = 4500;
-        //camera.touchMoveSensibility = 0.01;
+        camera.angularSensibility = 500.0;
         camera.touchAngularSensibility = 1000.0;
-        camera.angularSensibility = 1000.0;
+        //camera.touchMoveSensibility = 1.0;
         //camera.inertia = 0.10;
         camera.inertia = 0.5;
         camera.keysUp += [87];
@@ -1499,16 +1500,19 @@ class SceneViewer {
 
             this.selectCameraFree();
 
-            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0, timeout: 20}).then(coordinates => {
+            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0}).then(coordinates => {
                 //console.log(coordinates);
                 let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
-                let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
-                //console.log(scenePos);
+                if (this.walkMode) { altitude.y = 2.5; }
+
+                this.viewerState.positionWGS84 = [coordinates.lng, coordinates.lat, altitude];
+                let scenePos = this.wgs84ToScene(this.viewerState.positionWGS84);
+                this.viewerState.positionScene = scenePos;
+
                 this.camera.position.x = scenePos[0];
                 this.camera.position.y = altitude;
                 this.camera.position.z = scenePos[2];
 
-                if (this.walkMode) { this.camera.position.y = 2.0; }
                 /*
                 let heading = coordinates.heading;
                 if (heading !== null && !isNaN(heading)) {

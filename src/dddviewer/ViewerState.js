@@ -32,7 +32,7 @@ class ViewerState {
 
     geolocationEnabled = false;
 
-    serverInfoShow = false;
+    serverInfoShow = true;
 
 
 
@@ -76,7 +76,7 @@ class ViewerState {
         this.isMobile = isMobile || false;
         if (this.isMobile) {
             this.sceneViewportRescale = 2;
-            this.sceneTextureSet = "default256";
+            this.sceneTextureSet = null;  // "default256";
         }
 
         this.positionWGS84 = initialCoords;

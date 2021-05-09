@@ -3,7 +3,7 @@
     <div>
 
         <div style="color: white; margin: 5px;">
-            <b>Server Generation Queue: {{ serverInfo.queue_size }} tiles</b>
+            <small><b>Server Generation Queue: ~{{ serverInfo.queue_size }} jobs</b></small>
         </div>
 
     </div>
