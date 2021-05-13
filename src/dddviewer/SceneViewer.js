@@ -1500,7 +1500,7 @@ class SceneViewer {
 
             this.selectCameraFree();
 
-            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 0}).then(coordinates => {
+            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 5}).then(coordinates => {
                 //console.log(coordinates);
                 let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
                 if (this.walkMode) { altitude.y = 2.5; }

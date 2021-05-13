@@ -71,14 +71,14 @@ class TerrainMaterialWrapper {
                                [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [3.0, 1.0], // encoded by third splat (down left), third row (index 1 starting from bottom)
                                [0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0], // encoded by splat (down right), last row (index 0 from bottom)
                               ],
-                    scales:[[defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
+                    scales:[[defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
                              [defScale * 0.5, defScale * 0.5], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
                              [defScale * 1.5, defScale * 1.5], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
                              [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]],
                     displScales: [0.0, 0, 0.0, 0,
                                   0, 0, 0, 0,
                                   0, 0, 0, 0,
-                                  0.0, 0.0, 0.0, 0,],
+                                  0.0, 0.0, 0.0, 0.0,],
                     dedupScales: [1.0, 1.0, 1.0, 0.0,
                                   0.0, 0.0, 1.0, 1.0,
                                   1.5, 1.5, 1.5, 1.5,
@@ -157,7 +157,7 @@ class TerrainMaterialWrapper {
         //this.shaderinjectpoint3 += 'finalColor16 = col(vAlbedoUV, uv16, vec2(20.0, 20.0), vec2(1.0, 2.0), 0, scale, splatmap, albedoSampler);';
 
         //this.shaderinjectpoint3 += 'normalW = perturbNormal(cotangentFrame, finalNormal' + (this.totalTiles) + ', 1.0);';
-        this.shaderinjectpoint3 += 'normalW = normalize(normalW * 0.5 + 0.5 * finalNormal' + (this.totalTiles) + ');';  // TODO: adding these vectors is incorrect
+        this.shaderinjectpoint3 += 'normalW = normalize(normalW * 0.75 + 0.25 * finalNormal' + (this.totalTiles) + ');';  // TODO: adding these vectors is incorrect
         //this.shaderinjectpoint3 += 'normalW = normalW;';
         //this.shaderinjectpoint3 += 'normalW.y *= -1.0;';
         //this.shaderinjectpoint3 += 'result = finalNormal' + (this.totalTiles) + ';';
@@ -225,7 +225,7 @@ class TerrainMaterialWrapper {
                 float b2 = max(texture2.a + a2 - ma, 0.0);
 
                 vec4 result = (texture1 * b1 + texture2 * b2) / (b1 + b2);
-                //result.a = (a1 + a2) / (2.0 * (b1 + b2));
+                result.a = (texture1.a > 0. && texture2.a > 0.) ? (a1 + a2) / (2.0 * (b1 + b2)) : result.a;
                 return result;
             }
 
