@@ -773,8 +773,12 @@ class SceneViewer {
                 let key = metadata['ddd:instance:key'];
                 if (this.catalog[key]) {
 
-                    //this.instanceAsNode(root, key, mesh);
-                    this.instanceAsThinInstance(root, key, mesh);  // note this removes the mesh
+                    if ('ddd:instance:buffer:matrices' in metadata) {
+                        this.instanceAsThinInstanceBuffers(root, key, mesh);
+                    } else {
+                        //this.instanceAsNode(root, key, mesh);
+                        this.instanceAsThinInstance(root, key, mesh);  // note this removes the mesh
+                    }
 
                 } else {
                     // Instance not found. Mark this root for re processing and exit.
@@ -890,6 +894,98 @@ class SceneViewer {
             matrix = matrix.multiply(BABYLON.Matrix.Invert(meshInstanceRootMatrix));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
             var idx = meshInstanceRoot.thinInstanceAdd(matrix);
+            meshInstanceRoot.freezeWorldMatrix();
+
+            //let tmpcopy = meshInstanceRoot.clone();
+            //tmpcopy.position = localPos;
+            //tmpcopy.rotationQuaternion = localRot;
+            //tmpcopy.parent = meshInstanceRoot;
+
+        }
+
+        node.parent = null;
+        node.dispose();
+
+    }
+
+    instanceAsThinInstanceBuffers(root, key, node) {
+
+        console.debug("Creating thin instance buffers for: " + key);
+
+        let instance = this.catalog[key];
+        let meshes = instance.getChildMeshes();
+        let metadataNode = node.metadata.gltf.extras;
+
+        for (let mesh of meshes) {
+
+            let metadata = mesh.metadata.gltf.extras;
+            if (metadata['ddd:light:color']) {
+                // TODO: include the child instance
+                continue;
+            }
+
+            // Get root
+            let instanceRootKey = root.id + "_" + key + "_" + mesh.id; // root.id + "_" +  // TODO! do not clone but keep groups!
+            let meshInstanceRoot = this.instanceRoots[instanceRootKey];
+            if (!meshInstanceRoot) {
+                //console.debug("Creating instanceroot for: " + instanceRootKey);
+                instance.setEnabled(true);
+                meshInstanceRoot = mesh.clone(instanceRootKey, null, true);
+                meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
+
+                let cloneMat = meshInstanceRoot.material;
+                if (cloneMat) {
+                    meshInstanceRoot.material = null;
+                    cloneMat.dispose();
+                }
+
+                //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
+                //meshInstanceRoot.toRightHanded();
+                //meshInstanceRoot.rotate(BABYLON.Vector3.Right(), Math.PI / 2);
+
+                // This section is critical. The bakeCurrentTransformIntoVertices in the middle is too.
+                meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
+                meshInstanceRoot.bakeCurrentTransformIntoVertices();
+                meshInstanceRoot.rotate(BABYLON.Vector3.Forward(), -Math.PI / 2);
+                meshInstanceRoot.rotate(BABYLON.Vector3.Right(), Math.PI);
+                meshInstanceRoot.bakeCurrentTransformIntoVertices();
+                //meshInstanceRoot.flipFaces(true);
+
+                this.instanceRoots[instanceRootKey] = meshInstanceRoot;
+                meshInstanceRoot.parent = root;
+                //meshInstanceRoot.position = root.computeWorldMatrix(true);  // Seems to cause problems, but should not :? (freezing may be involved)
+
+                this.processMesh(meshInstanceRoot, meshInstanceRoot);
+
+                // Enable shadows for the instances if shadows are set
+                if (this.shadowGenerator) {
+                    this.shadowGenerator.getShadowMap().renderList.push(meshInstanceRoot);
+                }
+
+                //meshInstanceRoot.setEnabled(false);
+                //meshInstanceRoot.addLODLevel(200, null);
+
+                instance.setEnabled(false);
+                //instance.dispose();
+            }
+
+            //var adaptMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
+
+            const bufferMatrices = metadataNode['ddd:instance:buffer:matrices'];
+
+            let scaleMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), new BABYLON.Quaternion(0, 0, 0, 0), new BABYLON.Vector3(0, 0, 0)); //BABYLON.Matrix.Scaling(-1, 1, 1);
+
+            //let nodeMatrix = node.computeWorldMatrix(true);
+            //let meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix(true);
+            //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
+            //let matrix = scaleMatrix.multiply(nodeMatrix);
+            //matrix = matrix.multiply(BABYLON.Matrix.Invert(meshInstanceRootMatrix));
+            //console.debug("Creating instance: " + meshInstanceRoot.id);
+            //var idx = meshInstanceRoot.thinInstanceAdd(matrix);
+            var bufferMatricesArray = new Float32Array(bufferMatrices.length);
+            bufferMatricesArray.set(bufferMatrices);
+            meshInstanceRoot.thinInstanceSetBuffer("matrix", bufferMatricesArray, 16, true);
+
             meshInstanceRoot.freezeWorldMatrix();
 
             //let tmpcopy = meshInstanceRoot.clone();
@@ -1496,36 +1592,15 @@ class SceneViewer {
 
         if (enabled) {
 
-            // Enable geolocation
+            let that = this;
 
+            // Enable geolocation
             this.selectCameraFree();
 
-            this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 5}).then(coordinates => {
-                //console.log(coordinates);
-                let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
-                if (this.walkMode) { altitude.y = 2.5; }
-
-                this.viewerState.positionWGS84 = [coordinates.lng, coordinates.lat, altitude];
-                let scenePos = this.wgs84ToScene(this.viewerState.positionWGS84);
-                this.viewerState.positionScene = scenePos;
-
-                this.camera.position.x = scenePos[0];
-                this.camera.position.y = altitude;
-                this.camera.position.z = scenePos[2];
-
-                /*
-                let heading = coordinates.heading;
-                if (heading !== null && !isNaN(heading)) {
-                    this.viewerState.positionHeading = heading;
-                    let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-                    this.camera.rotation = rotation;
-                    //console.debug(heading);
-                }
-                */
-            });
+            //this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 5}).then(coordinates => {
+            this.app.$getLocation({enableHighAccuracy: true, maximumAge: 5}).then((coords) => { that.onDeviceLocation(coords) });
 
             // Compass
-            let that = this;
             this._onDeviceOrientation = function(e) { that.onDeviceOrientation(e); };
             this._onDeviceOrientation.bind(that);
             let isIOS = false;
@@ -1557,8 +1632,84 @@ class SceneViewer {
 
     }
 
+    onDeviceLocation(coordinates) {
+        //console.log(coordinates);
+        if (coordinates) {
+
+            let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
+            if (this.walkMode) { altitude.y = 2.5; }
+
+            this.viewerState.positionWGS84 = [coordinates.lng, coordinates.lat, altitude];
+            let scenePos = this.wgs84ToScene(this.viewerState.positionWGS84);
+            this.viewerState.positionScene = scenePos;
+
+            this.camera.position.x = scenePos[0];
+            this.camera.position.y = altitude;
+            this.camera.position.z = scenePos[2];
+
+            /*
+            let heading = coordinates.heading;
+            if (heading !== null && !isNaN(heading)) {
+                this.viewerState.positionHeading = heading;
+                let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                this.camera.rotation = rotation;
+                //console.debug(heading);
+            }
+            */
+        }
+
+        if (this.viewerState.geolocationEnabled) {
+            let that = this;
+            setTimeout(function() {
+                that.app.$getLocation({enableHighAccuracy: true, maximumAge: 5}).then((coords) => { that.onDeviceLocation(coords) });
+            }, 1000);
+        }
+
+    }
+
+
+    /**
+    * From: https://www.w3.org/TR/orientation-event/
+    */
+    /*
+    getQuaternion( alpha, beta, gamma ) {
+
+        var degtorad = Math.PI / 180; // Degree-to-Radian conversion
+
+      var _x = beta  ? beta  * degtorad : 0; // beta value
+      var _y = gamma ? gamma * degtorad : 0; // gamma value
+      var _z = alpha ? alpha * degtorad : 0; // alpha value
+
+      var cX = Math.cos( _x/2 );
+      var cY = Math.cos( _y/2 );
+      var cZ = Math.cos( _z/2 );
+      var sX = Math.sin( _x/2 );
+      var sY = Math.sin( _y/2 );
+      var sZ = Math.sin( _z/2 );
+
+      //
+      // ZXY quaternion construction.
+      //
+
+      var w = cX * cY * cZ - sX * sY * sZ;
+      var x = sX * cY * cZ - cX * sY * sZ;
+      var y = cX * sY * cZ + sX * cY * sZ;
+      var z = cX * cY * sZ + sX * sY * cZ;
+
+      //return [ w, x, y, z ];
+      return new BABYLON.Quaternion(x, y, z, w);
+    }
+    */
+
     onDeviceOrientation(e) {
+
+        //let rotation = BABYLON.Quaternion.FromEulerAngles(e.alpha * Math.PI / 180.0, e.beta * Math.PI / 180.0, e.gamma * Math.PI / 180.0);
+        //let forward = BABYLON.Vector3.Forward().rotateByQuaternionToRef(rotation, new BABYLON.Vector3());
+        //let heading = Math.atan2(forward.y, forward.x) * 180.0 / Math.PI;
+        //alert(heading);
+
         let heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+
         if (heading !== null && !isNaN(heading)) {
 
             heading = (heading) % 360.0;
@@ -1569,7 +1720,10 @@ class SceneViewer {
                 this.viewerState.positionTilt = (- tilt);
             }
 
-            let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+            let tiltRotation = (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0);
+            if (tiltRotation < 0) { tilt = Math.PI * 2 - tiltRotation; }
+            let rotation = new BABYLON.Vector3(tiltRotation, this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+            //let rotation = new BABYLON.Vector3(Math.PI / 2 + -e.beta * Math.PI / 180.0, -e.alpha * Math.PI / 180.0, e.gamma * Math.PI / 180.0 );
             this.camera.rotation = rotation;
             //console.debug(heading);
         }
@@ -1749,11 +1903,11 @@ class SceneViewer {
         //console.debug(this.scene.ambientColor);
 
         // Lamps
-        if ('LightLampOff' in this.catalog_materials) {
-            let lampMatOn = sunlightAmountNorm > 0.2;  // 0.2 is more logical, 0.1 exagerates the change
-            let lampMat = this.catalog_materials['LightLampOff'];
-            if (lampMatOn !== this._previousLampPatOn) {
-                this._previousLampPatOn = lampMatOn;
+        let lampMatOn = sunlightAmountNorm > 0.2;  // 0.2 is more logical, 0.1 exagerates the change
+        if (lampMatOn !== this._previousLampPatOn) {
+            this._previousLampPatOn = lampMatOn;
+            if ('LightLampOff' in this.catalog_materials) {
+                let lampMat = this.catalog_materials['LightLampOff'];
                 lampMat.unfreeze();
                 if (lampMatOn) {
                     lampMat.emissiveColor = BABYLON.Color3.Black();
@@ -1762,15 +1916,40 @@ class SceneViewer {
                 }
                 //lampMat.freeze();
             }
-        }
-        if ('LightRed' in this.catalog_materials) {
-            let lampMatOn = sunlightAmountNorm > 0.2;  // 0.2 is more logical, 0.1 exagerates the change
-            let lampMat = this.catalog_materials['LightRed'];
-            if (lampMatOn !== this._previousLampPatOn) {
-                this._previousLampPatOn = lampMatOn;
+            /*
+            if ('Glass' in this.catalog_materials) {
+                let lampMat = this.catalog_materials['Glass'];
                 lampMat.unfreeze();
-                lampMat.emissiveColor = lampMatOn ? BABYLON.Color3.Black() : new BABYLON.Color3(255 / 255, 0 / 255, 0 / 255);
+                if (lampMatOn) {
+                    lampMat.emissiveColor = BABYLON.Color3.Black();
+                } else {
+                    lampMat.emissiveColor = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
+                }
                 //lampMat.freeze();
+            }
+            */
+            if (Math.random() < 0.5) {
+                if ('LightGreen' in this.catalog_materials) {
+                    let lampMat = this.catalog_materials['LightGreen'];
+                    lampMat.unfreeze();
+                    if (lampMatOn) {
+                        lampMat.emissiveColor = BABYLON.Color3.Black();
+                    } else {
+                        lampMat.emissiveColor = new BABYLON.Color3(50 / 255, 512 / 255, 50 / 255);
+                    }
+                    //lampMat.freeze();
+                }
+            } else {
+                if ('LightRed' in this.catalog_materials) {
+                    let lampMat = this.catalog_materials['LightRed'];
+                    lampMat.unfreeze();
+                    if (lampMatOn) {
+                        lampMat.emissiveColor = BABYLON.Color3.Black();
+                    } else {
+                        lampMat.emissiveColor = new BABYLON.Color3(512 / 255, 0 / 255, 0 / 255);
+                    }
+                    //lampMat.freeze();
+                }
             }
         }
 

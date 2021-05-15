@@ -171,7 +171,7 @@ class TerrainMaterialWrapper {
         this.needsUpdating = true;
 
         this.material = new BABYLONMAT.PBRCustomMaterial("splatMaterial", scene);
-        this.material.metallic = 0.1;
+        this.material.metallic = 0.0;
         this.material.roughness = 0.95;
         //this.material.twoSidedLighting = true;
         //this.material.disableLighting = false;
@@ -216,6 +216,8 @@ class TerrainMaterialWrapper {
             */
 
             vec4 blend(vec4 texture1, float displScale1, vec4 texture2, float displScale2) {
+                if (texture2.a == 0.) return texture1;
+                if (texture1.a == 0.) return texture2;
                 float a1 = texture1.a + displScale1;
                 float a2 = texture2.a + displScale2;
                 float depth = 0.2;
@@ -358,7 +360,8 @@ class TerrainMaterialWrapper {
                 //diffuse1Color.rgb = splatColor1.rgb;
                 //diffuse1Color.a = blend;
 
-                 diffuse1Color.a = ((blend > 0.0) ? (heightval(diffuse1Color) * blend) : 0.0);
+                 //diffuse1Color.a = ((blend > 0.0) ? (heightval(diffuse1Color) * blend) : 0.0);
+                 diffuse1Color.a = ((blend > 0.0) ? (diffuse1Color.a * blend) : 0.0);
 
                  mat4 chanInfo = mat4(diffuse1Color, vec4(diffuse1Normal.x, diffuse1Normal.y, diffuse1Normal.z, diffuse1Normal.a), vec4(0.0), vec4(0.0));
 
@@ -392,6 +395,7 @@ class TerrainMaterialWrapper {
         this.material.getEffect().setTexture('splatmap', this.splatMap);
         this.material.getEffect().setTexture('atlasNormalsSampler', this.atlasBumpTexture);
         //this.material.reflectionTexture = this.envReflectionProbe.cubeTexture;
+        //this.material.reflectionTexture = this.scene.environmentTexture;
         //this.sceneViewer.scene.environmentTexture = this.sceneViewer.envReflectionProbe.cubeTexture;
     }
 
