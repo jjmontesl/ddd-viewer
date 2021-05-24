@@ -8,7 +8,7 @@
         <div style="margin-left: 15px;">
             <NodeHierarchy v-if="childPathGetter() !== null" :nodeGetter="nodeGetter" :pathGetter="childPathGetter" :depth="depth - 1"></NodeHierarchy>
             <div>
-                <div v-for="child in nodeChildren" :key="child.id">{{ child.label }}</div>
+                <div v-for="child in nodeChildren" :key="child.id"><a @click="selectChild(child)">{{ child.label }}</a></div>
             </div>
         </div>
     </div>
@@ -142,7 +142,15 @@ const NodeHierarchy = {
           let meshName = node.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
           this.$router.push('/3d/item/' + meshName + '/' + this.getSceneViewer().positionString()).catch(()=>{});
 
-    }
+    },
+
+    selectChild(node) {
+          let meshName = node.id.split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
+        this.$router.push('/3d/item/' + meshName + '/' + this.getSceneViewer().positionString()).catch(()=>{});
+    },
+
+
+
   },
 }
 

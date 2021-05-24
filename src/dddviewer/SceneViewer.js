@@ -71,6 +71,11 @@ class SceneViewer {
         this.ambientColorNight = new BABYLON.Color3(0, 0, 0.3);
         this.ambientColorDay = new BABYLON.Color3(0.70, 0.70, 0.7);
 
+        this.colorLightLamp = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
+        this.colorLightRed = new BABYLON.Color3(512 / 255, 0 / 255, 0 / 255);
+        this.colorLightGreen = new BABYLON.Color3(50 / 255, 512 / 255, 50 / 255);
+        this.colorLightOrange = new BABYLON.Color3(255 / 255, 157 / 255, 0 / 255);
+
         this.lastDateUpdate = new Date().getTime();
 
         // TODO: Sequencer would better belong to the app
@@ -367,7 +372,7 @@ class SceneViewer {
 
         if (this.skybox) {
             this.skybox.renderingGroupId = 0;  // Seems needs to be rendered in group 0 for it to be applied to the reflections on water
-            this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
+            //this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
             this.envReflectionProbe.renderList.push(this.skybox);
             this.materialWater.addToRenderList(this.skybox);
         }
@@ -644,7 +649,6 @@ class SceneViewer {
 
             mesh.isBlocker = true;
 
-
             if (metadata['ddd:material'] && !('ddd:text' in metadata)) {
                 let key = metadata['ddd:material'];
 
@@ -695,6 +699,9 @@ class SceneViewer {
                     mesh.material = root._splatmapMaterial;
                     root._splatmapMaterial.renderingGroupId = 1;
 
+                    // Expensive probe
+                    //this.envReflectionProbe.renderList.push(mesh);
+
                 } else if ((key in this.catalog_materials)) {  // && mesh.material
 
                     if (mesh.material && mesh.material !== mat && mat) {
@@ -733,36 +740,38 @@ class SceneViewer {
             } else if (metadata['ddd:text']) {
 
                 let newMesh = null;
-                /*
-                // TODO: requires fixing Marker export form DDD. Also reuse materials.
-                newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 2.4, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
-                newMesh.parent = null;
-                newMesh.parent = mesh.parent; // .parent;
-                newMesh.scaling = mesh.scaling.clone();
-                newMesh.rotationQuaternion = mesh.rotationQuaternion.clone();
-                newMesh.position = mesh.position.clone();
 
-                newMesh.rotate(BABYLON.Vector3.Right(), Math.PI / 2.0, BABYLON.Space.LOCAL);
-                newMesh.scaling.y *= 0.35;
+                let showText = false;
+                if (showText) {
+                    // Text should be (possibly) exported as meshes by the generator.
+                    newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 2.4, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
+                    newMesh.parent = null;
+                    newMesh.parent = mesh.parent; // .parent;
+                    newMesh.scaling = mesh.scaling.clone();
+                    newMesh.rotationQuaternion = mesh.rotationQuaternion.clone();
+                    newMesh.position = mesh.position.clone();
 
-                //Create dynamic texture
-                var texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + mesh.id , {width:256, height:128}, this.scene);
-                //var textureContext = texture.getContext();
-                var font = "bold 18px serif";
-                let text = metadata['ddd:text'];
-                texture.drawText(text, 128.0 - (text.length * 3), 60, font, "blue", "transparent", true, true);
+                    newMesh.rotate(BABYLON.Vector3.Right(), Math.PI / 2.0, BABYLON.Space.LOCAL);
+                    newMesh.scaling.y *= 0.35;
 
-                var material = new BABYLON.StandardMaterial("Mat" + mesh.id, this.scene);
-                material.diffuseTexture = texture;
-                material.diffuseTexture.hasAlpha = true;
-                material.useAlphaFromDiffuseTexture = true;
-                material.transparencyMode = 1;  // ALPHA_TEST
-                newMesh.material = material;
+                    //Create dynamic texture
+                    var texture = new BABYLON.DynamicTexture("dynamicTexture_text_" + mesh.id , {width:256, height:128}, this.scene);
+                    //var textureContext = texture.getContext();
+                    var font = "bold 36px serif";
+                    let text = metadata['ddd:text'];
+                    texture.drawText(text, 128.0 - (text.length * 8), 60, font, "blue", "transparent", true, true);
 
-                newMesh.isPickable = false;
-                //newMesh.metadata = {gltf: {extras: metadata}};  // Doesn't seem to work and/or freezes the app
-                //delete newMesh.metadata['ddd:text'];
-                */
+                    var material = new BABYLON.StandardMaterial("Mat" + mesh.id, this.scene);
+                    material.diffuseTexture = texture;
+                    material.diffuseTexture.hasAlpha = true;
+                    material.useAlphaFromDiffuseTexture = true;
+                    material.transparencyMode = 1;  // ALPHA_TEST
+                    newMesh.material = material;
+
+                    newMesh.isPickable = false;
+                    //newMesh.metadata = {gltf: {extras: metadata}};  // Doesn't seem to work and/or freezes the app
+                    //delete newMesh.metadata['ddd:text'];
+                }
 
                 mesh.parent = null;
                 mesh.dispose();
@@ -812,10 +821,9 @@ class SceneViewer {
             }
         }
 
-
         /*
         if (mesh === root) {
-            this.octree = this.scene.createOrUpdateSelectionOctree(); // capacity, maxDepth);
+            //this.octree = this.scene.createOrUpdateSelectionOctree(); // capacity, maxDepth);
         }
         */
 
@@ -945,6 +953,7 @@ class SceneViewer {
 
                 // This section is critical. The bakeCurrentTransformIntoVertices in the middle is too.
                 meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
+                meshInstanceRoot.rotate(BABYLON.Vector3.Up(), -Math.PI / 2);
                 meshInstanceRoot.bakeCurrentTransformIntoVertices();
                 meshInstanceRoot.rotate(BABYLON.Vector3.Forward(), -Math.PI / 2);
                 meshInstanceRoot.rotate(BABYLON.Vector3.Right(), Math.PI);
@@ -1912,7 +1921,7 @@ class SceneViewer {
                 if (lampMatOn) {
                     lampMat.emissiveColor = BABYLON.Color3.Black();
                 } else {
-                    lampMat.emissiveColor = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
+                    lampMat.emissiveColor = this.colorLightLamp;
                 }
                 //lampMat.freeze();
             }
@@ -1923,36 +1932,33 @@ class SceneViewer {
                 if (lampMatOn) {
                     lampMat.emissiveColor = BABYLON.Color3.Black();
                 } else {
-                    lampMat.emissiveColor = new BABYLON.Color3(250 / 255, 244 / 255, 192 / 255);
+                    lampMat.emissiveColor = new BABYLON.Color3(128 / 255, 120/ 255, 115 / 255);
                 }
                 //lampMat.freeze();
             }
             */
-            if (Math.random() < 0.5) {
-                if ('LightGreen' in this.catalog_materials) {
-                    let lampMat = this.catalog_materials['LightGreen'];
-                    lampMat.unfreeze();
-                    if (lampMatOn) {
-                        lampMat.emissiveColor = BABYLON.Color3.Black();
-                    } else {
-                        lampMat.emissiveColor = new BABYLON.Color3(50 / 255, 512 / 255, 50 / 255);
-                    }
-                    //lampMat.freeze();
-                }
-            } else {
-                if ('LightRed' in this.catalog_materials) {
-                    let lampMat = this.catalog_materials['LightRed'];
-                    lampMat.unfreeze();
-                    if (lampMatOn) {
-                        lampMat.emissiveColor = BABYLON.Color3.Black();
-                    } else {
-                        lampMat.emissiveColor = new BABYLON.Color3(512 / 255, 0 / 255, 0 / 255);
-                    }
-                    //lampMat.freeze();
-                }
-            }
         }
 
+        const semCycleSeconds = 20;
+        let semColor = (this.viewerState.positionDate.getMinutes() % semCycleSeconds) / semCycleSeconds;
+        semColor = (semColor < 0.5 ? 0 : (semColor < 0.9 ? 1 : 2));
+        if ('LightRed' in this.catalog_materials) {
+            let lampMat = this.catalog_materials['LightRed'];
+            lampMat.unfreeze();
+            lampMat.emissiveColor = (semColor === 0) ? this.colorLightRed : BABYLON.Color3.Black();
+            //lampMat.freeze();
+        }
+        if ('LightGreen' in this.catalog_materials) {
+            let lampMat = this.catalog_materials['LightGreen'];
+            lampMat.unfreeze();
+            lampMat.emissiveColor = (semColor === 1) ? this.colorLightGreen : BABYLON.Color3.Black();
+        }
+        if ('LightOrange' in this.catalog_materials) {
+            let lampMat = this.catalog_materials['LightOrange'];
+            lampMat.unfreeze();
+            lampMat.emissiveColor = (semColor === 2) ? this.colorLightOrange : BABYLON.Color3.Black();
+            //lampMat.freeze();
+        }
 
     }
 

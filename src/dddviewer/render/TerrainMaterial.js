@@ -71,10 +71,10 @@ class TerrainMaterialWrapper {
                                [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [3.0, 1.0], // encoded by third splat (down left), third row (index 1 starting from bottom)
                                [0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0], // encoded by splat (down right), last row (index 0 from bottom)
                               ],
-                    scales:[[defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
+                    scales:[[defScale * 0.75, defScale * 0.75], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
                              [defScale * 0.5, defScale * 0.5], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
                              [defScale * 1.5, defScale * 1.5], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
-                             [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]],
+                             [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]], // Sand, rock, rock orange
                     displScales: [0.0, 0, 0.0, 0,
                                   0, 0, 0, 0,
                                   0, 0, 0, 0,
@@ -397,6 +397,7 @@ class TerrainMaterialWrapper {
         //this.material.reflectionTexture = this.envReflectionProbe.cubeTexture;
         //this.material.reflectionTexture = this.scene.environmentTexture;
         //this.sceneViewer.scene.environmentTexture = this.sceneViewer.envReflectionProbe.cubeTexture;
+        //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
     }
 
 }

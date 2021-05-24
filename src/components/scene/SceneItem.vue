@@ -20,7 +20,7 @@
                     <OSMImage v-if="imageHref" :imageUrl="imageHref" />
 
                     <v-card-text v-if="showJSON" class="text-left">
-                        <pre style="font-size: 80%; line-height: 100%;">{{ jsonMetadata }}</pre>
+                        <pre style="font-size: 80%; line-height: 100%; width: 100%; overflow-x: scroll; overflow-y: hidden;">{{ jsonMetadata }}</pre>
                     </v-card-text>
 
                     <v-card-text v-if="!showJSON" class="text-left">

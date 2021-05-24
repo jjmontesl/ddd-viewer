@@ -98,11 +98,14 @@
                         <p>
                             <ul>
                                 <li>Map Data: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap Contributors</a></li>
-                                <!--<li>Elevation Data:</li>-->
                                 <li>Textures: <a href="https://cc0textures.com/">CC0Textures</a></li>
                                 <li>Vector Icons: <a href="http://fontawesome.com/">FontAwesome</a></li>
                                 <li>Graphic Engine: <a href="https://www.babylonjs.com/">BabylonJS</a></li>
-                                <li>3D OSM Generation: <a href="https://github.com/jjmontesl/ddd"></a></li>
+                                <li>3D OSM Generation: <a href="https://github.com/jjmontesl/ddd">DDD123</a></li>
+                                <li>Elevation Data (ES): CC-BY 4.0 ign.es 2010 (data from 2015-2021)</li>
+                                <li>Elevation Data (EU): EU-DEM v1.1 Copernicus Data by the European Union</li>
+                                <li>Elevation Data (US): US Geographical Survey</li>
+                                <li>Elevation Data (Other): SRTM Mission</li>
                             </ul>
                         </p>
 

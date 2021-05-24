@@ -136,6 +136,7 @@ export default {
       metadata: {},
       loading: true,
       nodeGetter: () => { return this.viewerState.selectedMesh; },
+      //x: new SceneViewer(),
 
       sceneTime: this.viewerState.positionDate.getHours(),
 
