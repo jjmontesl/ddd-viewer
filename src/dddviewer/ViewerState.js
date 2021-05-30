@@ -48,6 +48,8 @@ class ViewerState {
 
     sceneShadowsEnabled = false;
 
+    sceneTextsEnabled = false;
+
     scenePostprocessingEnabled = false;
 
     scenePickingEnabled = true;
@@ -83,6 +85,9 @@ class ViewerState {
 
         const shadowsEnabled = localStorage.getItem('dddSceneShadowsEnabled');
         this.sceneShadowsEnabled = shadowsEnabled ? JSON.parse(shadowsEnabled) : this.sceneShadowsEnabled;
+
+        const textsEnabled = localStorage.getItem('dddSceneTextsEnabled');
+        this.sceneTextsEnabled = textsEnabled ? JSON.parse(textsEnabled) : this.sceneTextsEnabled;
 
         const textureSet = localStorage.getItem('dddSceneTextureSet');
         this.sceneTextureSet = textureSet ? JSON.parse(textureSet) : this.sceneTextureSet;

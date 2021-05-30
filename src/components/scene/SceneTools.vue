@@ -44,6 +44,9 @@
                         <v-checkbox label="Items" disabled style="margin-top: 2px;"></v-checkbox>
                         -->
                         <v-checkbox v-model="viewerState.sceneShadowsEnabled" @change="sceneShadowsEnabledChange" label="Shadows" style="margin-top: 2px;"></v-checkbox>
+
+                        <v-checkbox v-model="viewerState.sceneTextsEnabled" @change="sceneTextsEnabledChange" label="Texts" style="margin-top: 2px;"></v-checkbox>
+
                         <!--
                         <v-checkbox v-model="viewerState.scenePostprocessingEnabled" @change="scenePostprocessingEnabledChange" label="Postprocessing" style="margin-top: 2px;"></v-checkbox>
                         -->
@@ -297,6 +300,9 @@ export default {
 
       sceneShadowsEnabledChange(value) {
           this.getSceneViewer().sceneShadowsSetEnabled(value);
+      },
+      sceneTextsEnabledChange(value) {
+          this.getSceneViewer().sceneTextsSetEnabled(value);
       },
       scenePostprocessingEnabledChange(value) {
           this.getSceneViewer().scenePostprocessingSetEnabled(value);

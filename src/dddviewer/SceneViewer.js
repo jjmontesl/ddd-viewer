@@ -133,8 +133,8 @@ class SceneViewer {
         water.windForce = 5;
         water.waveHeight = 0.1;
         water.waveSpeed = 100.0;
-        water.bumpHeight = 0.1;
-        water.waveLength = 0.25;
+        water.bumpHeight = 0.05;
+        water.waveLength = 10.0;
 
         water.alpha = 0.8;
         water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
@@ -684,23 +684,31 @@ class SceneViewer {
                 */
 
                 // TODO: Indicate when to splat in metadata
-                if (this.useSplatMap && this.viewerState.sceneTextureSet && metadata['ddd:layer'] === "0" &&
+                if (this.useSplatMap && this.viewerState.sceneTextureSet &&
+                    (('ddd:material:splatmap' in metadata) && metadata['ddd:material:splatmap'] === true) &&
+                    (!('ddd:layer' in metadata) || metadata['ddd:layer'] === "0") &&
                     (metadata['ddd:material'] === 'Park' || metadata['ddd:material'] === 'Grass' || metadata['ddd:material'] === 'Terrain' ||
                      metadata['ddd:material'] === 'Ground' || metadata['ddd:material'] === 'Ground Clear' || metadata['ddd:material'] === 'Dirt' || metadata['ddd:material'] === 'Garden' ||
                      metadata['ddd:material'] === 'Forest' || metadata['ddd:material'] === 'Sand' ||
                      metadata['ddd:material'] === 'Rock' || metadata['ddd:material'] === 'Rock Orange' ||
-                     (metadata['ddd:material'] === 'WayPedestrian' && metadata['ddd:area:type'] !== 'stairs') ||
+                     (metadata['ddd:material'] === 'WayPedestrian' && (!('ddd:area:type' in metadata) || (metadata['ddd:area:type'] !== 'stairs'))) ||
                      metadata['ddd:material'] === 'Wetland' || metadata['ddd:material'] === 'Asphalt')) {
 
-                    if (mesh.material && mesh.material !== root._splatmapMaterial) {
-                        mesh.material.dispose();
+                    if (root._splatmapMaterial) {
+                        if (mesh.material && mesh.material !== root._splatmapMaterial) {
+                            mesh.material.dispose();
+                        }
+
+                        mesh.material = root._splatmapMaterial;
+                        root._splatmapMaterial.renderingGroupId = 1;
+
+                        // Expensive probe
+                        //this.envReflectionProbe.renderList.push(mesh);
+                    } else {
+                        //this.depends.push(root);
+                        //return;
                     }
 
-                    mesh.material = root._splatmapMaterial;
-                    root._splatmapMaterial.renderingGroupId = 1;
-
-                    // Expensive probe
-                    //this.envReflectionProbe.renderList.push(mesh);
 
                 } else if ((key in this.catalog_materials)) {  // && mesh.material
 
@@ -741,7 +749,7 @@ class SceneViewer {
 
                 let newMesh = null;
 
-                let showText = false;
+                let showText = this.viewerState.sceneTextsEnabled;
                 if (showText) {
                     // Text should be (possibly) exported as meshes by the generator.
                     newMesh = BABYLON.MeshBuilder.CreatePlane('text_' + mesh.id, { size: 2.4, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene);
@@ -780,6 +788,15 @@ class SceneViewer {
             } else if (metadata['ddd:instance:key']) {
                 replaced = true;
                 let key = metadata['ddd:instance:key'];
+
+                // Ignored objects (devel purpose)
+                const ignored_keys = [];  // ["building-window"]
+                if (ignored_keys.indexOf(key) >= 0) {
+                    mesh.parent = null;
+                    mesh.dispose();
+                    return null;
+                }
+
                 if (this.catalog[key]) {
 
                     if ('ddd:instance:buffer:matrices' in metadata) {
@@ -1965,6 +1982,12 @@ class SceneViewer {
     sceneShadowsSetEnabled(value) {
         this.viewerState.sceneShadowsEnabled = value;
         localStorage.setItem('dddSceneShadowsEnabled', value);
+        alert('Reload the viewer for changes to take effect.');
+    }
+
+    sceneTextsSetEnabled(value) {
+        this.viewerState.sceneTextsEnabled = value;
+        localStorage.setItem('dddSceneTextsEnabled', value);
         alert('Reload the viewer for changes to take effect.');
     }
 
