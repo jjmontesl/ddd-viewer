@@ -1,0 +1,7 @@
+{
+    "label": "Vuelo de principante",
+    "checkpoints": [
+        {"coords": "@42.2309465,-8.7266273,34a,35y,24.5h,70.25t"},
+        {"coords": null}
+    ]
+}
