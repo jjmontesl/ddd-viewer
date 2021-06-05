@@ -527,6 +527,7 @@ class SceneViewer {
                     }
                     if ((metadata['ddd:material'] === 'Fence')) {
                         uvScale = 0.5;
+                        mesh.material.backFaceCulling = false;
                         mesh.material.albedoTexture.vOffset = 0.0725;
                         if (mesh.material.bumpTexture) { mesh.material.bumpTexture.vOffset = 0.0725; }
                     }
@@ -1131,6 +1132,7 @@ class SceneViewer {
 
         this.viewerState.sceneFPS = this.engine.getFps().toFixed(1);
         this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current.toString() : null;
+        this.viewerState.sceneTriangles = this.sceneInstru ? this.scene.getActiveIndices() / 3 : null;
 
         // Run time
         // TODO: this currently requires a minimum elapsed time so Date.setSeconds work. This approach accumulates error.

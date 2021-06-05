@@ -45,6 +45,7 @@ class ViewerState {
 
     sceneFPS = 0;
     sceneDrawCalls = null;
+    sceneTriangles = null;
 
     sceneShadowsEnabled = false;
 

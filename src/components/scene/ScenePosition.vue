@@ -25,7 +25,7 @@
                     <div style="overflow: hidden; white-space: nowrap;"><b></b>&nbsp;</div>
                     -->
 
-                    <div><small>{{ viewerState.sceneFPS }} FPS</small> <small>{{ viewerState.sceneDrawCalls }} drawcalls</small></div>
+                    <div><small>{{ viewerState.sceneFPS }} FPS</small> <small>{{ viewerState.sceneTriangles }} tris / {{ viewerState.sceneDrawCalls }} drawcalls</small></div>
 
                 </div>
             </v-card-text>
