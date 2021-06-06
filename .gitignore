@@ -29,3 +29,4 @@ yarn-error.log*
 .history/
 
 /upload.sh
+/public/assets/

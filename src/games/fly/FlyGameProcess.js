@@ -1,19 +1,17 @@
-
-
 import * as BABYLON from 'babylonjs';
-
 
 export default class {
 
-    constructor(gameData) {
+    constructor( gameData ) {
 
         // These attributes are set by the SceneViewer/ViewerProcesses externally
         this.processes = null;
+		this.sceneViewer = null;
         this.finished = false;
 
         this.time = 0.0;
 
-        this.gameLabel = "Vuelo Principante";
+        this.gameLabel = 'Vuelo Principante';
 
         this.seagull = null;
 
@@ -40,24 +38,24 @@ export default class {
     }
 
     loadPlayerModel() {
-        const that = this;
-        const filename = "/assets/seagull/gull-oriented.glb";
-        BABYLON.SceneLoader.ImportMesh(null, filename, '', this.scene, //this.scene,
+        const filename = '/assets/seagull/gull-oriented.glb';
+        BABYLON.SceneLoader.ImportMesh( null, filename, '', this.scene, //this.scene,
           // onSuccess
-          function(newMeshes, particleSystems, skeletons) {
-              newMeshes[0].setParent(null);
-              newMeshes[0].setEnabled(true);
-              newMeshes[0].position = new BABYLON.Vector3(0, 200, 0);
-              that.seagull = newMeshes[0];
+          // eslint-disable-next-line no-unused-vars
+          ( newMeshes, particleSystems, skeletons ) => {
+              newMeshes[0].setParent( null );
+              newMeshes[0].setEnabled( true );
+              newMeshes[0].position = new BABYLON.Vector3( 0, 200, 0 );
+              this.seagull = newMeshes[0];
 
-              newMeshes.forEach((mesh, i) => {
-                  that.processes.sceneViewer.shadowGenerator.getShadowMap().renderList.push(mesh);
+              newMeshes.forEach(( mesh ) => {
+                  this.sceneViewer.shadowGenerator.getShadowMap().renderList.push( mesh );
               });
           },
-          function(event) {
+		  () => {
           },
-          function(scene, msg, ex) {
-              console.log("Could not load model: " + filename, ex);
+          ( scene, msg, ex ) => {
+              console.log( 'Could not load model: ' + filename, ex );
           }
        );
     }
@@ -74,80 +72,63 @@ export default class {
         this.sceneViewer.camera.detachControl();
         this.sceneViewer.viewerState.sceneViewModeShow = false;
 
-        window.addEventListener('keydown', (e) => { if (String.fromCharCode(e.which) === 'A') { this.controlsLeft = true; } });
-        window.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'A') { this.controlsLeft = false; } });
-        window.addEventListener('keydown', (e) => { if (String.fromCharCode(e.which) === 'D') { this.controlsRight = true; } });
-        window.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'D') { this.controlsRight = false; } });
-        window.addEventListener('keydown', (e) => { if (String.fromCharCode(e.which) === 'W') { this.controlsUp = true; } });
-        window.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'W') { this.controlsUp = false; } });
-        window.addEventListener('keydown', (e) => { if (String.fromCharCode(e.which) === 'S') { this.controlsDown = true; } });
-        window.addEventListener('keyup', (e) => { if (String.fromCharCode(e.which) === 'S') { this.controlsDown = false; } });
+        window.addEventListener( 'keydown', ( e ) => { if ( String.fromCharCode( e.which ) === 'A' ) { this.controlsLeft = true; } });
+        window.addEventListener( 'keyup', ( e ) => { if ( String.fromCharCode( e.which ) === 'A' ) { this.controlsLeft = false; } });
+        window.addEventListener( 'keydown', ( e ) => { if ( String.fromCharCode( e.which ) === 'D' ) { this.controlsRight = true; } });
+        window.addEventListener( 'keyup', ( e ) => { if ( String.fromCharCode( e.which ) === 'D' ) { this.controlsRight = false; } });
+        window.addEventListener( 'keydown', ( e ) => { if ( String.fromCharCode( e.which ) === 'W' ) { this.controlsUp = true; } });
+        window.addEventListener( 'keyup', ( e ) => { if ( String.fromCharCode( e.which ) === 'W' ) { this.controlsUp = false; } });
+        window.addEventListener( 'keydown', ( e ) => { if ( String.fromCharCode( e.which ) === 'S' ) { this.controlsDown = true; } });
+        window.addEventListener( 'keyup', ( e ) => { if ( String.fromCharCode( e.which ) === 'S' ) { this.controlsDown = false; } });
 
     }
 
-    update(deltaTime) {
+    update( deltaTime ) {
 
         // TODO: Hacky way of initializing the process:
         // This should be called by ViewerProcesses for each new process.
-        if (this.time === 0) {
+        if ( this.time === 0 ) {
             this.initialize();
         }
         this.time += deltaTime;
         const sceneViewer = this.processes.sceneViewer;
 
         // Check needed objects are loaded
-        if (this.seagull === null) { return; }
+        if ( this.seagull === null ) { return; }
 
         // Process input
         let pitch = 0.0;
-        if (this.controlsLeft) { this.heading -= this.rotationSpeed * deltaTime; }
-        if (this.controlsRight) { this.heading += this.rotationSpeed * deltaTime; }
-        if (this.controlsUp) { pitch = -0.3; }
-        if (this.controlsDown) { pitch = 0.1; }
+        if ( this.controlsLeft ) { this.heading -= this.rotationSpeed * deltaTime; }
+        if ( this.controlsRight ) { this.heading += this.rotationSpeed * deltaTime; }
+        if ( this.controlsUp ) { pitch = -0.3; }
+        if ( this.controlsDown ) { pitch = 0.1; }
 
         // Apply physics
-        let inclination = (this.controlsLeft ? -0.2 : (this.controlsRight ? 0.2 : 0.0));
-        this.seagull.rotation = new BABYLON.Vector3(pitch, this.heading, inclination);
+        let inclination = ( this.controlsLeft ? -0.2 : ( this.controlsRight ? 0.2 : 0.0 ));
+        this.seagull.rotation = new BABYLON.Vector3( pitch, this.heading, inclination );
 
-        let velocityRef = new BABYLON.Vector3(0, -2.0, -7.5);
-        let headingRotation = new BABYLON.Vector3(0, this.heading, 0).toQuaternion();
-        let velocity = velocityRef.rotateByQuaternionToRef(headingRotation, new BABYLON.Vector3());
+        let velocityRef = new BABYLON.Vector3( 0, -2.0, -7.5 );
+        let headingRotation = new BABYLON.Vector3( 0, this.heading, 0 ).toQuaternion();
+        let velocity = velocityRef.rotateByQuaternionToRef( headingRotation, new BABYLON.Vector3());
 
-        const movement = velocity.scale(deltaTime);
+        const movement = velocity.scale( deltaTime );
 
 
         let newPos = this.seagull.position.clone();
-        newPos.addInPlace(movement);
+        newPos.addInPlace( movement );
         this.seagull.position = newPos;
 
         // Update camera to follow target from behind
-        let cameraTargetPos = new BABYLON.Vector3(0, 1, -2);
-        let cameraTargetPosWorld = BABYLON.Vector3.TransformCoordinates(cameraTargetPos, this.seagull.getWorldMatrix());
+        let cameraTargetPos = new BABYLON.Vector3( 0, 1, -2 );
+        let cameraTargetPosWorld = BABYLON.Vector3.TransformCoordinates( cameraTargetPos, this.seagull.getWorldMatrix());
 
-        let cameraNewPos = BABYLON.Vector3.Lerp(sceneViewer.camera.position, cameraTargetPosWorld, 0.02);
+        let cameraNewPos = BABYLON.Vector3.Lerp( sceneViewer.camera.position, cameraTargetPosWorld, 0.02 );
 
         sceneViewer.camera.position = cameraNewPos;
         //sceneViewer.camera.lookAt(this.seagull.position);
         //new BABYLON.Vector3((90.0 - sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-        sceneViewer.camera.setTarget(this.seagull.position);
+        sceneViewer.camera.setTarget( this.seagull.position );
 
-
-
-        /*
-        let interp_factor = (this.animTime > 0) ? ((this.time) / this.animTime) : 1.0;
-        if (interp_factor > 1.0) {
-            interp_factor = 1.0;
-        }
-
-        let interpTime = (this.dtEnd / 1000 - this.dtStart / 1000) * interp_factor;
-
-        sceneViewer.viewerState.positionDate = new Date(this.dtStart.getTime() + interpTime * 1000);
-        sceneViewer.lightSetupFromDatePos();
-
-        if (interp_factor >= 1.0) {
-            this.processes.remove(this);
-        }
-        */
     }
 
 }

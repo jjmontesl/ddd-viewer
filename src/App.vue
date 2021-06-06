@@ -33,8 +33,7 @@
 </template>
 
 <script>
-import {createXYZ, extentFromProjection} from 'ol/tilegrid.js';
-import proj4 from 'proj4';
+import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
 //import {register} from 'ol/proj/proj4';
 import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
@@ -113,7 +112,7 @@ export default {
       return {
         getViewerState: function() { return that.viewerState; },
         getSceneViewer: function() { return that.sceneViewer; },
-        setSceneViewer: function(sceneViewer) { that.sceneViewer = sceneViewer; },
+        setSceneViewer: function( sceneViewer ) { that.sceneViewer = sceneViewer; },
       }
   },
   data() {
@@ -121,7 +120,7 @@ export default {
       //name: this.$store.state.auth.user.name,
       //showVerifyDialog: !this.$store.state.verify.emailVerified
       //viewer: dddViewer,
-      viewerState: new ViewerState(this.dddConfig.defaultCoords, this.isMobile()),
+      viewerState: new ViewerState( this.dddConfig.defaultCoords, this.isMobile()),
       //viewerState: null,
     }
   },
@@ -144,24 +143,24 @@ export default {
   },
   methods: {
 
-      dddViewerMode(mode) {
+      dddViewerMode( mode ) {
         //console.debug("Received Viewer Mode change event to: " + mode);
-        if (mode !== null) {
+        if ( mode !== null ) {
             this.viewerState.mapVisible = mode === 'map';
             this.viewerState.sceneVisible = mode === 'scene';
         }
-        setTimeout(function() {
-            window.dispatchEvent(new Event('resize'));
-        }, 200);
+        setTimeout(() => {
+            window.dispatchEvent( new Event( 'resize' ));
+        }, 200 );
       },
 
-      dddPosition(coords, zoom) {
+      dddPosition( coords, zoom ) {
           //console.debug("Received Viewer coords: " + coords);
           this.viewerState.positionWGS84 = coords;
           this.viewerState.positionTileZoomLevel = zoom;
       },
 
-      dddScenePosition(coords) {
+      dddScenePosition( coords ) {
           //console.debug("Received Viewer coords: " + coords);
           this.viewerState.positionScene = coords;
       },
@@ -171,7 +170,7 @@ export default {
       },
 
     isMobile() {
-        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test( navigator.userAgent )) {
             return true;
         } else {
             return false;
@@ -186,70 +185,71 @@ export default {
                 //http://localhost:8080/maps/@42.1354407,-0.4126472,17.0z
                 let href = window.location.href;
                 const regexp = /.*@([0-9.\-]+),([0-9.\-]+)((,(([0-9.\-]+)[ayhtz]))*).*/;
-                let matches = href.match(regexp);
+                let matches = href.match( regexp );
                 const regexpTile = /.*@([0-9\-]+),([0-9\-]+)t((,(([0-9.\-]+)[ayhtz]))*).*/;
-                let matchesTile = href.match(regexpTile);
+                let matchesTile = href.match( regexpTile );
 
                 let tileCoords = null;
                 //console.debug(matchesTile);
 
-                if ((! matches || matches.length < 3) || (matchesTile)) {
+                if (( ! matches || matches.length < 3 ) || ( matchesTile )) {
                     // Try tile
 
-                    if (matchesTile && matchesTile.length >= 3) {
+                    if ( matchesTile && matchesTile.length >= 3 ) {
                         //console.debug("Loading position from tile grid coords.");
                         matches = matchesTile;
-                        tileCoords = [17, parseInt(matches[1]), parseInt(matches[2])];
+                        tileCoords = [ 17, parseInt( matches[1]), parseInt( matches[2]) ];
                     } else {
                         // Try last
-                        const dddLastPositionString = localStorage.getItem('dddLastPositionString');
+                        const dddLastPositionString = localStorage.getItem( 'dddLastPositionString' );
                         //console.debug("Using last known position in this viewer: " + dddLastPositionString);
-                        matches = dddLastPositionString.match(regexp);
+                        matches = dddLastPositionString.match( regexp );
                     }
                 }
 
-                if (!matches) { return; }
+                if ( !matches ) { return; }
 
-                if (matches.length >= 3 && tileCoords !== null) {
+                if ( matches.length >= 3 && tileCoords !== null ) {
                     //console.debug(tileCoords);
-                    this.viewerState.positionWGS84 = this.positionFromTile(tileCoords);
+                    this.viewerState.positionWGS84 = this.positionFromTile( tileCoords );
                     this.viewerState.positionTileZoomLevel = tileCoords[0];
-                } else if (matches.length >= 3) {
-                    this.viewerState.positionWGS84 = [parseFloat(matches[2]),parseFloat(matches[1])];
+                } else if ( matches.length >= 3 ) {
+                    this.viewerState.positionWGS84 = [ parseFloat( matches[2]),parseFloat( matches[1]) ];
                 }
 
-                if (matches.length >= 4) {
-                    for (let match of matches[3].split(",")) {
-                        if (match === "") { continue; }
-                        let value = parseFloat(match.slice(0, -1));
-                        let code = match.slice(-1);
-                        if (code === 'z') {
+                if ( matches.length >= 4 ) {
+                    for ( let match of matches[3].split( ',' )) {
+                        if ( match === '' ) { continue; }
+                        let value = parseFloat( match.slice( 0, -1 ));
+                        let code = match.slice( -1 );
+                        if ( code === 'z' ) {
                             this.viewerState.positionTileZoomLevel = value;
-                        } else if (code === 'a') {
+                        } else if ( code === 'a' ) {
                             this.viewerState.positionGroundHeight = value;
-                        } else if (code === 'h') {
+                        } else if ( code === 'h' ) {
                             this.viewerState.positionHeading = value;
-                        } else if (code === 't') {
+                        } else if ( code === 't' ) {
                             this.viewerState.positionTilt = value;
                         }
                         //console.debug(value, code);
                     }
 
                 }
-            } catch(e) {
+            // eslint-disable-next-line no-unused-vars
+            } catch( e ) {
                 //console.debug("Error parsing location from href: " + e);
             }
 
           //let positionWgs84 = this.getViewerState().positionWGS84;
       },
 
-      positionFromTile(tileCoords) {
+      positionFromTile( tileCoords ) {
         const tileGrid = createXYZ({
-              extent: extentFromProjection('EPSG:3857'),
+              extent: extentFromProjection( 'EPSG:3857' ),
         });
-        let tileExtent = tileGrid.getTileCoordExtent(tileCoords);
-        let tileCenter = extent.getCenter(tileExtent);
-        let tileCenterWGS84 = olProj.transform(tileCenter, 'EPSG:3857', 'EPSG:4326');
+        let tileExtent = tileGrid.getTileCoordExtent( tileCoords );
+        let tileCenter = extent.getCenter( tileExtent );
+        let tileCenterWGS84 = olProj.transform( tileCenter, 'EPSG:3857', 'EPSG:4326' );
         return tileCenterWGS84;
       }
   }

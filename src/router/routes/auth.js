@@ -3,19 +3,19 @@ export default [
     path: '/login',
     name: 'login',
     component: () =>
-      import(/* webpackChunkName: "login" */ '@/components/Login.vue')
+      import( /* webpackChunkName: "login" */ '@/components/Login.vue' )
   },
   {
     path: '/signup',
     name: 'signup',
     component: () =>
-      import(/* webpackChunkName: "signup" */ '@/components/SignUp.vue')
+      import( /* webpackChunkName: "signup" */ '@/components/SignUp.vue' )
   },
   {
     path: '/verify/:id',
     name: 'verify',
     component: () =>
-      import(/* webpackChunkName: "verify" */ '@/components/Verify.vue')
+      import( /* webpackChunkName: "verify" */ '@/components/Verify.vue' )
   },
   {
     path: '/forgot',

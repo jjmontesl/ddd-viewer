@@ -6,6 +6,6 @@ export default [
       requiresAuth: false
     },
     component: () =>
-      import(/* webpackChunkName: "mapMain" */ '@/components/MapMain.vue')
+      import( /* webpackChunkName: "mapMain" */ '@/components/MapMain.vue' )
   }
 ]

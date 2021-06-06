@@ -2,7 +2,7 @@
 
     "productionTip": false,
 
-    "tileUrlBase": "https://{{hostname}}:8000/cache/ddd_http/",
+    "tileUrlBase": "https://3dsmaps.com/cache/ddd_http/",
 
     "showDevelLinks": true,
 
@@ -28,7 +28,7 @@
 
     "defaultCoords": [-8.723, 42.238],
 
-    "dddHttpApiUrlBase": "https://{{hostname}}:8000/api/",
+    "dddHttpApiUrlBase": "https://3dsmaps.com/api/",
 
     "geolocation": true
 

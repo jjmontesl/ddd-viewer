@@ -6,6 +6,6 @@ export default [
       requiresAuth: false
     },
     component: () =>
-      import(/* webpackChunkName: "mapMain" */ '@/components/scene/SceneDebug.vue')
+      import( /* webpackChunkName: "mapMain" */ '@/components/scene/SceneDebug.vue' )
   }
 ]

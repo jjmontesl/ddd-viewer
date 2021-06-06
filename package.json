@@ -10,7 +10,7 @@
   "scripts": {
     "generate-build-version": "node generate-build-version",
     "serve": "vue-cli-service serve",
-    "serve-pub-https": "vue-cli-service serve --public 192.168.0.14:8080 --https",
+    "serve-pub-https": "vue-cli-service serve --public localhost:8080 --https",
     "build": "npm run generate-build-version && vue-cli-service build",
     "format": "prettier --write --config .prettierrc \"**/*.js\"",
     "lint": "vue-cli-service lint --fix",
@@ -19,11 +19,6 @@
     "remark": "remark . -o",
     "ci": "vue-cli-service test:e2e --env API_URL=https://api-demo.daniel-avellaneda.com,ENV=ci --headless --config video=false",
     "coverage": "nyc report --reporter=text-summary"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged && npm run remark"
-    }
   },
   "lint-staged": {
     "*.{js,vue}": [

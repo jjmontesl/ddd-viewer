@@ -6,6 +6,6 @@ export default [
       requiresAuth: false
     },
     component: () =>
-      import(/* webpackChunkName: "mapTiles" */ '@/components/MapTiles.vue')
+      import( /* webpackChunkName: "mapTiles" */ '@/components/MapTiles.vue' )
   }
 ]

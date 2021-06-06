@@ -6,6 +6,6 @@ export default [
       requiresAuth: false
     },
     component: () =>
-      import(/* webpackChunkName: "sceneARSurface" */ '@/components/SceneARSurface.vue')
+      import( /* webpackChunkName: "sceneARSurface" */ '@/components/SceneARSurface.vue' )
   }
 ]
