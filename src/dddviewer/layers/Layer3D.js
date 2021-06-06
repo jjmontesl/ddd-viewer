@@ -1,11 +1,11 @@
 //import axios from 'axios'
 
-export default class {
+// export default class {
 
-  update() {
-      layer.loadTilesDynamic();
-  }
-
+//   update() {
+//       layer.loadTilesDynamic();
+//   }
+// }
 
   /*
   getUsers(params) {
@@ -23,7 +23,4 @@ export default class {
     return axios.delete(`/users/${id}`)
   }
   */
-
-
-}
 

@@ -5,7 +5,7 @@ import 'babylonjs-loaders';
 
 export default class {
 
-    constructor(sceneViewer) {
+    constructor( sceneViewer ) {
 
         this.sceneViewer = sceneViewer;
 
@@ -22,33 +22,33 @@ export default class {
     }
 
     processNext() {
-        if (this.queue.length < 1) {
+        if ( this.queue.length < 1 ) {
             return;
         }
 
         let task = this.queue.pop();
-        this.processTask(task);
+        this.processTask( task );
     }
 
-    enqueueLoadModel(url, onSuccess, onFailure) {
-        this.queue.push({'url': url, 'onSuccess': onSuccess, 'onFailure': onFailure});
-        if (this.current.length < this.concurrentTasks) {
+    enqueueLoadModel( url, onSuccess, onFailure ) {
+        this.queue.push({ 'url': url, 'onSuccess': onSuccess, 'onFailure': onFailure });
+        if ( this.current.length < this.concurrentTasks ) {
             this.processNext();
         }
     }
 
-    processTask(task) {
+    processTask( task ) {
         let url = task['url'];
         let that = this;
-        BABYLON.SceneLoader.ImportMesh(null, '', url, this.sceneViewer.scene,
-            function(newMeshes, particleSystems, skeletons) {
+        BABYLON.SceneLoader.ImportMesh( null, '', url, this.sceneViewer.scene,
+            ( newMeshes, particleSystems, skeletons ) => {
                 that.processNext();
-                task.onSuccess(newMeshes, particleSystems, skeletons);
+                task.onSuccess( newMeshes, particleSystems, skeletons );
             },
-            function() {
+            () => {
             },
-            function(scene, msg, ex) {
-                task.onFailure(scene, msg, ex);
+            ( scene, msg, ex ) => {
+                task.onFailure( scene, msg, ex );
                 that.processNext();
             }
         );

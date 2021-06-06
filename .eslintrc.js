@@ -78,14 +78,6 @@ module.exports = {
         allowNamedFunctions: true
       }
     ],
-    quotes: [
-      'warn',
-      'single',
-      {
-        avoidEscape: false,
-        allowTemplateLiterals: true
-      }
-    ],
     //semi: ['error', 'never'],
     semi: 'off',
     'semi-spacing': [

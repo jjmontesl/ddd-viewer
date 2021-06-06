@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import modules from '@/store/modules'
 
-Vue.use(Vuex)
+Vue.use( Vuex )
 
 export const store = new Vuex.Store({
   modules: {
@@ -10,7 +10,7 @@ export const store = new Vuex.Store({
   }
 })
 
-if (window.Cypress) {
+if ( window.Cypress ) {
   // Only available during E2E tests
   window.__store__ = store
 }

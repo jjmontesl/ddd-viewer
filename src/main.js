@@ -9,35 +9,37 @@ import App from '@/App.vue'
 import router from '@/router'
 import { store } from '@/store'
 import VuetifyConfirm from 'vuetify-confirm'
-import VueGtag from "vue-gtag";
+import VueGtag from 'vue-gtag';
 import VueGeolocation from 'vue-browser-geolocation';
 
-fetch("/dddconfig.json")  // process.env.BASE_URL +
-  .then((response) => {
+// import deb from "./utils/typescript";
+// deb();
+fetch( '/dddconfig.json' ) // process.env.BASE_URL +
+  .then(( response ) => {
 
-      response.json().then((config) => {
+      response.json().then(( config ) => {
 
         Vue.prototype.dddConfig = config;
 
-        config.tileUrlBase = config.tileUrlBase.replace('{{hostname}}', location.hostname);
-        config.dddHttpApiUrlBase = config.dddHttpApiUrlBase.replace('{{hostname}}', location.hostname);
+        config.tileUrlBase = config.tileUrlBase.replace( '{{hostname}}', location.hostname );
+        config.dddHttpApiUrlBase = config.dddHttpApiUrlBase.replace( '{{hostname}}', location.hostname );
         //console.debug(config);
 
         Vue.config.productionTip = config.productionTip
 
-        Vue.use(VuetifyConfirm, { vuetify })
+        Vue.use( VuetifyConfirm, { vuetify })
 
-        if (config.analyticsTag) {
-            Vue.use(VueGtag, {
+        if ( config.analyticsTag ) {
+            Vue.use( VueGtag, {
               config: { id: config.analyticsTag  },
               //params: {
               //    send_page_view: false
               //}
-            }, router);
+            }, router );
         }
 
-        if (config.geolocation) {
-            Vue.use(VueGeolocation);
+        if ( config.geolocation ) {
+            Vue.use( VueGeolocation );
         }
 
         /*
@@ -60,17 +62,17 @@ fetch("/dddconfig.json")  // process.env.BASE_URL +
           router,
           store,
           i18n,
-          render: (h) => h(App),
+          render: ( h ) => h( App ),
           created() {
-            store.dispatch('setLocale', store.getters.locale)
-            if (store.getters.isTokenSet) {
-              store.dispatch('autoLogin')
+            store.dispatch( 'setLocale', store.getters.locale )
+            if ( store.getters.isTokenSet ) {
+              store.dispatch( 'autoLogin' )
             }
           },
 
-        }).$mount('#app')
+        }).$mount( '#app' )
 
-        if (window.Cypress) {
+        if ( window.Cypress ) {
           // Only available during E2E tests
           window.app = app
         }
