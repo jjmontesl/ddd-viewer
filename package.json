@@ -1,112 +1,55 @@
 {
-  "name": "ddd-viewer",
-  "version": "0.5.0",
-  "description": "DDD(123) Viewer with OSM data support",
-  "license": "AGPL",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jjmontesl/ddd-viewer.git"
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
   },
   "scripts": {
-    "generate-build-version": "node generate-build-version",
-    "serve": "vue-cli-service serve",
-    "serve-pub-https": "vue-cli-service serve --public localhost:8080 --https",
-    "build": "npm run generate-build-version && vue-cli-service build",
-    "format": "prettier --write --config .prettierrc \"**/*.js\"",
-    "lint": "vue-cli-service lint --fix",
-    "test:e2e": "vue-cli-service test:e2e --mode e2e",
-    "test:unit": "vue-cli-service test:unit",
-    "remark": "remark . -o",
-    "ci": "vue-cli-service test:e2e --env API_URL=https://api-demo.daniel-avellaneda.com,ENV=ci --headless --config video=false",
-    "coverage": "nyc report --reporter=text-summary"
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
   },
-  "lint-staged": {
-    "*.{js,vue}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
+  "peerDependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
   },
-  "dependencies": {
-    "@babylonjs/loaders": "^4.2.0",
-    "@mdi/font": "^5.1.45",
-    "@types/suncalc": "^1.8.0",
-    "axios": "^0.19.2",
-    "babylonjs": "^5.0.0-alpha.17",
-    "babylonjs-gltf2interface": "^5.0.0-alpha.17",
-    "babylonjs-loaders": "^5.0.0-alpha.17",
-    "babylonjs-materials": "^5.0.0-alpha.17",
-    "core-js": "^3.6.5",
-    "date-fns": "^2.12.0",
-    "earcut": "^2.2.2",
-    "ol": "^6.4.2",
-    "proj4": "^2.7.0",
-    "remark-cli": "^8.0.0",
-    "suncalc": "^1.8.0",
-    "vee-validate": "^3.3.0",
-    "vue": "^2.6.11",
-    "vue-analytics": "^5.22.1",
-    "vue-browser-geolocation": "^1.8.0",
-    "vue-country-flag": "^2.0.1",
-    "vue-gtag": "^1.11.0",
-    "vue-i18n": "^8.17.3",
-    "vue-meta": "^2.4.0",
-    "vue-resize-text": "^0.1.1",
-    "vue-router": "^3.3.4",
-    "vuetify": "^2.2.22",
-    "vuetify-confirm": "^2.0.5",
-    "vuex": "^3.2.0"
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
   },
+  "name": "dddviewer",
+  "author": "farvell",
+  "module": "dist/dddviewer.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/dddviewer.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/dddviewer.esm.js",
+      "limit": "10 KB"
+    }
+  ],
   "devDependencies": {
-    "@babylonjs/core": "^4.2.0",
-    "@cypress/code-coverage": "^3.8.1",
-    "@kazupon/vue-i18n-loader": "^0.5.0",
-    "@vue/babel-preset-app": "^4.4.4",
-    "@vue/cli-plugin-babel": "^4.4.4",
-    "@vue/cli-plugin-e2e-cypress": "^4.4.4",
-    "@vue/cli-plugin-eslint": "^4.4.4",
-    "@vue/cli-plugin-unit-mocha": "^4.4.4",
-    "@vue/cli-service": "^4.4.4",
-    "@vue/eslint-config-prettier": "^6.0.0",
-    "@vue/test-utils": "^1.0.3",
-    "babel-eslint": "^10.1.0",
-    "babel-plugin-istanbul": "^6.0.0",
-    "chai": "^4.2.0",
-    "eslint": "^7.3.0",
-    "eslint-config-formidable": "^4.0.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-vue": "^6.2.2",
-    "faker": "^4.1.0",
-    "fibers": "^5.0.0",
-    "husky": "^4.2.5",
-    "istanbul-lib-coverage": "^3.0.0",
-    "lint-staged": "^10.2.11",
-    "nyc": "^15.1.0",
-    "prettier": "^2.0.5",
-    "sass": "^1.26.8",
-    "sass-loader": "^8.0.2",
-    "stylus": "^0.54.7",
-    "stylus-loader": "^3.0.2",
-    "vue-cli-plugin-axios": "0.0.4",
-    "vue-cli-plugin-i18n": "^1.0.1",
-    "vue-cli-plugin-vuetify": "^2.0.5",
-    "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.5.0"
-  },
-  "keywords": [
-    "ddd",
-    "ddd123",
-    "osm",
-    "openstreetmap",
-    "3d",
-    "gis",
-    "trimesh",
-    "shapely",
-    "babylonjs",
-    "openlayers",
-    "vuejs",
-    "javascript",
-    "webapp",
-    "web",
-    "app"
-  ]
+    "@size-limit/preset-small-lib": "^4.11.0",
+    "husky": "^6.0.0",
+    "size-limit": "^4.11.0",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.2.0",
+    "typescript": "^4.3.2"
+  }
 }

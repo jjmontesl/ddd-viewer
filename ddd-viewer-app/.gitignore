@@ -26,4 +26,7 @@ yarn-error.log*
 *.sln
 *.sw*
 
-*.log
+.history/
+
+/upload.sh
+/public/assets/
