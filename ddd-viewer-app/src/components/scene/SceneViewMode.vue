@@ -55,14 +55,14 @@
 
 <script>
 import 'ol/ol.css';
-import * as olProj from 'ol/proj';
-import Map from 'ol/Map';
-import OSM from 'ol/source/OSM';
-import TileDebug from 'ol/source/TileDebug';
-import TileLayer from 'ol/layer/Tile';
-import View from 'ol/View';
-import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
-import { ScaleLine, defaults as defaultControls } from 'ol/control';
+// import * as olProj from 'ol/proj';
+// import Map from 'ol/Map';
+// import OSM from 'ol/source/OSM';
+// import TileDebug from 'ol/source/TileDebug';
+// import TileLayer from 'ol/layer/Tile';
+// import View from 'ol/View';
+// import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
+// import { ScaleLine, defaults as defaultControls } from 'ol/control';
 
 import ServerInfo from '@/components/ddd/ServerInfo.vue';
 

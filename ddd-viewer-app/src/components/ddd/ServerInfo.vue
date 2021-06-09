@@ -11,9 +11,9 @@
 </template>
 
 <script>
-import tiles from '@/services/ddd_http/tiles.js'
+import tiles from '@/services/ddd_http/tiles'
 
-import OSMImage from '@/components/ddd/OSMImage.vue';
+// import OSMImage from '@/components/ddd/OSMImage.vue';
 
 export default {
   mounted() {

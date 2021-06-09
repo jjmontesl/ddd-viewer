@@ -18,23 +18,23 @@
 </template>
 
 <script>
-import 'ol/ol.css';
+import * as InitializeMap from 'ol/ol.css';
 import * as olProj from 'ol/proj';
 import Map from 'ol/Map';
 import OSM from 'ol/source/OSM';
-import XYZ from 'ol/source/XYZ';
-import TileDebug from 'ol/source/TileDebug';
+// import XYZ from 'ol/source/XYZ';
+// import TileDebug from 'ol/source/TileDebug';
 import TileLayer from 'ol/layer/Tile';
 import View from 'ol/View';
-import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
-import { ScaleLine, defaults as defaultControls } from 'ol/control';
+// import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
+// import { ScaleLine, defaults as defaultControls } from 'ol/control';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import DragPan from 'ol/interaction/DragPan';
-import { defaults as defaultInteractions } from 'ol/interaction';
-import ZoomControl from 'ol/control/Zoom';
+// import { defaults as defaultInteractions } from 'ol/interaction';
+// import ZoomControl from 'ol/control/Zoom';
 //import DragControl from 'ol/control/Drag';
 
-import tiles from '@/services/ddd_http/tiles.js';
+// import tiles from '@/services/ddd_http/tiles.js';
 
 
 export default {

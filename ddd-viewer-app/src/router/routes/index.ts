@@ -1,5 +1,5 @@
 const requireRoute = require.context( '.', false, /\.js$/ ); // Get js files inside routes folder
-const routes = [];
+const routes: any[] = [];
 
 requireRoute.keys().forEach(( fileName ) => {
   // Avoid the index.js file

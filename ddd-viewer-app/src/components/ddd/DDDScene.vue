@@ -19,9 +19,9 @@
 
 <script>
 
-import * as olProj from 'ol/proj';
-import * as extent from 'ol/extent';
-import 'babylonjs-loaders';
+// import * as olProj from 'ol/proj';
+// import * as extent from 'ol/extent';
+import checkUpdateHref from 'babylonjs-loaders';
 //import waterMaterial from '@/plugins/js/waterMaterial.js';
 
 import SceneViewer from '@/dddviewer/SceneViewer.js';
@@ -201,7 +201,7 @@ export default {
         //this.sceneViewer.engine.resize(true);
       },
 
-      addLayer: function( layer ) {
+      addLayer: function() { // layer
           //console.debug("Adding layer: " + layer);
       },
 

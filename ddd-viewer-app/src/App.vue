@@ -44,10 +44,10 @@ import Loading from '@/components/core/Loading.vue'
 
 import DDDMap from '@/components/ddd/DDDMap.vue';
 import DDDMap3DSwitch from '@/components/ddd/DDDMap3DSwitch.vue';
-import DDDScene from '@/components/ddd/DDDScene.vue';
+// import DDDScene from '@/components/ddd/DDDScene.vue';
 import SceneViewMode from '@/components/scene/SceneViewMode.vue';
 
-import ViewerState from '@/dddviewer/ViewerState.js';
+import ViewerState from './services/ViewerState';
 
 export default {
   name: 'App',
@@ -97,12 +97,12 @@ export default {
     //Footer
     DDDMap,
     DDDMap3DSwitch,
-    DDDScene,
+    // DDDScene,
     SceneViewMode,
   },
   computed: {
     appTitle() {
-      return this.$store.getters.appTitle
+      return "DDD-Viewer"
     },
   },
   inject: [

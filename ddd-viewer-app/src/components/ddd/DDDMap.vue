@@ -16,7 +16,7 @@ import XYZ from 'ol/source/XYZ';
 import TileDebug from 'ol/source/TileDebug';
 import TileLayer from 'ol/layer/Tile';
 import View from 'ol/View';
-import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
+//import { createXYZ, extentFromProjection } from 'ol/tilegrid.js';
 import { ScaleLine, defaults as defaultControls } from 'ol/control';
 
 export default {
@@ -67,7 +67,7 @@ export default {
         return posString;
       },
 
-      move: function( event ) {
+      move: function() {
 
           //console.debug(event);
           //console.debug(this.positionWGS84());

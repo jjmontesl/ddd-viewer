@@ -1,16 +1,16 @@
 import Vue from 'vue'
-import '@/plugins/axios'
+// import '@/plugins/axios'
 import vuetify from '@/plugins/vuetify'
-import '@/plugins/veevalidate'
-import '@/plugins/common'
+// import '@/plugins/veevalidate'
+// import '@/plugins/common'
 import '@/plugins/googleAnalytics'
 import i18n from '@/plugins/i18n'
 import App from '@/App.vue'
 import router from '@/router'
-import { store } from '@/store'
+// import { store } from '@/store'
 import VuetifyConfirm from 'vuetify-confirm'
-import VueGtag from 'vue-gtag';
-import VueGeolocation from 'vue-browser-geolocation';
+import VueGtag from 'vue-gtag'
+// import VueGeolocation from 'vue-browser-geolocation';
 
 // import deb from "./utils/typescript";
 // deb();
@@ -38,9 +38,9 @@ fetch( '/dddconfig.json' ) // process.env.BASE_URL +
             }, router );
         }
 
-        if ( config.geolocation ) {
-            Vue.use( VueGeolocation );
-        }
+        // if ( config.geolocation ) {
+        //     Vue.use( VueGeolocation );
+        // }
 
         /*
         Vue.prototype.dddConfig = {
@@ -60,22 +60,21 @@ fetch( '/dddconfig.json' ) // process.env.BASE_URL +
         const app = new Vue({
           vuetify,
           router,
-          store,
           i18n,
-          render: ( h ) => h( App ),
-          created() {
-            store.dispatch( 'setLocale', store.getters.locale )
-            if ( store.getters.isTokenSet ) {
-              store.dispatch( 'autoLogin' )
-            }
-          },
+          render: ( h ) => h( App )
+        //   created() {
+        //     store.dispatch( 'setLocale', store.getters.locale )
+        //     if ( store.getters.isTokenSet ) {
+        //       store.dispatch( 'autoLogin' )
+        //     }
+        //   },
 
         }).$mount( '#app' )
 
-        if ( window.Cypress ) {
-          // Only available during E2E tests
-          window.app = app
-        }
+        // if ( window.Cypress ) {
+        //   // Only available during E2E tests
+        //   window.app = app
+        // }
 
     })
 

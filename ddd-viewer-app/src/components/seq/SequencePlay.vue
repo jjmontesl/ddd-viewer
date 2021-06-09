@@ -16,8 +16,8 @@
 
 
 <script>
-import DDDScene from '@/components/ddd/DDDScene.vue';
-import DDDSceneInsert from '@/components/ddd/DDDSceneInsert.vue';
+// import DDDScene from '@/components/ddd/DDDScene.vue';
+// import DDDSceneInsert from '@/components/ddd/DDDSceneInsert.vue';
 
 export default {
   mounted() {

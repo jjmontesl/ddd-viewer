@@ -10,13 +10,6 @@
             :to="{ name: 'home' }"
             tag="span"
             style="cursor: pointer;"
-            v-if="isTokenSet"
-            >{{ appTitle }}</router-link>
-          <router-link
-            :to="{ name: 'home' }"
-            tag="span"
-            style="cursor: pointer;"
-            v-else
             >{{ appTitle }}</router-link>
         </div>
       </div>
@@ -67,16 +60,6 @@
           </v-list>
         </v-menu>
 
-        <v-btn
-          text
-          v-if="isTokenSet"
-          @click="userLogout"
-          class="hidden-sm-and-down btnLogout"
-        >
-          <v-icon left>mdi-exit-to-app</v-icon>
-          {{ $t('menuItems.LOGOUT') }}
-        </v-btn>
-
         <!-- <LocaleChanger /> -->
 
       </v-toolbar-items>
@@ -123,15 +106,6 @@
           </v-list-item>
         </v-list-group>
 
-        <v-list-item v-if="isTokenSet" @click="userLogout">
-          <v-list-item-action>
-            <v-icon>mdi-exit-to-app</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            {{ $t('menuItems.LOGOUT') }}
-          </v-list-item-content>
-        </v-list-item>
-
         <v-list-item>
           <v-list-item-action></v-list-item-action>
           <v-icon>mdi-weather-sunny</v-icon>
@@ -148,146 +122,147 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import LocaleChanger from '@/components/core/LocaleChanger'
-import ResizeText from 'vue-resize-text'
+// import { mapGetters } from 'vuex';
+import LocaleChanger from '@/components/core/LocaleChanger';
+import ResizeText from 'vue-resize-text';
 
 export default {
-  name: 'Toolbar',
-  metaInfo() {
-    return {
-      title: this.$store.getters.appTitle,
-      htmlAttrs: {
-        lang: this.$i18n.locale
-      },
-      meta: [
-        { name: 'msapplication-TileColor', content: '#ffc40d' },
-        { name: 'theme-color', content: '#ffffff' },
-        {
-          name: 'apple-mobile-web-app-title',
-          content: this.$store.getters.appTitle
-        },
-        { name: 'application-name', content: this.$store.getters.appTitle }
-      ],
-      link: [
-        {
-          rel: 'apple-touch-icon',
-          sizes: '180x180',
-          href: '/apple-touch-icon.png'
-        },
-        {
-          rel: 'icon',
-          type: 'image/png',
-          sizes: '32x32',
-          href: '/favicon-32x32.png'
-        },
-        {
-          rel: 'icon',
-          type: 'image/png',
-          sizes: '16x16',
-          href: '/favicon-16x16.png'
-        },
-        { rel: 'manifest', href: '/site.webmanifest' },
-        { rel: 'mask-icon', color: '#5bbad5', href: '/safari-pinned-tab.svg' },
-        { rel: 'favicon', href: '/favicon.ico' }
-      ]
-    }
-  },
-  components: {
-    LocaleChanger
-  },
-  directives: {
-    ResizeText
-  },
-  data() {
-    return {
-      isDark: false,
-      sidebar: false
-    }
-  },
-  props: [
-      'viewerState'
-  ],
-  computed: {
-    ...mapGetters([ 'appTitle', 'isTokenSet', 'user', ]),
-    admin() {
-      return this.user !== null ? this.user.role === 'admin' : false
-    },
-    adminItems() {
-      return [
-        {
-          title: this.$t( 'adminItems.CITIES' ),
-          link: 'admin-cities',
-          icon: 'mdi-city',
-          class: 'btnAdminCities'
-        },
-        {
-          title: this.$t( 'adminItems.USERS' ),
-          link: 'admin-users',
-          icon: 'mdi-account-supervisor',
-          class: 'btnAdminUsers'
-        }
-      ]
-    },
-    menuItems() {
-      if ( this.isTokenSet ) {
-        return [
-          {
-            title: this.$t( 'menuItems.HOME' ),
-            link: 'home',
-            icon: 'mdi-home',
-            class: 'btnHome'
-          },
-          {
-            title: this.$t( 'menuItems.VIEW_MAP' ),
-            link: 'view-map',
-            icon: 'mdi-video-map',
-            class: 'btnViewMap'
-          },
-          {
-            title: this.$t( 'menuItems.VIEW_3D' ),
-            link: 'view-3d',
-            icon: 'mdi-video-3d',
-            class: 'btnView3D'
-          },
-          {
-            title: this.$t( 'menuItems.ABOUT' ),
-            link: 'about',
-            icon: 'mdi-help-circle-outline',
-            class: 'btnAbout'
-          },
-          {
-            title: this.$t( 'menuItems.MY_PROFILE' ),
-            link: 'profile',
-            icon: 'mdi-face',
-            class: 'btnProfile'
-          }
-        ]
-      }
-      let links = [];
-      links = [
-        /*
+	name: 'Toolbar',
+	metaInfo() {
+		return {
+			title: "DDD Viewer",
+			htmlAttrs: {
+				lang: this.$i18n.locale
+			},
+			meta: [
+				{ name: 'msapplication-TileColor', content: '#ffc40d' },
+				{ name: 'theme-color', content: '#ffffff' },
+				{
+					name: 'apple-mobile-web-app-title',
+					content: "DDD Viewer"
+				},
+				{ name: 'application-name', content: "DDD Viewer" }
+			],
+			link: [
+				{
+					rel: 'apple-touch-icon',
+					sizes: '180x180',
+					href: '/apple-touch-icon.png'
+				},
+				{
+					rel: 'icon',
+					type: 'image/png',
+					sizes: '32x32',
+					href: '/favicon-32x32.png'
+				},
+				{
+					rel: 'icon',
+					type: 'image/png',
+					sizes: '16x16',
+					href: '/favicon-16x16.png'
+				},
+				{ rel: 'manifest', href: '/site.webmanifest' },
+				{ rel: 'mask-icon', color: '#5bbad5', href: '/safari-pinned-tab.svg' },
+				{ rel: 'favicon', href: '/favicon.ico' }
+			]
+		};
+	},
+	components: {
+		LocaleChanger
+	},
+	directives: {
+		ResizeText
+	},
+	data() {
+		return {
+			isDark: false,
+			sidebar: false
+		};
+	},
+	props: [
+		'viewerState'
+	],
+	computed: {
+		// ...mapGetters([ 'appTitle', 'isTokenSet', 'user', ]),
+		admin() {
+			return this.user !== null ? this.user.role === 'admin' : false;
+		},
+		adminItems() {
+			return [
+				{
+					title: this.$t( 'adminItems.CITIES' ),
+					link: 'admin-cities',
+					icon: 'mdi-city',
+					class: 'btnAdminCities'
+				},
+				{
+					title: this.$t( 'adminItems.USERS' ),
+					link: 'admin-users',
+					icon: 'mdi-account-supervisor',
+					class: 'btnAdminUsers'
+				}
+			];
+		},
+		menuItems() {
+			// eslint-disable-next-line no-constant-condition
+			if ( true ) {
+				return [
+					{
+						title: this.$t( 'menuItems.HOME' ),
+						link: 'home',
+						icon: 'mdi-home',
+						class: 'btnHome'
+					},
+					{
+						title: this.$t( 'menuItems.VIEW_MAP' ),
+						link: 'view-map',
+						icon: 'mdi-video-map',
+						class: 'btnViewMap'
+					},
+					{
+						title: this.$t( 'menuItems.VIEW_3D' ),
+						link: 'view-3d',
+						icon: 'mdi-video-3d',
+						class: 'btnView3D'
+					},
+					{
+						title: this.$t( 'menuItems.ABOUT' ),
+						link: 'about',
+						icon: 'mdi-help-circle-outline',
+						class: 'btnAbout'
+					},
+					{
+						title: this.$t( 'menuItems.MY_PROFILE' ),
+						link: 'profile',
+						icon: 'mdi-face',
+						class: 'btnProfile'
+					}
+				];
+			}
+			let links = [];
+			links = [
+				/*
         {
           title: this.$t('menuItems.HOME'),
           link: 'home',
           icon: 'mdi-home'
         },
         */
-        {
-          title: 'Map',
-          link: 'mapMain',
-          icon: 'mdi-map-outline',
-          class: 'btnViewMap'
-        },
-        {
-          title: '3D',
-          link: 'sceneMain',
-          icon: 'mdi-earth',
-          class: 'btnView3D'
-        },
-         ]
-      if ( this.viewerState && this.viewerState.sceneVisible ) {
-          /*
+				{
+					title: 'Map',
+					link: 'mapMain',
+					icon: 'mdi-map-outline',
+					class: 'btnViewMap'
+				},
+				{
+					title: '3D',
+					link: 'sceneMain',
+					icon: 'mdi-earth',
+					class: 'btnView3D'
+				},
+			];
+			if ( this.viewerState && this.viewerState.sceneVisible ) {
+				/*
         links.push({
           title: 'Tools',
           link: (this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools'),
@@ -295,21 +270,21 @@ export default {
           class: 'btnTools'
         });
         */
-        links.push({
-          title: 'Settings',
-          link: ( this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools' ), // Rename to Settings
-          icon: 'mdi-cog',
-          class: 'btnSettings'
-        });
+				links.push({
+					title: 'Settings',
+					link: ( this.$route.name === "sceneTools" ? 'sceneMain' : 'sceneTools' ), // Rename to Settings
+					icon: 'mdi-cog',
+					class: 'btnSettings'
+				});
 
-      }
-      links.push({
-          title: this.$t( 'menuItems.ABOUT' ),
-          link: 'about',
-          icon: 'mdi-help-circle-outline',
-          class: 'btnAbout'
-        });
-        /*
+			}
+			links.push({
+				title: this.$t( 'menuItems.ABOUT' ),
+				link: 'about',
+				icon: 'mdi-help-circle-outline',
+				class: 'btnAbout'
+			});
+			/*
         {
           title: this.$t('menuItems.LOGIN'),
           link: 'login',
@@ -323,26 +298,26 @@ export default {
           class: 'btnLogin'
         }
         */
-      return links;
-    }
-  },
-  methods: {
-    userLogout() {
-      this.$store.dispatch( 'userLogout' )
-    }
-  },
-  watch: {
-    isDark() {
-      this.$vuetify.theme.dark = this.isDark
-      localStorage.setItem( 'dark', this.isDark )
-    },
-    'viewerState.sceneVisible'() {
-        this.$forceUpdate();
-    }
-  },
-  created() {
-    const dark = localStorage.getItem( 'dark' )
-    this.isDark = dark ? JSON.parse( dark ) : false
-  }
-}
+			return links;
+		}
+	},
+	methods: {
+		userLogout() {
+			this.$store.dispatch( 'userLogout' );
+		}
+	},
+	watch: {
+		isDark() {
+			this.$vuetify.theme.dark = this.isDark;
+			localStorage.setItem( 'dark', this.isDark );
+		},
+		'viewerState.sceneVisible'() {
+			this.$forceUpdate();
+		}
+	},
+	created() {
+		const dark = localStorage.getItem( 'dark' );
+		this.isDark = dark ? JSON.parse( dark ) : false;
+	}
+};
 </script>

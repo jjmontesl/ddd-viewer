@@ -1,33 +1,33 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("babylonjs"));
-	else if(typeof define === 'function' && define.amd)
-		define("babylonjs-procedural-textures", ["babylonjs"], factory);
-	else if(typeof exports === 'object')
-		exports["babylonjs-procedural-textures"] = factory(require("babylonjs"));
+( function webpackUniversalModuleDefinition( root, factory ) {
+	if( typeof exports === 'object' && typeof module === 'object' )
+		module.exports = factory( require( "babylonjs" ));
+	else if( typeof define === 'function' && define.amd )
+		define( "babylonjs-procedural-textures", [ "babylonjs" ], factory );
+	else if( typeof exports === 'object' )
+		exports["babylonjs-procedural-textures"] = factory( require( "babylonjs" ));
 	else
-		root["PROCEDURALTEXTURES"] = factory(root["BABYLON"]);
-})((typeof self !== "undefined" ? self : typeof global !== "undefined" ? global : this), function(__WEBPACK_EXTERNAL_MODULE_babylonjs_Misc_decorators__) {
-return /******/ (function(modules) { // webpackBootstrap
+		root["PROCEDURALTEXTURES"] = factory( root["BABYLON"]);
+})(( typeof self !== "undefined" ? self : typeof global !== "undefined" ? global : this ), ( __WEBPACK_EXTERNAL_MODULE_babylonjs_Misc_decorators__ ) => {
+return /******/ ( function( modules ) { // webpackBootstrap
 /******/ 	// The module cache
-/******/ 	var installedModules = {};
+/******/ 	let installedModules = {};
 /******/
 /******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
+/******/ 	function __webpack_require__( moduleId ) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
+/******/ 		if( installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
+/******/ 		let module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
 /******/
 /******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 		modules[moduleId].call( module.exports, module, module.exports, __webpack_require__ );
 /******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
@@ -44,18 +44,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.c = installedModules;
 /******/
 /******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 	__webpack_require__.d = function( exports, name, getter ) {
+/******/ 		if( !__webpack_require__.o( exports, name )) {
+/******/ 			Object.defineProperty( exports, name, { enumerable: true, get: getter });
 /******/ 		}
 /******/ 	};
 /******/
 /******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 	__webpack_require__.r = function( exports ) {
+/******/ 		if( typeof Symbol !== 'undefined' && Symbol.toStringTag ) {
+/******/ 			Object.defineProperty( exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		Object.defineProperty( exports, '__esModule', { value: true });
 /******/ 	};
 /******/
 /******/ 	// create a fake namespace object
@@ -63,35 +63,35 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// mode & 2: merge all properties of value into the ns
 /******/ 	// mode & 4: return value when already ns object
 /******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 	__webpack_require__.t = function( value, mode ) {
+/******/ 		if( mode & 1 ) value = __webpack_require__( value );
+/******/ 		if( mode & 8 ) return value;
+/******/ 		if(( mode & 4 ) && typeof value === 'object' && value && value.__esModule ) return value;
+/******/ 		let ns = Object.create( null );
+/******/ 		__webpack_require__.r( ns );
+/******/ 		Object.defineProperty( ns, 'default', { enumerable: true, value: value });
+/******/ 		if( mode & 2 && typeof value !== 'string' ) for( let key in value ) __webpack_require__.d( ns, key, (( key ) => { return value[key]; }).bind( null, key ));
 /******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
+/******/ 	__webpack_require__.n = function( module ) {
+/******/ 		let getter = module && module.__esModule ?
 /******/ 			function getDefault() { return module['default']; } :
 /******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		__webpack_require__.d( getter, 'a', getter );
 /******/ 		return getter;
 /******/ 	};
 /******/
 /******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/ 	__webpack_require__.o = function( object, property ) { return Object.prototype.hasOwnProperty.call( object, property ); };
 /******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./legacy/legacy-grass.ts");
+/******/ 	return __webpack_require__( __webpack_require__.s = "./legacy/legacy-grass.ts" );
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -101,34 +101,34 @@ return /******/ (function(modules) { // webpackBootstrap
   !*** C:/Repos/Babylon.js/node_modules/tslib/tslib.es6.js ***!
   \***********************************************************/
 /*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __createBinding, __exportStar, __values, __read, __spread, __spreadArrays, __spreadArray, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault, __classPrivateFieldGet, __classPrivateFieldSet */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ ( function( module, __webpack_exports__, __webpack_require__ ) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__extends", function() { return __extends; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__assign", function() { return __assign; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__rest", function() { return __rest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__decorate", function() { return __decorate; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__param", function() { return __param; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__metadata", function() { return __metadata; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__awaiter", function() { return __awaiter; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__generator", function() { return __generator; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__createBinding", function() { return __createBinding; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__exportStar", function() { return __exportStar; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__values", function() { return __values; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__read", function() { return __read; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spread", function() { return __spread; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spreadArrays", function() { return __spreadArrays; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spreadArray", function() { return __spreadArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__await", function() { return __await; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncGenerator", function() { return __asyncGenerator; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncDelegator", function() { return __asyncDelegator; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncValues", function() { return __asyncValues; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__makeTemplateObject", function() { return __makeTemplateObject; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__importStar", function() { return __importStar; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__importDefault", function() { return __importDefault; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__classPrivateFieldGet", function() { return __classPrivateFieldGet; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__classPrivateFieldSet", function() { return __classPrivateFieldSet; });
+__webpack_require__.r( __webpack_exports__ );
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__extends", () => { return __extends; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__assign", () => { return __assign; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__rest", () => { return __rest; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__decorate", () => { return __decorate; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__param", () => { return __param; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__metadata", () => { return __metadata; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__awaiter", () => { return __awaiter; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__generator", () => { return __generator; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__createBinding", () => { return __createBinding; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__exportStar", () => { return __exportStar; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__values", () => { return __values; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__read", () => { return __read; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__spread", () => { return __spread; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__spreadArrays", () => { return __spreadArrays; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__spreadArray", () => { return __spreadArray; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__await", () => { return __await; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__asyncGenerator", () => { return __asyncGenerator; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__asyncDelegator", () => { return __asyncDelegator; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__asyncValues", () => { return __asyncValues; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__makeTemplateObject", () => { return __makeTemplateObject; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__importStar", () => { return __importStar; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__importDefault", () => { return __importDefault; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__classPrivateFieldGet", () => { return __classPrivateFieldGet; });
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "__classPrivateFieldSet", () => { return __classPrivateFieldSet; });
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -145,225 +145,225 @@ PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 /* global Reflect, Promise */
 
-var extendStatics = function(d, b) {
+var extendStatics = function( d, b ) {
     extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-    return extendStatics(d, b);
+        ({ __proto__: [] } instanceof Array && function ( d, b ) { d.__proto__ = b; }) ||
+        function ( d, b ) { for ( let p in b ) if ( Object.prototype.hasOwnProperty.call( b, p )) d[p] = b[p]; };
+    return extendStatics( d, b );
 };
 
-function __extends(d, b) {
-    if (typeof b !== "function" && b !== null)
-        throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-    extendStatics(d, b);
+function __extends( d, b ) {
+    if ( typeof b !== "function" && b !== null )
+        throw new TypeError( "Class extends value " + String( b ) + " is not a constructor or null" );
+    extendStatics( d, b );
     function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    d.prototype = b === null ? Object.create( b ) : ( __.prototype = b.prototype, new __());
 }
 
 var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
+    __assign = Object.assign || function __assign( t ) {
+        for ( var s, i = 1, n = arguments.length; i < n; i++ ) {
             s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            for ( let p in s ) if ( Object.prototype.hasOwnProperty.call( s, p )) t[p] = s[p];
         }
         return t;
     }
-    return __assign.apply(this, arguments);
+    return __assign.apply( this, arguments );
 }
 
-function __rest(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+function __rest( s, e ) {
+    let t = {};
+    for ( var p in s ) if ( Object.prototype.hasOwnProperty.call( s, p ) && e.indexOf( p ) < 0 )
         t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+    if ( s != null && typeof Object.getOwnPropertySymbols === "function" )
+        for ( var i = 0, p = Object.getOwnPropertySymbols( s ); i < p.length; i++ ) {
+            if ( e.indexOf( p[i]) < 0 && Object.prototype.propertyIsEnumerable.call( s, p[i]))
                 t[p[i]] = s[p[i]];
         }
     return t;
 }
 
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
+function __decorate( decorators, target, key, desc ) {
+    let c = arguments.length; let r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor( target, key ) : desc; let d;
+    if ( typeof Reflect === "object" && typeof Reflect.decorate === "function" ) r = Reflect.decorate( decorators, target, key, desc );
+    else for ( let i = decorators.length - 1; i >= 0; i-- ) if ( d = decorators[i]) r = ( c < 3 ? d( r ) : c > 3 ? d( target, key, r ) : d( target, key )) || r;
+    return c > 3 && r && Object.defineProperty( target, key, r ), r;
 }
 
-function __param(paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
+function __param( paramIndex, decorator ) {
+    return function ( target, key ) { decorator( target, key, paramIndex ); }
 }
 
-function __metadata(metadataKey, metadataValue) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+function __metadata( metadataKey, metadataValue ) {
+    if ( typeof Reflect === "object" && typeof Reflect.metadata === "function" ) return Reflect.metadata( metadataKey, metadataValue );
 }
 
-function __awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+function __awaiter( thisArg, _arguments, P, generator ) {
+    function adopt( value ) { return value instanceof P ? value : new P((( resolve ) => { resolve( value ); })); }
+    return new ( P || ( P = Promise ))((( resolve, reject ) => {
+        function fulfilled( value ) { try { step( generator.next( value )); } catch ( e ) { reject( e ); } }
+        function rejected( value ) { try { step( generator["throw"]( value )); } catch ( e ) { reject( e ); } }
+        function step( result ) { result.done ? resolve( result.value ) : adopt( result.value ).then( fulfilled, rejected ); }
+        step(( generator = generator.apply( thisArg, _arguments || [])).next());
+    }));
 }
 
-function __generator(thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
+function __generator( thisArg, body ) {
+    let _ = { label: 0, sent: function() { if ( t[0] & 1 ) throw t[1]; return t[1]; }, trys: [], ops: [] }; let f; let y; let t; let g;
+    return g = { next: verb( 0 ), "throw": verb( 1 ), "return": verb( 2 ) }, typeof Symbol === "function" && ( g[Symbol.iterator] = function() { return this; }), g;
+    function verb( n ) { return function ( v ) { return step([ n, v ]); }; }
+    function step( op ) {
+        if ( f ) throw new TypeError( "Generator is already executing." );
+        while ( _ ) try {
+            if ( f = 1, y && ( t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || (( t = y["return"]) && t.call( y ), 0 ) : y.next ) && !( t = t.call( y, op[1])).done ) return t;
+            if ( y = 0, t ) op = [ op[0] & 2, t.value ];
+            switch ( op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 5: _.label++; y = op[1]; op = [ 0 ]; continue;
                 case 7: op = _.ops.pop(); _.trys.pop(); continue;
                 default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
+                    if ( !( t = _.trys, t = t.length > 0 && t[t.length - 1]) && ( op[0] === 6 || op[0] === 2 )) { _ = 0; continue; }
+                    if ( op[0] === 3 && ( !t || ( op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if ( op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if ( t && _.label < t[2]) { _.label = t[2]; _.ops.push( op ); break; }
+                    if ( t[2]) _.ops.pop();
                     _.trys.pop(); continue;
             }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+            op = body.call( thisArg, _ );
+        } catch ( e ) { op = [ 6, e ]; y = 0; } finally { f = t = 0; }
+        if ( op[0] & 5 ) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 }
 
-var __createBinding = Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
+var __createBinding = Object.create ? ( function( o, m, k, k2 ) {
+    if ( k2 === undefined ) k2 = k;
+    Object.defineProperty( o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : ( function( o, m, k, k2 ) {
+    if ( k2 === undefined ) k2 = k;
     o[k2] = m[k];
 });
 
-function __exportStar(m, o) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+function __exportStar( m, o ) {
+    for ( let p in m ) if ( p !== "default" && !Object.prototype.hasOwnProperty.call( o, p )) __createBinding( o, m, p );
 }
 
-function __values(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
+function __values( o ) {
+    let s = typeof Symbol === "function" && Symbol.iterator; let m = s && o[s]; let i = 0;
+    if ( m ) return m.call( o );
+    if ( o && typeof o.length === "number" ) return {
         next: function () {
-            if (o && i >= o.length) o = void 0;
+            if ( o && i >= o.length ) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    throw new TypeError( s ? "Object is not iterable." : "Symbol.iterator is not defined." );
 }
 
-function __read(o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
+function __read( o, n ) {
+    let m = typeof Symbol === "function" && o[Symbol.iterator];
+    if ( !m ) return o;
+    let i = m.call( o ); let r; let ar = []; let e;
     try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        while (( n === void 0 || n-- > 0 ) && !( r = i.next()).done ) ar.push( r.value );
     }
-    catch (error) { e = { error: error }; }
+    catch ( error ) { e = { error: error }; }
     finally {
         try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
+            if ( r && !r.done && ( m = i["return"])) m.call( i );
         }
-        finally { if (e) throw e.error; }
+        finally { if ( e ) throw e.error; }
     }
     return ar;
 }
 
 /** @deprecated */
 function __spread() {
-    for (var ar = [], i = 0; i < arguments.length; i++)
-        ar = ar.concat(__read(arguments[i]));
+    for ( var ar = [], i = 0; i < arguments.length; i++ )
+        ar = ar.concat( __read( arguments[i]));
     return ar;
 }
 
 /** @deprecated */
 function __spreadArrays() {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+    for ( var s = 0, i = 0, il = arguments.length; i < il; i++ ) s += arguments[i].length;
+    for ( var r = Array( s ), k = 0, i = 0; i < il; i++ )
+        for ( let a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++ )
             r[k] = a[j];
     return r;
 }
 
-function __spreadArray(to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+function __spreadArray( to, from ) {
+    for ( let i = 0, il = from.length, j = to.length; i < il; i++, j++ )
         to[j] = from[i];
     return to;
 }
 
-function __await(v) {
-    return this instanceof __await ? (this.v = v, this) : new __await(v);
+function __await( v ) {
+    return this instanceof __await ? ( this.v = v, this ) : new __await( v );
 }
 
-function __asyncGenerator(thisArg, _arguments, generator) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var g = generator.apply(thisArg, _arguments || []), i, q = [];
-    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-    function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-    function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
-    function fulfill(value) { resume("next", value); }
-    function reject(value) { resume("throw", value); }
-    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+function __asyncGenerator( thisArg, _arguments, generator ) {
+    if ( !Symbol.asyncIterator ) throw new TypeError( "Symbol.asyncIterator is not defined." );
+    let g = generator.apply( thisArg, _arguments || []); let i; let q = [];
+    return i = {}, verb( "next" ), verb( "throw" ), verb( "return" ), i[Symbol.asyncIterator] = function () { return this; }, i;
+    function verb( n ) { if ( g[n]) i[n] = function ( v ) { return new Promise((( a, b ) => { q.push([ n, v, a, b ]) > 1 || resume( n, v ); })); }; }
+    function resume( n, v ) { try { step( g[n]( v )); } catch ( e ) { settle( q[0][3], e ); } }
+    function step( r ) { r.value instanceof __await ? Promise.resolve( r.value.v ).then( fulfill, reject ) : settle( q[0][2], r ); }
+    function fulfill( value ) { resume( "next", value ); }
+    function reject( value ) { resume( "throw", value ); }
+    function settle( f, v ) { if ( f( v ), q.shift(), q.length ) resume( q[0][0], q[0][1]); }
 }
 
-function __asyncDelegator(o) {
-    var i, p;
-    return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-    function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+function __asyncDelegator( o ) {
+    let i; let p;
+    return i = {}, verb( "next" ), verb( "throw", ( e ) => { throw e; }), verb( "return" ), i[Symbol.iterator] = function () { return this; }, i;
+    function verb( n, f ) { i[n] = o[n] ? function ( v ) { return ( p = !p ) ? { value: __await( o[n]( v )), done: n === "return" } : f ? f( v ) : v; } : f; }
 }
 
-function __asyncValues(o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+function __asyncValues( o ) {
+    if ( !Symbol.asyncIterator ) throw new TypeError( "Symbol.asyncIterator is not defined." );
+    let m = o[Symbol.asyncIterator]; let i;
+    return m ? m.call( o ) : ( o = typeof __values === "function" ? __values( o ) : o[Symbol.iterator](), i = {}, verb( "next" ), verb( "throw" ), verb( "return" ), i[Symbol.asyncIterator] = function () { return this; }, i );
+    function verb( n ) { i[n] = o[n] && function ( v ) { return new Promise((( resolve, reject ) => { v = o[n]( v ), settle( resolve, reject, v.done, v.value ); })); }; }
+    function settle( resolve, reject, d, v ) { Promise.resolve( v ).then(( v ) => { resolve({ value: v, done: d }); }, reject ); }
 }
 
-function __makeTemplateObject(cooked, raw) {
-    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+function __makeTemplateObject( cooked, raw ) {
+    if ( Object.defineProperty ) { Object.defineProperty( cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
     return cooked;
-};
+}
 
-var __setModuleDefault = Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+let __setModuleDefault = Object.create ? ( function( o, v ) {
+    Object.defineProperty( o, "default", { enumerable: true, value: v });
+}) : function( o, v ) {
     o["default"] = v;
 };
 
-function __importStar(mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
+function __importStar( mod ) {
+    if ( mod && mod.__esModule ) return mod;
+    let result = {};
+    if ( mod != null ) for ( let k in mod ) if ( k !== "default" && Object.prototype.hasOwnProperty.call( mod, k )) __createBinding( result, mod, k );
+    __setModuleDefault( result, mod );
     return result;
 }
 
-function __importDefault(mod) {
-    return (mod && mod.__esModule) ? mod : { default: mod };
+function __importDefault( mod ) {
+    return ( mod && mod.__esModule ) ? mod : { default: mod };
 }
 
-function __classPrivateFieldGet(receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
+function __classPrivateFieldGet( receiver, privateMap ) {
+    if ( !privateMap.has( receiver )) {
+        throw new TypeError( "attempted to get private field on non-instance" );
     }
-    return privateMap.get(receiver);
+    return privateMap.get( receiver );
 }
 
-function __classPrivateFieldSet(receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
+function __classPrivateFieldSet( receiver, privateMap, value ) {
+    if ( !privateMap.has( receiver )) {
+        throw new TypeError( "attempted to set private field on non-instance" );
     }
-    privateMap.set(receiver, value);
+    privateMap.set( receiver, value );
     return value;
 }
 
@@ -375,21 +375,21 @@ function __classPrivateFieldSet(receiver, privateMap, value) {
   !*** (webpack)/buildin/global.js ***!
   \***********************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ ( function( module, exports ) {
 
-var g;
+let g;
 
 // This works in non-strict mode
-g = (function() {
+g = ( function() {
 	return this;
 })();
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
+	g = g || new Function( "return this" )();
+} catch ( e ) {
 	// This works if the window reference is available
-	if (typeof window === "object") g = window;
+	if ( typeof window === "object" ) g = window;
 }
 
 // g can still be undefined, but nothing to do about it...
@@ -406,16 +406,16 @@ module.exports = g;
   !*** ./grass/grassProceduralTexture.fragment.ts ***!
   \**************************************************/
 /*! exports provided: grassProceduralTexturePixelShader */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ ( function( module, __webpack_exports__, __webpack_require__ ) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "grassProceduralTexturePixelShader", function() { return grassProceduralTexturePixelShader; });
-/* harmony import */ var babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! babylonjs/Materials/effect */ "babylonjs/Misc/decorators");
-/* harmony import */ var babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0__);
+__webpack_require__.r( __webpack_exports__ );
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "grassProceduralTexturePixelShader", () => { return grassProceduralTexturePixelShader; });
+/* harmony import */ let babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__( /*! babylonjs/Materials/effect */ "babylonjs/Misc/decorators" );
+/* harmony import */ let babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n( babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0__ );
 
-var name = 'grassProceduralTexturePixelShader';
-var shader = "precision highp float;\nvarying vec2 vPosition;\nvarying vec2 vUV;\nuniform vec3 herb1Color;\nuniform vec3 herb2Color;\nuniform vec3 herb3Color;\nuniform vec3 groundColor;\nfloat rand(vec2 n) {\nreturn fract(cos(dot(n,vec2(12.9898,4.1414)))*43758.5453);\n}\nfloat noise(vec2 n) {\nconst vec2 d=vec2(0.0,1.0);\nvec2 b=floor(n),f=smoothstep(vec2(0.0),vec2(1.0),fract(n));\nreturn mix(mix(rand(b),rand(b+d.yx),f.x),mix(rand(b+d.xy),rand(b+d.yy),f.x),f.y);\n}\nfloat fbm(vec2 n) {\nfloat total=0.0,amplitude=1.0;\nfor (int i=0; i<4; i++) {\ntotal+=noise(n)*amplitude;\nn+=n;\namplitude*=0.5;\n}\nreturn total;\n}\nvoid main(void) {\nvec3 color=mix(groundColor,herb1Color,rand(gl_FragCoord.xy*4.0));\ncolor=mix(color,herb2Color,rand(gl_FragCoord.xy*8.0));\ncolor=mix(color,herb3Color,rand(gl_FragCoord.xy));\ncolor=mix(color,herb1Color,fbm(gl_FragCoord.xy*16.0));\ngl_FragColor=vec4(color,1.0);\n}";
+let name = 'grassProceduralTexturePixelShader';
+let shader = "precision highp float;\nvarying vec2 vPosition;\nvarying vec2 vUV;\nuniform vec3 herb1Color;\nuniform vec3 herb2Color;\nuniform vec3 herb3Color;\nuniform vec3 groundColor;\nfloat rand(vec2 n) {\nreturn fract(cos(dot(n,vec2(12.9898,4.1414)))*43758.5453);\n}\nfloat noise(vec2 n) {\nconst vec2 d=vec2(0.0,1.0);\nvec2 b=floor(n),f=smoothstep(vec2(0.0),vec2(1.0),fract(n));\nreturn mix(mix(rand(b),rand(b+d.yx),f.x),mix(rand(b+d.xy),rand(b+d.yy),f.x),f.y);\n}\nfloat fbm(vec2 n) {\nfloat total=0.0,amplitude=1.0;\nfor (int i=0; i<4; i++) {\ntotal+=noise(n)*amplitude;\nn+=n;\namplitude*=0.5;\n}\nreturn total;\n}\nvoid main(void) {\nvec3 color=mix(groundColor,herb1Color,rand(gl_FragCoord.xy*4.0));\ncolor=mix(color,herb2Color,rand(gl_FragCoord.xy*8.0));\ncolor=mix(color,herb3Color,rand(gl_FragCoord.xy));\ncolor=mix(color,herb1Color,fbm(gl_FragCoord.xy*16.0));\ngl_FragColor=vec4(color,1.0);\n}";
 babylonjs_Materials_effect__WEBPACK_IMPORTED_MODULE_0__["Effect"].ShadersStore[name] = shader;
 /** @hidden */
 var grassProceduralTexturePixelShader = { name: name, shader: shader };
@@ -428,56 +428,56 @@ var grassProceduralTexturePixelShader = { name: name, shader: shader };
   !*** ./grass/grassProceduralTexture.ts ***!
   \*****************************************/
 /*! exports provided: GrassProceduralTexture */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ ( function( module, __webpack_exports__, __webpack_require__ ) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GrassProceduralTexture", function() { return GrassProceduralTexture; });
-/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "../../node_modules/tslib/tslib.es6.js");
-/* harmony import */ var babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! babylonjs/Misc/decorators */ "babylonjs/Misc/decorators");
-/* harmony import */ var babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _grassProceduralTexture_fragment__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./grassProceduralTexture.fragment */ "./grass/grassProceduralTexture.fragment.ts");
+__webpack_require__.r( __webpack_exports__ );
+/* harmony export (binding) */ __webpack_require__.d( __webpack_exports__, "GrassProceduralTexture", () => { return GrassProceduralTexture; });
+/* harmony import */ let tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__( /*! tslib */ "../../node_modules/tslib/tslib.es6.js" );
+/* harmony import */ let babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__( /*! babylonjs/Misc/decorators */ "babylonjs/Misc/decorators" );
+/* harmony import */ let babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n( babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__ );
+/* harmony import */ let _grassProceduralTexture_fragment__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__( /*! ./grassProceduralTexture.fragment */ "./grass/grassProceduralTexture.fragment.ts" );
 
 
 
 
 
 
-var GrassProceduralTexture = /** @class */ (function (_super) {
-    Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(GrassProceduralTexture, _super);
-    function GrassProceduralTexture(name, size, scene, fallbackTexture, generateMipMaps) {
-        var _this = _super.call(this, name, size, "grassProceduralTexture", scene, fallbackTexture, generateMipMaps) || this;
-        _this._groundColor = new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"](1, 1, 1);
+var GrassProceduralTexture = /** @class */ ( function ( _super ) {
+    Object( tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])( GrassProceduralTexture, _super );
+    function GrassProceduralTexture( name, size, scene, fallbackTexture, generateMipMaps ) {
+        let _this = _super.call( this, name, size, "grassProceduralTexture", scene, fallbackTexture, generateMipMaps ) || this;
+        _this._groundColor = new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"]( 1, 1, 1 );
         _this._grassColors = [
-            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"](0.29, 0.38, 0.02),
-            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"](0.36, 0.49, 0.09),
-            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"](0.51, 0.6, 0.28)
+            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"]( 0.29, 0.38, 0.02 ),
+            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"]( 0.36, 0.49, 0.09 ),
+            new babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"]( 0.51, 0.6, 0.28 )
         ];
         _this.updateShaderUniforms();
         return _this;
     }
     GrassProceduralTexture.prototype.updateShaderUniforms = function () {
-        this.setColor3("herb1Color", this._grassColors[0]);
-        this.setColor3("herb2Color", this._grassColors[1]);
-        this.setColor3("herb3Color", this._grassColors[2]);
-        this.setColor3("groundColor", this._groundColor);
+        this.setColor3( "herb1Color", this._grassColors[0]);
+        this.setColor3( "herb2Color", this._grassColors[1]);
+        this.setColor3( "herb3Color", this._grassColors[2]);
+        this.setColor3( "groundColor", this._groundColor );
     };
-    Object.defineProperty(GrassProceduralTexture.prototype, "grassColors", {
+    Object.defineProperty( GrassProceduralTexture.prototype, "grassColors", {
         get: function () {
             return this._grassColors;
         },
-        set: function (value) {
+        set: function ( value ) {
             this._grassColors = value;
             this.updateShaderUniforms();
         },
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(GrassProceduralTexture.prototype, "groundColor", {
+    Object.defineProperty( GrassProceduralTexture.prototype, "groundColor", {
         get: function () {
             return this._groundColor;
         },
-        set: function (value) {
+        set: function ( value ) {
             this._groundColor = value;
             this.updateShaderUniforms();
         },
@@ -489,11 +489,11 @@ var GrassProceduralTexture = /** @class */ (function (_super) {
      * @returns a serialized grass procedural texture object
      */
     GrassProceduralTexture.prototype.serialize = function () {
-        var serializationObject = babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["SerializationHelper"].Serialize(this, _super.prototype.serialize.call(this));
+        let serializationObject = babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["SerializationHelper"].Serialize( this, _super.prototype.serialize.call( this ));
         serializationObject.customType = "BABYLON.GrassProceduralTexture";
         serializationObject.grassColors = [];
-        for (var i = 0; i < this._grassColors.length; i++) {
-            serializationObject.grassColors.push(this._grassColors[i].asArray());
+        for ( let i = 0; i < this._grassColors.length; i++ ) {
+            serializationObject.grassColors.push( this._grassColors[i].asArray());
         }
         return serializationObject;
     };
@@ -504,20 +504,20 @@ var GrassProceduralTexture = /** @class */ (function (_super) {
      * @param rootUrl defines the root URL containing grass procedural texture information
      * @returns a parsed Grass Procedural Texture
      */
-    GrassProceduralTexture.Parse = function (parsedTexture, scene, rootUrl) {
-        var texture = babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["SerializationHelper"].Parse(function () { return new GrassProceduralTexture(parsedTexture.name, parsedTexture._size, scene, undefined, parsedTexture._generateMipMaps); }, parsedTexture, scene, rootUrl);
-        var colors = [];
-        for (var i = 0; i < parsedTexture.grassColors.length; i++) {
-            colors.push(babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"].FromArray(parsedTexture.grassColors[i]));
+    GrassProceduralTexture.Parse = function ( parsedTexture, scene, rootUrl ) {
+        let texture = babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["SerializationHelper"].Parse(() => { return new GrassProceduralTexture( parsedTexture.name, parsedTexture._size, scene, undefined, parsedTexture._generateMipMaps ); }, parsedTexture, scene, rootUrl );
+        let colors = [];
+        for ( let i = 0; i < parsedTexture.grassColors.length; i++ ) {
+            colors.push( babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["Color3"].FromArray( parsedTexture.grassColors[i]));
         }
         texture.grassColors = colors;
         return texture;
     };
-    Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
-        Object(babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["serializeAsColor3"])()
-    ], GrassProceduralTexture.prototype, "groundColor", null);
+    Object( tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"])([
+        Object( babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["serializeAsColor3"])()
+    ], GrassProceduralTexture.prototype, "groundColor", null );
     return GrassProceduralTexture;
-}(babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["ProceduralTexture"]));
+}( babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["ProceduralTexture"]));
 
 babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["_TypeStore"].RegisteredTypes["BABYLON.GrassProceduralTexture"] = GrassProceduralTexture;
 
@@ -529,12 +529,12 @@ babylonjs_Misc_decorators__WEBPACK_IMPORTED_MODULE_1__["_TypeStore"].RegisteredT
   !*** ./grass/index.ts ***!
   \************************/
 /*! exports provided: GrassProceduralTexture */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ ( function( module, __webpack_exports__, __webpack_require__ ) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _grassProceduralTexture__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grassProceduralTexture */ "./grass/grassProceduralTexture.ts");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GrassProceduralTexture", function() { return _grassProceduralTexture__WEBPACK_IMPORTED_MODULE_0__["GrassProceduralTexture"]; });
+__webpack_require__.r( __webpack_exports__ );
+/* harmony import */ let _grassProceduralTexture__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__( /*! ./grassProceduralTexture */ "./grass/grassProceduralTexture.ts" );
+/* harmony reexport (safe) */ __webpack_require__.d( __webpack_exports__, "GrassProceduralTexture", () => { return _grassProceduralTexture__WEBPACK_IMPORTED_MODULE_0__["GrassProceduralTexture"]; });
 
 
 
@@ -546,27 +546,27 @@ __webpack_require__.r(__webpack_exports__);
   !*** ./legacy/legacy-grass.ts ***!
   \********************************/
 /*! exports provided: GrassProceduralTexture */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ ( function( module, __webpack_exports__, __webpack_require__ ) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var _grass__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../grass */ "./grass/index.ts");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GrassProceduralTexture", function() { return _grass__WEBPACK_IMPORTED_MODULE_0__["GrassProceduralTexture"]; });
+__webpack_require__.r( __webpack_exports__ );
+/* WEBPACK VAR INJECTION */( function( global ) {/* harmony import */ let _grass__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__( /*! ../grass */ "./grass/index.ts" );
+/* harmony reexport (safe) */ __webpack_require__.d( __webpack_exports__, "GrassProceduralTexture", () => { return _grass__WEBPACK_IMPORTED_MODULE_0__["GrassProceduralTexture"]; });
 
 
 /**
  * This is the entry point for the UMD module.
  * The entry point for a future ESM package should be index.ts
  */
-var globalObject = (typeof global !== 'undefined') ? global : ((typeof window !== 'undefined') ? window : undefined);
-if (typeof globalObject !== "undefined") {
-    for (var key in _grass__WEBPACK_IMPORTED_MODULE_0__) {
+let globalObject = ( typeof global !== 'undefined' ) ? global : (( typeof window !== 'undefined' ) ? window : undefined );
+if ( typeof globalObject !== "undefined" ) {
+    for ( let key in _grass__WEBPACK_IMPORTED_MODULE_0__ ) {
         globalObject.BABYLON[key] = _grass__WEBPACK_IMPORTED_MODULE_0__[key];
     }
 }
 
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../node_modules/webpack/buildin/global.js */ "../../node_modules/webpack/buildin/global.js")))
+/* WEBPACK VAR INJECTION */}.call( this, __webpack_require__( /*! ./../../../node_modules/webpack/buildin/global.js */ "../../node_modules/webpack/buildin/global.js" )))
 
 /***/ }),
 
@@ -575,7 +575,7 @@ if (typeof globalObject !== "undefined") {
   !*** external {"root":"BABYLON","commonjs":"babylonjs","commonjs2":"babylonjs","amd":"babylonjs"} ***!
   \****************************************************************************************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ ( function( module, exports ) {
 
 module.exports = __WEBPACK_EXTERNAL_MODULE_babylonjs_Misc_decorators__;
 

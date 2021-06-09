@@ -30,3 +30,4 @@ yarn-error.log*
 
 /upload.sh
 /public/assets/
+/all-unused/

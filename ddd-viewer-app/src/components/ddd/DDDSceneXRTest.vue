@@ -199,8 +199,8 @@ var createScene = async function ( engine, canvas ) {
         //if (!placementActive) { return; }
 
         plane.polygonDefinition.push( plane.polygonDefinition[0]);
-        var polygon_triangulation = new BABYLON.PolygonMeshBuilder( "name", plane.polygonDefinition.map(( p ) => new BABYLON.Vector2( p.x, p.z )), scene, earcut );
-        var polygon = polygon_triangulation.build( false, 0.01 );
+        var polygonTriangulation = new BABYLON.PolygonMeshBuilder( "name", plane.polygonDefinition.map(( p ) => new BABYLON.Vector2( p.x, p.z )), scene, earcut );
+        var polygon = polygonTriangulation.build( false, 0.01 );
         plane.mesh = polygon;
 
         planes[plane.id] = ( plane.mesh );
@@ -228,8 +228,8 @@ var createScene = async function ( engine, canvas ) {
             return;
         }
         plane.polygonDefinition.push( plane.polygonDefinition[0]);
-        var polygon_triangulation = new BABYLON.PolygonMeshBuilder( "name", plane.polygonDefinition.map(( p ) => new BABYLON.Vector2( p.x, p.z )), scene, earcut );
-        var polygon = polygon_triangulation.build( false, 0.01 );
+        var polygonTriangulation = new BABYLON.PolygonMeshBuilder( "name", plane.polygonDefinition.map(( p ) => new BABYLON.Vector2( p.x, p.z )), scene, earcut );
+        var polygon = polygonTriangulation.build( false, 0.01 );
         polygon.createNormals();
         plane.mesh = polygon;
         planes[plane.id] = ( plane.mesh );

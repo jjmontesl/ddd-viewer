@@ -7,10 +7,10 @@ import '@mdi/font/css/materialdesignicons.css'
 
 Vue.use( Vuetify )
 
-const theme = JSON.parse( localStorage.getItem( 'dark' )) || false
+const theme: string | null = JSON.parse( localStorage.getItem( 'dark' ) || "null" );
 const opts = {
   theme: {
-    dark: theme !== false
+    dark: theme !== null
   },
   iconfont: 'mdi'
 }
