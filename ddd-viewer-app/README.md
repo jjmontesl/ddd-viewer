@@ -1,101 +1,25 @@
-# DDD Viewer
+<h1 align="center">Welcome to DDD-Viewer-App👋</h1>
+<p align="center">
+  <a href="#" target="_blank">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.5.0-blue.svg?cacheSeconds=2592000" />
+    </a>
+</p>
 
-[![Author](http://img.shields.io/badge/author-@davellanedam-blue.svg?style=flat-square)](https://twitter.com/davellanedam)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/davellanedam/vue-skeleton-mvp/blob/master/LICENSE)
-[![Tag](https://img.shields.io/github/tag/davellanedam/vue-skeleton-mvp.svg?style=flat-square)](https://github.com/davellanedam/vue-skeleton-mvp/tags)
+> DDD-Viewer library for viewing OpenStreetMaps data in 3D.
 
+## Installation
 
-## Features
+- npm install
 
--
+## Where to start.
 
-## DDD Viewer Online
+- serve: Run development live serve.
+- serve-pub-https: Runs live serve on port 443 https"
+- build: Generate build.
 
+## Show your support
 
-## Sequences
-
-Sequences require a starting point in the URL. The sequence JSON itself can be encoded using:
-
-    cat trip-xxxx.json  | jq -c -M . | base64 -w0
-
-## Running in development
-
-	npm run serve
-
-or
-
-	npm run serve-pub-https
-
-
-
-
-
-## Installing
-
-### Using Git (recommended)
-
-1.  Clone the project from github. Change "myproject" to your project name.
-
-```bash
-git clone https://github.com/davellanedam/vue-skeleton-mvp.git ./myproject
-```
-
-## VERY IMPORTANT
-
-This project uses Vue Router HTML5 History Mode, this means when you are in development mode you can hit Cmd+R (mac) or F5 (Windows) to reload the page and it will work, but when the project is built you will have problems, so will need to do a small change in your web server to make that work. Please read the official Vue Router documentation here: <https://router.vuejs.org/guide/essentials/history-mode.html#example-server-configurations>
-
-### Compiles and hot-reloads for development
-
-```bash
-npm run serve
-```
-
-### Compiles and minifies for production
-
-```bash
-npm run build
-```
-
-### Run your tests
-
-```bash
-npm run test
-```
-
-### Lints and fixes files
-
-```bash
-npm run lint
-```
-
-### Formatting markdown files
-
-```bash
-npm run remark
-```
-
-### Run your end-to-end tests
-
-```bash
-npm run test:e2e
-```
-
-### Run your unit tests
-
-```bash
-npm run test:unit
-```
-
-### Customize configuration
-
-See [Configuration Reference](https://cli.vuejs.org/config/).
-
-## Bugs or improvements
-
-Feel free to report any bugs or improvements. Pull requests are always welcome.
-
-## License
-
+Give a ⭐️ if this project helped you!
 
 
 
