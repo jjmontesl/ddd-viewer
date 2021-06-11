@@ -1,8 +1,8 @@
 
 import * as BABYLON from 'babylonjs';
-import CameraMoveAnimationProcess from '@/dddviewer/seq/CameraMoveAnimationProcess.js';
-import DateTimeAnimationProcess from '@/dddviewer/seq/DateTimeAnimationProcess.js';
-import TextAnimationProcess from '@/dddviewer/seq/TextAnimationProcess.js';
+import CameraMoveAnimationProcess from './CameraMoveAnimationProcess';
+import DateTimeAnimationProcess from './DateTimeAnimationProcess';
+import TextAnimationProcess from './TextAnimationProcess';
 
 /* eslint-disable no-console,  */
 
