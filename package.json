@@ -1,55 +1,59 @@
 {
-  "version": "0.1.0",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "engines": {
-    "node": ">=10"
-  },
-  "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
-  },
-  "peerDependencies": {},
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "name": "ddd-viewer",
-  "author": "Jose Juan Montes",
-  "module": "dist/dddviewer.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/ddd-viewer.cjs.production.min.js",
-      "limit": "10 KB"
+    "version": "0.1.0",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "engines": {
+        "node": ">=10"
     },
-    {
-      "path": "dist/ddd-viewer.esm.js",
-      "limit": "10 KB"
+    "scripts": {
+        "start": "tsdx watch",
+        "build": "tsdx build",
+        "test": "tsdx test",
+        "lint": "tsdx lint",
+        "prepare": "tsdx build",
+        "size": "size-limit",
+        "analyze": "size-limit --why"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "tsdx lint"
+        }
+    },
+    "name": "ddd-viewer",
+    "author": "Jose Juan Montes",
+    "module": "dist/dddviewer.esm.js",
+    "size-limit": [
+        {
+            "path": "dist/ddd-viewer.cjs.production.min.js",
+            "limit": "10 KB"
+        },
+        {
+            "path": "dist/ddd-viewer.esm.js",
+            "limit": "10 KB"
+        }
+    ],
+    "devDependencies": {
+        "@size-limit/preset-small-lib": "^4.11.0",
+        "@types/ol": "^6.5.1",
+        "@typescript-eslint/eslint-plugin": "^4.26.1",
+        "@typescript-eslint/parser": "^4.26.1",
+        "eslint": "^7.28.0",
+        "husky": "^6.0.0",
+        "size-limit": "^4.11.0",
+        "tsdx": "^0.14.1",
+        "tslib": "^2.2.0",
+        "typescript": "^4.3.2"
+    },
+    "dependencies": {
+        "@types/proj4": "^2.5.0",
+        "babylonjs": "^4.2.0",
+        "babylonjs-materials": "^4.2.0",
+        "ol": "^6.5.0",
+        "proj4": "^2.7.2"
     }
-  ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^4.11.0",
-    "husky": "^6.0.0",
-    "size-limit": "^4.11.0",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.2.0",
-    "typescript": "^4.3.2"
-  }
 }

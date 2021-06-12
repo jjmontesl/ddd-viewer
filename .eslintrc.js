@@ -1,8 +1,8 @@
 module.exports = {
     "env": {
         "browser": true,
-        "es2021": true,
-		"commonjs": true
+        "es2015": true,
+        "commonjs": true
     },
     "extends": [
         "eslint:recommended",
@@ -19,11 +19,7 @@ module.exports = {
     "rules": {
         "indent": [
             "error",
-            "tab"
-        ],
-        "linebreak-style": [
-            "error",
-            "unix"
+            4
         ],
         "quotes": [
             "error",
@@ -31,7 +27,27 @@ module.exports = {
         ],
         "semi": [
             "error",
-            "never"
+            "always"
+        ],
+        "object-curly-spacing": [
+            "error",
+            "always"
+        ],
+        "array-bracket-spacing": [
+            "error",
+            "always"
+        ],
+        "space-in-parens": [
+            "error",
+            "always",
+            {
+                "exceptions": [
+                    "{}",
+                    "[]",
+                    "()",
+                    "empty"
+                ]
+            }
         ]
     }
 };

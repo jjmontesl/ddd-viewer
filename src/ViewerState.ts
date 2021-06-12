@@ -14,8 +14,8 @@ class ViewerState {
     positionHeading = 0.0;
     positionTilt = 0.0;
     positionName = "";
-    positionDate = new Date();
-    positionDateSeconds = this.positionDate / 1000;
+    positionDate: Date = new Date();
+    positionDateSeconds: number = this.positionDate.getTime() / 1000;
     geolocationEnabled = false;
     serverInfoShow = true;
 
@@ -42,24 +42,24 @@ class ViewerState {
     sceneGroundTextureOverride = null;
     sceneTitleText = null;
 
-    constructor(initialCoords, isMobile) {
+    constructor( initialCoords, isMobile ) {
 
         this.isMobile = isMobile || false;
-        if (this.isMobile) {
+        if ( this.isMobile ) {
             this.sceneViewportRescale = 2;
             this.sceneTextureSet = null;  // "default256";
         }
 
         this.positionWGS84 = initialCoords;
 
-        const shadowsEnabled = localStorage.getItem('dddSceneShadowsEnabled');
-        this.sceneShadowsEnabled = shadowsEnabled ? JSON.parse(shadowsEnabled) : this.sceneShadowsEnabled;
+        const shadowsEnabled = localStorage.getItem( "dddSceneShadowsEnabled" );
+        this.sceneShadowsEnabled = shadowsEnabled ? JSON.parse( shadowsEnabled ) : this.sceneShadowsEnabled;
 
-        const textsEnabled = localStorage.getItem('dddSceneTextsEnabled');
-        this.sceneTextsEnabled = textsEnabled ? JSON.parse(textsEnabled) : this.sceneTextsEnabled;
+        const textsEnabled = localStorage.getItem( "dddSceneTextsEnabled" );
+        this.sceneTextsEnabled = textsEnabled ? JSON.parse( textsEnabled ) : this.sceneTextsEnabled;
 
-        const textureSet = localStorage.getItem('dddSceneTextureSet');
-        this.sceneTextureSet = textureSet ? JSON.parse(textureSet) : this.sceneTextureSet;
+        const textureSet = localStorage.getItem( "dddSceneTextureSet" );
+        this.sceneTextureSet = textureSet ? JSON.parse( textureSet ) : this.sceneTextureSet;
 
         // Start time
         this.positionDate.setHours( 11 );
