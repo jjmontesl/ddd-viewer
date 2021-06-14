@@ -7,7 +7,7 @@ abstract class Base3DLayer {
         this.layerManager = null;
     }
 
-    abstract update(): void;
+    abstract update( deltaTime: number ): void;
 }
 
 export default Base3DLayer;

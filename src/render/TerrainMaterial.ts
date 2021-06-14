@@ -1,57 +1,58 @@
+/* eslint-disable object-curly-spacing */
+/* eslint-disable array-bracket-spacing */
+/* eslint-disable indent */
 
-import * as BABYLON from 'babylonjs';
-import * as BABYLONMAT from 'babylonjs-materials';
-import 'babylonjs-loaders';
+import * as BABYLON from "babylonjs";
+import * as BABYLONMAT from "babylonjs-materials";
+import "babylonjs-loaders";
+import { Material, Scene, Texture, Vector2 } from "babylonjs";
+import SceneViewer from "../SceneViewer";
+import { PBRCustomMaterial } from "babylonjs-materials";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 
+/**
+ * From: https://forum.babylonjs.com/t/pbr-texture-splatting-up-to-64-textures/1994/28
+ *  and: https://www.babylonjs-playground.com/#LIVRIY#58
+ */
 class TerrainMaterialWrapper {
 
-    // From: https://forum.babylonjs.com/t/pbr-texture-splatting-up-to-64-textures/1994/28
-    //  and: https://www.babylonjs-playground.com/#LIVRIY#58
+    sceneViewer: SceneViewer;
+    material: PBRCustomMaterial;
+    dedupDouble: boolean;
 
-    constructor(sceneViewer, splatmapTexture, atlasTexture, atlasNormalTexture, options) {
+    options: any;
+
+    tileIndexes = [];
+    shaderinjectpoint1 = "";
+    shaderinjectpoint2 = "";
+    shaderinjectpoint3 = "";
+    shaderinjectpoint4 = "";
+
+    numTilesHorizontal: number = 0;
+    numTilesVertical: number = 0;
+    totalTiles: number = 0;
+    tileScale: Vector2 = new Vector2(1, 1);
+
+    numSplatTilesHorizontal: number = 0;
+    numSplatTilesVertical: number = 0;
+    totalSplatTiles: number = 0;
+    splatScale: Vector2 = new Vector2(1, 1);
+
+    splatMap: Texture | null = null;
+    atlasBumpTexture: Texture | null = null;
+
+
+    constructor(sceneViewer: SceneViewer, splatmapTexture: Texture, atlasTexture: Texture, atlasNormalTexture: Texture, options: any) {
         this.sceneViewer = sceneViewer;
-        this.material = null;
-        //this.testSplatMaterial(scene);
-        this.initSplatMaterial(this.sceneViewer.scene, splatmapTexture, atlasTexture, atlasNormalTexture, options);
-
         this.dedupDouble = false;
+        this.material = this.initSplatMaterial( <Scene> this.sceneViewer.scene, splatmapTexture, atlasTexture, atlasNormalTexture, options );
+        //this.testSplatMaterial(scene);
     }
 
-    testSplatMaterial(scene) {
-        //var splatmap = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/mix6.png", scene);
-        //var splatmap = new BABYLON.Texture("http://localhost:8000/cache/ddd_godot_osm/17/62358/48541.splatmap-4chan-0_3-256.png", scene);
-        //var atlas = new BABYLON.Texture("/assets/splatmap-textures-atlas.png", scene);
-        //var atlas = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/atlas3.jpg", scene);
-        var atlasnormals = null; // new BABYLON.Texture("/assets/splatmap-textures-atlas-normals.png", scene);
-        /*
-        var options = {
-            numTilesHorizontal:4.0,
-            numTilesVertical:4,
-            numSplatTilesHorizontal:2,
-            numSplatTilesVertical:2,
-            splatInfos: {  // Positions is X / Y, Y grows upwards
-                positions:[
-                           [0.0, 3.0], [1.0, 3.0], [2.0, 3.0], [3.0, 3.0], // encoded by first splat (top left), first row (index 3 from bottom)
-                           [0.0, 2.0], [1.0, 2.0], [2.0, 2.0], [3.0, 2.0], // encoded by splat (top right), second row (index 2 from bottom)
-                           [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [3.0, 1.0], // encoded by third splat (down left), third row (index 1 starting from bottom)
-                           [0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0], // encoded by splat (down right), last row (index 0 from bottom)
-                          ],
-                scales:[[defScale,defScale], [defScale,defScale], [defScale,defScale], [defScale,defScale],
-                         [defScale,defScale], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
-                         [defScale * 1.5, defScale * 1.5], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
-                         [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale,defScale], [defScale,defScale]]
-            }
-        };
-        */
-        this.initSplatMaterial(scene, splatmap, atlas, atlasnormals);
-    }
+    initSplatMaterial(scene: Scene, splatMap: Texture, atlas: Texture, atlasnormals: Texture, options: any): PBRCustomMaterial {
 
-
-    initSplatMaterial(scene, splatMap, atlas, atlasnormals, options) {
-
-        var that = this;
+        //var that = this;
         var defScale = 100.0;
         if (!options){
             options = {
@@ -62,7 +63,7 @@ class TerrainMaterialWrapper {
                 //tileScale:[[20.0,20.0],[20.0,20.0],[20.0,20.0]],
                 splatInfos: {  // Positions is X / Y, Y grows upwards
                     layers: [
-                        {'name': 'Ground', 'position': [0, 3], 'scale': [defScale, defScale], 'displScales': 1.0 },
+                        {"name": "Ground", "position": [0, 3], "scale": [defScale, defScale], "displScales": 1.0 },
                         // ...
                     ],
                     positions:[
@@ -89,10 +90,10 @@ class TerrainMaterialWrapper {
 
         this.options = options;
         this.tileIndexes = [];
-        this.shaderinjectpoint1 = '';
-        this.shaderinjectpoint2 = '';
-        this.shaderinjectpoint3 = '';
-        this.shaderinjectpoint4 = '';
+        this.shaderinjectpoint1 = "";
+        this.shaderinjectpoint2 = "";
+        this.shaderinjectpoint3 = "";
+        this.shaderinjectpoint4 = "";
 
         // 4x4 = 16
         this.numTilesHorizontal = options.numTilesHorizontal;
@@ -106,17 +107,17 @@ class TerrainMaterialWrapper {
         this.totalSplatTiles = this.numSplatTilesVertical * this.numSplatTilesHorizontal;
         this.splatScale = new BABYLON.Vector2(1.0/this.numSplatTilesHorizontal,1.0/this.numSplatTilesVertical);
 
-        this.shaderinjectpoint1 += 'vec2 splatScale = vec2('+this.splatScale.x+','+this.splatScale.y+');\r\n';
-        this.shaderinjectpoint1 += 'vec2 scale = vec2('+this.tileScale.x+','+this.tileScale.y+');\r\n';
+        this.shaderinjectpoint1 += "vec2 splatScale = vec2("+this.splatScale.x+","+this.splatScale.y+");\r\n";
+        this.shaderinjectpoint1 += "vec2 scale = vec2("+this.tileScale.x+","+this.tileScale.y+");\r\n";
 
         //this.shaderinjectpoint3 += 'normalW = vec3(0.0, 1.0, 0.0);\r\n';
 
-        this.shaderinjectpoint3 += 'vec4 finalColor1 = baseColor1;\r\n';
-        this.shaderinjectpoint3 += 'vec3 finalNormal1 = baseNormal1;\r\n';
+        this.shaderinjectpoint3 += "vec4 finalColor1 = baseColor1;\r\n";
+        this.shaderinjectpoint3 += "vec3 finalNormal1 = baseNormal1;\r\n";
         //this.shaderinjectpoint3 += 'finalColor1.a = 0.05;\r\n';
 
-        this.shaderinjectpoint4 += 'vec4 finalColor1 = baseColor1;\r\n';
-        this.shaderinjectpoint4 += 'float finalRough1 = baseRough1;\r\n';
+        this.shaderinjectpoint4 += "vec4 finalColor1 = baseColor1;\r\n";
+        this.shaderinjectpoint4 += "float finalRough1 = baseRough1;\r\n";
         //this.shaderinjectpoint4 += 'finalColor1.a = 0.05;\r\n';
 
         var v = 0.0, h = 0.0;
@@ -128,48 +129,48 @@ class TerrainMaterialWrapper {
 
             if (i < this.totalTiles-1) {
                  this.shaderinjectpoint3 += (`
-                     `+ '//vec4 finalColor' + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalColor' + (i + 1) + ' : baseColor' + (i + 2) + `;
-                     `+ '//vec4 finalColor' + (i + 2) + ' = finalColor' + (i + 1) + ' * (1.0 - baseColor' + (i + 2) + '.a) + baseColor' + (i + 2) + ' * baseColor' + (i + 2) + `.a;
-                     `+ 'vec4 finalColor' + (i + 2) + ' = blend(finalColor' + (i + 1) + ', ' + this.options.splatInfos.displScales[i].toFixed(5) + ', baseColor' + (i + 2) + ', ' + this.options.splatInfos.displScales[i + 1].toFixed(5) + '); ' + `
+                     `+ "//vec4 finalColor" + (i + 2) + " = finalColor" + (i + 1) + ".a >= baseColor" + (i + 2) + ".a ? finalColor" + (i + 1) + " : baseColor" + (i + 2) + `;
+                     `+ "//vec4 finalColor" + (i + 2) + " = finalColor" + (i + 1) + " * (1.0 - baseColor" + (i + 2) + ".a) + baseColor" + (i + 2) + " * baseColor" + (i + 2) + `.a;
+                     `+ "vec4 finalColor" + (i + 2) + " = blend(finalColor" + (i + 1) + ", " + this.options.splatInfos.displScales[i].toFixed(5) + ", baseColor" + (i + 2) + ", " + this.options.splatInfos.displScales[i + 1].toFixed(5) + "); " + `
                      //finalColor` + (i + 2) + `.a *= 0.95;
 
-                     //vec3 finalNormal` + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalNormal' + (i + 1) + ' : baseNormal' + (i + 2) + `;
-                     vec3 finalNormal` + (i + 2) + ' = blendNormal(finalColor' + (i + 1) + ', ' + this.options.splatInfos.displScales[i].toFixed(5) + ', baseColor' + (i + 2) + ', ' + this.options.splatInfos.displScales[i + 1].toFixed(5) + ', finalNormal' + (i + 1) + ', baseNormal' + (i + 2) + '); ' + `
+                     //vec3 finalNormal` + (i + 2) + " = finalColor" + (i + 1) + ".a >= baseColor" + (i + 2) + ".a ? finalNormal" + (i + 1) + " : baseNormal" + (i + 2) + `;
+                     vec3 finalNormal` + (i + 2) + " = blendNormal(finalColor" + (i + 1) + ", " + this.options.splatInfos.displScales[i].toFixed(5) + ", baseColor" + (i + 2) + ", " + this.options.splatInfos.displScales[i + 1].toFixed(5) + ", finalNormal" + (i + 1) + ", baseNormal" + (i + 2) + "); " + `
                  `);
 
                  this.shaderinjectpoint4 += (`
-                     `+ 'vec4 finalColor' + (i + 2) + ' = blend(finalColor' + (i + 1) + ', ' + this.options.splatInfos.displScales[i].toFixed(5) + ', baseColor' + (i + 2) + ', ' + this.options.splatInfos.displScales[i + 1].toFixed(5) + '); ' + `
-                     float finalRough` + (i + 2) + ' = finalColor' + (i + 1) + '.a >= baseColor' + (i + 2) + '.a ? finalRough' + (i + 1) + ' : baseRough' + (i + 2) + `;
+                     `+ "vec4 finalColor" + (i + 2) + " = blend(finalColor" + (i + 1) + ", " + this.options.splatInfos.displScales[i].toFixed(5) + ", baseColor" + (i + 2) + ", " + this.options.splatInfos.displScales[i + 1].toFixed(5) + "); " + `
+                     float finalRough` + (i + 2) + " = finalColor" + (i + 1) + ".a >= baseColor" + (i + 2) + ".a ? finalRough" + (i + 1) + " : baseRough" + (i + 2) + `;
                  `);
 
             }
 
             // Get basecolors from tiles
-            this.shaderinjectpoint2 += 'vec2 uv' + (i + 1) + ' = vec2((vAlbedoUV.x + '+h+'.0) * splatScale.x, (vAlbedoUV.y + '+v+'.0) * splatScale.y);\r\n';
-            this.shaderinjectpoint2 += 'mat4 chanInfo' + (i + 1) +' = colInfo(vAlbedoUV, uv' + (i + 1) + ', ' + this.options.splatInfos.dedupScales[i].toFixed(5) + ', vec2('+this.options.splatInfos.scales[i][0]+','+this.options.splatInfos.scales[i][1]+'), vec2('+this.options.splatInfos.positions[i][0] + ','+this.options.splatInfos.positions[i][1]+'), ' + (i % 4) + ', scale, splatmap, albedoSampler, atlasNormalsSampler);\r\n';
+            this.shaderinjectpoint2 += "vec2 uv" + (i + 1) + " = vec2((vAlbedoUV.x + "+h+".0) * splatScale.x, (vAlbedoUV.y + "+v+".0) * splatScale.y);\r\n";
+            this.shaderinjectpoint2 += "mat4 chanInfo" + (i + 1) +" = colInfo(vAlbedoUV, uv" + (i + 1) + ", " + this.options.splatInfos.dedupScales[i].toFixed(5) + ", vec2("+this.options.splatInfos.scales[i][0]+","+this.options.splatInfos.scales[i][1]+"), vec2("+this.options.splatInfos.positions[i][0] + ","+this.options.splatInfos.positions[i][1]+"), " + (i % 4) + ", scale, splatmap, albedoSampler, atlasNormalsSampler);\r\n";
             //this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = col(vAlbedoUV, uv' + (i + 1) + ', vec2('+this.options.splatInfos.scales[i][0]+','+this.options.splatInfos.scales[i][1]+'), vec2('+this.options.splatInfos.positions[i][0] + ','+this.options.splatInfos.positions[i][1]+'), ' + (i % 4) + ', scale, splatmap, albedoSampler, bumpSampler);\r\n';
-            this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = chanInfo' + (i + 1) + '[0];\r\n';
-            this.shaderinjectpoint2 += 'vec3 baseNormal' + (i + 1) +' = vec3(chanInfo' + (i + 1) + '[1].x, chanInfo' + (i + 1) + '[1].y, chanInfo' + (i + 1) + '[1].z);\r\n';
-            this.shaderinjectpoint2 += 'float baseRough' + (i + 1) +' = chanInfo' + (i + 1) + '[1].a;\r\n';
+            this.shaderinjectpoint2 += "vec4 baseColor" + (i + 1) +" = chanInfo" + (i + 1) + "[0];\r\n";
+            this.shaderinjectpoint2 += "vec3 baseNormal" + (i + 1) +" = vec3(chanInfo" + (i + 1) + "[1].x, chanInfo" + (i + 1) + "[1].y, chanInfo" + (i + 1) + "[1].z);\r\n";
+            this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = chanInfo" + (i + 1) + "[1].a;\r\n";
 
         }
 
         //this.shaderinjectpoint3 += 'finalColor16 = col(vAlbedoUV, uv16, vec2(20.0, 20.0), vec2(1.0, 2.0), 0, scale, splatmap, albedoSampler);';
 
         //this.shaderinjectpoint3 += 'normalW = perturbNormal(cotangentFrame, finalNormal' + (this.totalTiles) + ', 1.0);';
-        this.shaderinjectpoint3 += 'normalW = normalize(normalW * 0.75 + 0.25 * finalNormal' + (this.totalTiles) + ');';  // TODO: adding these vectors is incorrect
+        this.shaderinjectpoint3 += "normalW = normalize(normalW * 0.75 + 0.25 * finalNormal" + (this.totalTiles) + ");";  // TODO: adding these vectors is incorrect
         //this.shaderinjectpoint3 += 'normalW = normalW;';
         //this.shaderinjectpoint3 += 'normalW.y *= -1.0;';
         //this.shaderinjectpoint3 += 'result = finalNormal' + (this.totalTiles) + ';';
-        this.shaderinjectpoint3 += 'result = finalColor' + (this.totalTiles) + '.rgb;';
+        this.shaderinjectpoint3 += "result = finalColor" + (this.totalTiles) + ".rgb;";
 
         //this.shaderinjectpoint4 += 'normalW = normalW + finalNormal' + (this.totalTiles) + ';';  // TODO: adding these vectors is incorrect
-        this.shaderinjectpoint4 += 'reflectivityOut.roughness = finalRough' + (this.totalTiles) + ';';
+        this.shaderinjectpoint4 += "reflectivityOut.roughness = finalRough" + (this.totalTiles) + ";";
 
         this.splatMap = splatMap;
+        //this.needsUpdating = true;
 
-        this.needsUpdating = true;
-
+        
         this.material = new BABYLONMAT.PBRCustomMaterial("splatMaterial", scene);
         this.material.metallic = 0.0;
         this.material.roughness = 0.95;
@@ -191,8 +192,8 @@ class TerrainMaterialWrapper {
             //this.material.bumpTexture = atlasnormals;
             this.atlasBumpTexture = atlasnormals;
         }
-        this.material.AddUniform('splatmap','sampler2D');
-        this.material.AddUniform('atlasNormalsSampler','sampler2D');
+        this.material.AddUniform("splatmap","sampler2D", {});
+        this.material.AddUniform("atlasNormalsSampler","sampler2D",  {});
 
 
         this.material.Fragment_Begin(
@@ -312,9 +313,9 @@ class TerrainMaterialWrapper {
                 `
                 */
 
-                +'vec2 scaledUv1 = fract((vAlbedoUV + offset) * tile1Scale);'  // Curvy antitiling factor
-                +'scaledUv1 = scaledUv1 * (254.0/256.0) + vec2(1.0 / 256.0, 1.0 / 256.0);'
-                +'vec2 uv1 = vec2((scaledUv1.x + tile1Position.x) * scale.x, (scaledUv1.y + tile1Position.y) * scale.y);'
+                +"vec2 scaledUv1 = fract((vAlbedoUV + offset) * tile1Scale);"  // Curvy antitiling factor
+                +"scaledUv1 = scaledUv1 * (254.0/256.0) + vec2(1.0 / 256.0, 1.0 / 256.0);"
+                +"vec2 uv1 = vec2((scaledUv1.x + tile1Position.x) * scale.x, (scaledUv1.y + tile1Position.y) * scale.y);"
 
                 /*
                 +'vec2 scaledUv2 = fract((vAlbedoUV + offset2) * tile1Scale).yx;'  // Curvy antitiling factor
@@ -384,16 +385,16 @@ class TerrainMaterialWrapper {
             this.shaderinjectpoint4
         );
 
-        this.material.onBindObservable.add(function () {
-            that.update();
+        this.material.onBindObservable.add(() => {
+            this.update();
         });
 
         return this.material;
     }
 
-    update = function(){
-        this.material.getEffect().setTexture('splatmap', this.splatMap);
-        this.material.getEffect().setTexture('atlasNormalsSampler', this.atlasBumpTexture);
+    update(): void {
+        this.material.getEffect().setTexture( "splatmap", this.splatMap );
+        this.material.getEffect().setTexture( "atlasNormalsSampler", this.atlasBumpTexture );
         //this.material.reflectionTexture = this.envReflectionProbe.cubeTexture;
         //this.material.reflectionTexture = this.scene.environmentTexture;
         //this.sceneViewer.scene.environmentTexture = this.sceneViewer.envReflectionProbe.cubeTexture;

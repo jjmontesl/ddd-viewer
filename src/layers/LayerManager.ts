@@ -12,10 +12,10 @@ export default class LayerManager {
         this.layers = {};
     }
 
-    update(): void {
+    update( deltaTime: number ): void {
         for ( const key in this.layers ) {
             // Load tiles dynamically as needed
-            this.layers[key].update();
+            this.layers[key].update( deltaTime );
         }
     }
 

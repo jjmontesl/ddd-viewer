@@ -17,13 +17,12 @@ import "babylonjs-loaders";
 // import TerrainMaterialWrapper from "./render/TerrainMaterial.js";
 //import UniversalTerrainMaterialWrapper from '@/dddviewer/render/UniversalTerrainMaterialWrapper.js';
 //import createOceanMaterial from '@/dddviewer/render/OceanMaterial.js';
-
-// import SkyMaterialWrapper from "./render/SkyboxMaterial.js";
+//import SkyMaterialWrapper from "./render/SkyboxMaterial";
 
 import LayerManager from "./layers/LayerManager";
 import QueueLoader from "./loading/QueueLoader";
-// import ViewerSequencer from "./seq/ViewerSequencer.js";
-// import ViewerProcesses from "./seq/ViewerProcesses.js";
+//import ViewerSequencer from "./seq/ViewerSequencer";
+//import ViewerProcesses from "./seq/ViewerProcesses";
 import ViewerState from "./ViewerState";
 import { Camera } from "babylonjs/Cameras/camera";
 import { Engine } from "babylonjs/Engines/engine";
@@ -31,17 +30,26 @@ import { Scene } from "babylonjs/scene";
 import { Material } from "babylonjs/Materials/material";
 import { Mesh } from "babylonjs/Meshes/mesh";
 import TileGrid from "ol/tilegrid/TileGrid";
+import { AbstractMesh, ArcRotateCamera, BoundingInfo, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, LensFlareSystem, PBRMaterial, ReflectionProbe, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
+import TerrainMaterialWrapper from "./render/TerrainMaterial";
+import { Coordinate } from "ol/coordinate";
+import DDDMaterialsConfig from "./DDDMaterialsConfig";
 
 
 class SceneViewer {
     camera: Camera | null = null;
     viewerState: ViewerState;
 
-    engine: Engine | null = null;
-    scene: Scene | null = null;
+    engine: Engine;
+    scene: Scene;
+    sceneInstru: SceneInstrumentation | null = null;
 
-    // highlightMeshes = [];
-    // materialHighlight = null;
+    sequencer: ViewerSequencer;
+    processes: ViewerProcesses;
+
+    highlightMeshes: Mesh[] = [];
+    //materialHighlight: Material | null = null;
+    materialHighlight: StandardMaterial | null = null;
 
     walkMode: boolean = false;
     useSplatMap: boolean = true;
@@ -50,23 +58,51 @@ class SceneViewer {
     queueLoader: QueueLoader;
 
     originShiftWGS84: number[];
-    projection: proj4.Converter | null;
+    projection: proj4.Converter;
 
     tileGrid: TileGrid;
 
     catalog: { [key: string]: Mesh }
     catalog_materials: { [key: string]: Material }
     instanceRoots: { [key: string]: any }
-    depends: [];
+    depends: Mesh[];
 
-    constructor( viewerState: ViewerState ) {
+    ambientColorNight: Color3 = new Color3( 0, 0, 0.3 );
+    ambientColorDay: Color3 = new Color3( 0.70, 0.70, 0.7 );
+
+    colorLightLamp: Color3 = new Color3( 250 / 255, 244 / 255, 192 / 255 );
+    colorLightRed: Color3 = new Color3( 512 / 255, 0 / 255, 0 / 255 );
+    colorLightGreen: Color3 = new Color3( 50 / 255, 512 / 255, 50 / 255 );
+    colorLightOrange: Color3 = new Color3( 255 / 255, 157 / 255, 0 / 255 );
+
+    lastDateUpdate: number = new Date().getTime();
+
+    selectedMesh: Mesh | null = null;
+    sceneSelectedMeshId: string | null = null;
+
+    materialWater: WaterMaterial | null = null;
+    envReflectionProbe: ReflectionProbe | null = null;
+    light: DirectionalLight | null = null;
+    shadowGenerator: CascadedShadowGenerator | null = null;
+    lensFlareSystem: LensFlareSystem | null = null;
+    textureDetailSurfaceImp: Texture | null = null;
+    skybox: Mesh | null = null;
+
+    splatmapAtlasTexture: Texture | null = null;
+    splatmapAtlasNormalsTexture: Texture | null = null;
+    
+    _previousLampPatOn: boolean | null = null;
+    _geolocationWatchId: string | null = null;
+
+
+    constructor( canvas: HTMLCanvasElement, viewerState: ViewerState ) {
         this.viewerState = viewerState;
         
         this.layerManager = new LayerManager( this );
         this.queueLoader = new QueueLoader( this );
 
         this.originShiftWGS84 = [ 0, 0 ];
-        this.projection = null;
+        this.projection = proj4("EPSG:4326");
 
         this.tileGrid = createXYZ({
             extent: extentFromProjection( "EPSG:3857" ),
@@ -83,66 +119,50 @@ class SceneViewer {
         // Dependencies to not yet loaded objects, in order to process them
         this.depends = [];
 
-        this.ambientColorNight = new BABYLON.Color3( 0, 0, 0.3 );
-        this.ambientColorDay = new BABYLON.Color3( 0.70, 0.70, 0.7 );
-
-        this.colorLightLamp = new BABYLON.Color3( 250 / 255, 244 / 255, 192 / 255 );
-        this.colorLightRed = new BABYLON.Color3( 512 / 255, 0 / 255, 0 / 255 );
-        this.colorLightGreen = new BABYLON.Color3( 50 / 255, 512 / 255, 50 / 255 );
-        this.colorLightOrange = new BABYLON.Color3( 255 / 255, 157 / 255, 0 / 255 );
-
         this.lastDateUpdate = new Date().getTime();
 
         // TODO: Sequencer would better belong to the app
         this.sequencer = new ViewerSequencer( this );
         this.processes = new ViewerProcesses( this );
 
-        this.selectedMesh = null;
 
-        this._previousLampPatOn = null;
+        // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
+        this.engine = new BABYLON.Engine( canvas, true ); // , null, true); // , { stencil: true });
 
-        this._geolocationWatchId = null;
+        console.warn( "Scene option 'useGeometryIdsMap' is disabled." );
+        this.scene = new Scene( this.engine, { useGeometryIdsMap: true } as SceneOptions );
 
+        //that.scene = createScene(engine, canvas);
+        //this.scene.freezeActiveMeshes(true);  // affects too many things, causes wrong behavior (skybox, etc)
+        //this.octree = null;
+
+        this.initialize();
 
     }
 
-    initialize( canvas ) {
+    initialize(): void {
 
-        const that = this;
+        //const that = this;
 
         // Get the canvas element from the DOM.
         //const canvas = that.$el.querySelector('.ddd-scene');
         //const canvas = document.getElementById("renderCanvas");
 
         //console.debug(that.viewerState);
-        const coords = that.viewerState.positionWGS84;
-        //that.loadTileForCoords(coords);
+        const coords = this.viewerState.positionWGS84;
+        this.registerProjectionForCoords( coords );
 
-        that.registerProjectionForCoords( coords );
-
-        // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
-        const engine = new BABYLON.Engine( canvas, true ); // , null, true); // , { stencil: true });
-        this.engine = engine;
-
-        this.scene = new BABYLON.Scene( engine,  {
-            "useGeometryIdsMap": true
-        });
-        //that.scene = createScene(engine, canvas);
-        //this.scene.freezeActiveMeshes(true);  // affects too many things, causes wrong behavior (skybox, etc)
-
-        this.octree = null;
 
         this.scene.pointerMovePredicate = function() { return false; };
         this.scene.pointerDownPredicate = function() { return false; };
 
         //this.sceneInstru = null;
-        this.sceneInstru = new BABYLON.SceneInstrumentation( that.scene );
-
+        this.sceneInstru = new BABYLON.SceneInstrumentation( this.scene );
 
         //that.highlightLayer = new BABYLON.HighlightLayer("hl1", that.scene);
 
 
-        const water = new WaterMaterial( "water", that.scene, new BABYLON.Vector2( 512, 512 ));
+        const water = new WaterMaterial( "water", this.scene, new BABYLON.Vector2( 512, 512 ));
         //water.backFaceCulling = true;
         //water.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", that.scene);
         water.windForce = 5;
@@ -150,19 +170,15 @@ class SceneViewer {
         water.waveSpeed = 100.0;
         water.bumpHeight = 0.05;
         water.waveLength = 10.0;
-
         water.alpha = 0.8;
+        //water.useSpecularOverAlpha = true;
+        //water.useReflectionOverAlpha = true;
         water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
-        water.useSpecularOverAlpha = true;
-        water.useReflectionOverAlpha = true;
-
+        //water.renderingGroupId = 3;
         water.colorBlendFactor = 0.2;
-        water.renderingGroupId = 3;
         this.scene.setRenderingAutoClearDepthStencil( 3, false, false, false );
         //water.addToRenderList(ground);
-
         //let waterOcean = createOceanMaterial(this.scene);
-
         this.materialWater = water;
 
         /*
@@ -175,7 +191,7 @@ class SceneViewer {
         // Environment
         this.envReflectionProbe = null;
         if ( this.viewerState.sceneEnvironmentProbe !== null ) {
-            this.envReflectionProbe = new BABYLON.ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true, true );
+            this.envReflectionProbe = new BABYLON.ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true);
             this.envReflectionProbe.refreshRate = 6;
             this.envReflectionProbe.position = new BABYLON.Vector3( 0, 0, 0 );
 
@@ -195,7 +211,7 @@ class SceneViewer {
         } else {
             //this.scene.createDefaultEnvironment();
             //var hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("/textures/environment.env", this.scene);
-            const hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData( "/textures/country.env", this.scene );
+            const hdrTexture = CubeTexture.CreateFromPrefilteredData( "/textures/country.env", this.scene );
             this.scene.environmentTexture = hdrTexture;
         }
 
@@ -236,10 +252,10 @@ class SceneViewer {
         that.lightHemi.specular = new BABYLON.Color3(1, 1, 0.95);
         that.lightHemi.groundColor = new BABYLON.Color3(0.95, 1, 0.95);
         */
-        that.light = new BABYLON.DirectionalLight( "light", new BABYLON.Vector3( 0.3, -0.5, 0.5 ).normalizeToNew(), that.scene );
-        that.light.diffuse = new BABYLON.Color3( 0.95, 0.95, 1.00 );
-        that.light.specular = new BABYLON.Color3( 1, 1, 0.95 );
-        that.light.intensity = 2.5;
+        this.light = new BABYLON.DirectionalLight( "light", new BABYLON.Vector3( 0.3, -0.5, 0.5 ).normalizeToNew(), this.scene );
+        this.light.diffuse = new BABYLON.Color3( 0.95, 0.95, 1.00 );
+        this.light.specular = new BABYLON.Color3( 1, 1, 0.95 );
+        this.light.intensity = 2.5;
 
         /*
         that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
@@ -249,42 +265,42 @@ class SceneViewer {
         */
 
 
-        that.shadowGenerator = null;
-        if ( that.viewerState.sceneShadowsEnabled ) {
-            that.shadowGenerator = new BABYLON.CascadedShadowGenerator( 1024, that.light );
+        this.shadowGenerator = null;
+        if ( this.viewerState.sceneShadowsEnabled ) {
+            this.shadowGenerator = new BABYLON.CascadedShadowGenerator( 1024, this.light );
             //that.shadowGenerator.debug = true;
-            that.shadowGenerator.shadowMaxZ = 500;
-            that.shadowGenerator.autoCalcDepthBounds = true;
-            that.shadowGenerator.penumbraDarkness = 0.8;
-            that.shadowGenerator.lambda = 0.5;
+            this.shadowGenerator.shadowMaxZ = 500;
+            this.shadowGenerator.autoCalcDepthBounds = true;
+            this.shadowGenerator.penumbraDarkness = 0.8;
+            this.shadowGenerator.lambda = 0.5;
             //that.shadowGenerator.depthClamp = false;
             //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
-            that.shadowGenerator.splitFrustum();
+            this.shadowGenerator.splitFrustum();
         }
 
 
-        this.lensFlareEmitter = new BABYLON.Mesh( "lensFlareEmitter", that.scene );
-        this.lensFlareSystem = new BABYLON.LensFlareSystem( "lensFlareSystem", this.lensFlareEmitter, that.scene );
+        const lensFlareEmitter: Mesh = new BABYLON.Mesh( "lensFlareEmitter", this.scene );
+        this.lensFlareSystem = new BABYLON.LensFlareSystem( "lensFlareSystem", lensFlareEmitter, this.scene );
         const flareScale = 0.5;
-        const flare00 = new BABYLON.LensFlare( flareScale * 0.2, 0, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
-        const flare01 = new BABYLON.LensFlare( flareScale * 0.5, 0.2, new BABYLON.Color3( 0.5, 0.5, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        const flare02 = new BABYLON.LensFlare( flareScale * 0.2, 1.0, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        const flare03 = new BABYLON.LensFlare( flareScale * 0.4, 0.4, new BABYLON.Color3( 1, 0.5, 1 ), "/textures/flare.png", this.lensFlareSystem );
-        const flare04 = new BABYLON.LensFlare( flareScale * 0.1, 0.6, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        const flare05 = new BABYLON.LensFlare( flareScale * 0.3, 0.8, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.2, 0, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.5, 0.2, new BABYLON.Color3( 0.5, 0.5, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.2, 1.0, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.4, 0.4, new BABYLON.Color3( 1, 0.5, 1 ), "/textures/flare.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.1, 0.6, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new BABYLON.LensFlare( flareScale * 0.3, 0.8, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
 
         // Setup lighting, flares, etc.
         this.lightSetupFromDatePos();
 
         //var ssao = new BABYLON.SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
-        that.materialHighlight = new BABYLON.StandardMaterial( "materialHighlight", that.scene );
-        that.materialHighlight.diffuseColor = new BABYLON.Color3( 1, 1, 1 );
+        this.materialHighlight = new BABYLON.StandardMaterial( "materialHighlight", this.scene );
+        this.materialHighlight.diffuseColor = new BABYLON.Color3( 1, 1, 1 );
         //that.materialHighlight.specularColor = new BABYLON.Color3(1, 1, 1);
-        that.materialHighlight.emissiveColor = new BABYLON.Color3( 1.0, 1.0, 1. );
-        that.materialHighlight.wireframe = true;
-        that.materialHighlight.disableLighting = true;
-        that.materialHighlight.backFaceCulling = true;
+        this.materialHighlight.emissiveColor = new BABYLON.Color3( 1.0, 1.0, 1. );
+        this.materialHighlight.wireframe = true;
+        this.materialHighlight.disableLighting = true;
+        this.materialHighlight.backFaceCulling = true;
 
         // The first parameter can be used to specify which mesh to import. Here we import all meshes
         //BABYLON.SceneLoader.ImportMesh('', '', https://models.babylonjs.com/', 'alien.glb', that.scene, function (newMeshes) {
@@ -301,10 +317,10 @@ class SceneViewer {
         this.loadTextures();
 
         // Render every frame
-        engine.runRenderLoop(() => {
-            if ( ! that.scene ) { return; }
-            that.update( that.engine.getDeltaTime() / 1000.0 );
-            that.scene.render();
+        this.engine.runRenderLoop(() => {
+            if ( ! this.scene ) { return; }
+            this.update( this.engine!.getDeltaTime() / 1000.0 );
+            this.scene.render();
         });
 
         // Shaders
@@ -344,13 +360,13 @@ class SceneViewer {
 
     }
 
-    loadSkybox( baseUrl ) {
+    loadSkybox( baseUrl: string ): void {
         // Remove skybox
         if ( this.skybox ) {
 
-            this.materialWater.getRenderList.lengh = 0;
+            this.materialWater!.getRenderList()!.length = 0;
             if ( this.viewerState.sceneEnvironmentProbe ) {
-                this.envReflectionProbe.renderList.length = 0;
+                this.envReflectionProbe!.renderList!.length = 0;
             }
 
             this.skybox.dispose();
@@ -359,27 +375,28 @@ class SceneViewer {
 
         // Set skybox
         if ( baseUrl === "@dynamic" )  {
-            var skybox = BABYLON.Mesh.CreateSphere( "skyBox", 30, 3000, this.scene );
-            var skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
+            const skybox = BABYLON.Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
+            
+            const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
+            skyboxMaterial.disableDepthWrite = true;
 
             skybox.material = skyboxMaterial;
-            skybox.material.disableDepthWrite = true;
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
 
         } else if ( baseUrl !== null ) {
 
-            var skybox = BABYLON.MeshBuilder.CreateBox( "skyBox", { size:3000.0 }, this.scene );
-            var skyboxMaterial = new BABYLON.StandardMaterial( "skyBox", this.scene );
+            const skybox = BABYLON.MeshBuilder.CreateBox( "skyBox", { size:3000.0 }, this.scene );
+            const skyboxMaterial = new BABYLON.StandardMaterial( "skyBox", <Scene> this.scene );
             skyboxMaterial.backFaceCulling = false;
-            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture( baseUrl, this.scene );
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture( baseUrl, <Scene> this.scene );
             skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
             skyboxMaterial.diffuseColor = new BABYLON.Color3( 0, 0, 0 );
             skyboxMaterial.specularColor = new BABYLON.Color3( 0, 0, 0 );
+            skyboxMaterial.disableDepthWrite = true;
 
             skybox.material = skyboxMaterial;
-            skybox.material.disableDepthWrite = true;
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
@@ -388,45 +405,45 @@ class SceneViewer {
         if ( this.skybox ) {
             this.skybox.renderingGroupId = 0;  // Seems needs to be rendered in group 0 for it to be applied to the reflections on water
             //this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
-            this.envReflectionProbe.renderList.push( this.skybox );
-            this.materialWater.addToRenderList( this.skybox );
+            this.envReflectionProbe!.renderList!.push( this.skybox );
+            this.materialWater!.addToRenderList( this.skybox );
         }
 
     }
 
-    showFullScreen() {
-        this.engine.switchFullscreen( true );
+    showFullScreen(): void {
+        if ( this.engine ) {
+            this.engine.switchFullscreen( true );
+        }
     }
 
-    showDebugView() {
+    showDebugView(): void {
         // Show BabylonJS Inspector
-        this.scene.debugLayer.show({ overlay: true });
+        this.scene!.debugLayer.show({ overlay: true });
     }
 
-    loadCatalog( filename, loadMaterials ) {
+    loadCatalog( filename: string, loadMaterials: boolean ): void {
         console.debug( "Loading catalog: " + filename );
-        const that = this;
         BABYLON.SceneLoader.ImportMesh( null, filename, "", this.scene, //this.scene,
             // onSuccess
-            function( newMeshes, particleSystems, skeletons ) {
+            ( newMeshes: AbstractMesh[], particleSystems: any, skeletons: any ) => {
                 //console.log("GLB loaded", newMeshes);
-                that.loadCatalogFromMesh( newMeshes[0], loadMaterials );
+                this.loadCatalogFromMesh( <Mesh>newMeshes[0], loadMaterials );
                 newMeshes[0].setParent( null );
                 newMeshes[0].setEnabled( false );
                 //newMeshes[0].isVisible = false;
                 //newMeshes[0].dispose();
 
-                that.processDepends();
+                this.processDepends();
             },
-            function( event ) {
-            },
-            function( scene, msg, ex ) {
+            ( event ) => { },
+            ( scene, msg, ex ) => {
                 console.debug( "Could not load scene catalog: " + filename, ex );
             }
         );
     }
 
-    processDepends() {
+    processDepends(): void {
         console.debug( "Processing dependencies" );
         const dependsCopy = [ ...this.depends ];
         for ( const dep of dependsCopy ) {
@@ -435,7 +452,7 @@ class SceneViewer {
         }
     }
 
-    loadCatalogFromMesh( mesh, loadMaterials ) {
+    loadCatalogFromMesh( mesh: Mesh, loadMaterials: boolean ): void {
 
         if ( mesh && mesh.metadata && mesh.metadata.gltf && mesh.metadata.gltf.extras ) {
             const metadata = mesh.metadata.gltf.extras;
@@ -471,11 +488,11 @@ class SceneViewer {
         }
 
         for ( const child of mesh.getChildren()) {
-            this.loadCatalogFromMesh( child, loadMaterials );
+            this.loadCatalogFromMesh( <Mesh> child, loadMaterials );
         }
     }
 
-    addMaterialToCatalog( key, mesh, force ) {
+    addMaterialToCatalog( key: string, mesh: Mesh, force: boolean = false ): void {
         if ( mesh.material ) {
             //console.debug(mesh.material);
             //mesh.material.id = key;
@@ -506,7 +523,7 @@ class SceneViewer {
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
                     this.catalog_materials["WaterInstanced"].freeze();
 
-                    this.catalog_materials[key] = this.materialWater;
+                    this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
                 } else if ( metadata["ddd:material"] === "Water4Advanced" ) {
@@ -517,10 +534,10 @@ class SceneViewer {
                     mesh.material.useReflectionOverAlpha = true;
                     mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
                     */
-                    this.catalog_materials[key] = this.materialWater;
+                    this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
-                } else if ( mesh.material.albedoTexture ) {
+                } else if ( mesh.material instanceof PBRMaterial ) {
 
                     //mesh.material.specularColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.2);
                     //mesh.material.albedoColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.5);
@@ -543,16 +560,16 @@ class SceneViewer {
                     if (( metadata["ddd:material"] === "Fence" )) {
                         uvScale = 0.5;
                         mesh.material.backFaceCulling = false;
-                        mesh.material.albedoTexture.vOffset = 0.0725;
-                        if ( mesh.material.bumpTexture ) { mesh.material.bumpTexture.vOffset = 0.0725; }
+                        ( <Texture> mesh.material.albedoTexture ).vOffset = 0.0725;
+                        if ( mesh.material.bumpTexture ) { ( <Texture> mesh.material.bumpTexture ).vOffset = 0.0725; }
                     }
 
                     if ( uvScale !== 1.0 ) {
-                        mesh.material.albedoTexture.uScale = uvScale;
-                        mesh.material.albedoTexture.vScale = uvScale;
+                        ( <Texture> mesh.material.albedoTexture ).uScale = uvScale;
+                        ( <Texture> mesh.material.albedoTexture ).vScale = uvScale;
                         if ( mesh.material.bumpTexture ) {
-                            mesh.material.bumpTexture.uScale = uvScale;
-                            mesh.material.bumpTexture.vScale = uvScale;
+                            ( <Texture> mesh.material.bumpTexture ).uScale = uvScale;
+                            ( <Texture> mesh.material.bumpTexture ).vScale = uvScale;
                         }
                     }
 
@@ -574,17 +591,14 @@ class SceneViewer {
 
                     // Detail map
                     mesh.material.detailMap.texture = this.textureDetailSurfaceImp;
-                    mesh.material.detailMap.texture.uScale = 1 / 256;
-                    mesh.material.detailMap.texture.vScale = 1 / 256;
+                    ( <Texture> mesh.material.detailMap.texture ).uScale = 1 / 256;
+                    ( <Texture> mesh.material.detailMap.texture ).vScale = 1 / 256;
                     mesh.material.detailMap.isEnabled = true;
                     mesh.material.detailMap.diffuseBlendLevel = 0.15; // 0.2
                     //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                     //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
-
                     //mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
-
                     //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
-
                 }
 
                 if ( metadata["zoffset"]) {
@@ -602,7 +616,7 @@ class SceneViewer {
         }
     }
 
-    addMeshToCatalog( key, mesh ) {
+    addMeshToCatalog( key: string, mesh: Mesh ): void {
         if ( this.catalog[key]) {
             console.debug( "Mesh already in catalog: " + key );
         } else {
@@ -613,7 +627,7 @@ class SceneViewer {
         }
     }
 
-    processMesh( root, mesh ) {
+    processMesh( root: Mesh, mesh: Mesh ): Mesh | null {
         //console.debug("Processing mesh: " + mesh.id)
 
         const rootmd = root.metadata.tileInfo;
@@ -630,22 +644,22 @@ class SceneViewer {
 
                 const splatmapTexture = new BABYLON.Texture( splatmapUrl, this.scene );
 
-                const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, this.splatmapAtlasTexture, this.splatmapAtlasNormalsTexture );
-                root._splatmapMaterial = matwrapper.material;
-
-
+                const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture, {});
+                (<any> root)._splatmapMaterial = matwrapper.material;
+                
+                
                 let uvScale = [ 225, 225 ]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
                 const bounds = rootmd ? rootmd["tile:bounds_m"] : null;
                 if ( bounds ) {
                     //console.debug("Bounds: ", bounds);
                     uvScale = [ bounds[2] - bounds[0], bounds[3] - bounds[1] ];
                 }
-
+                
                 // Seems to work well (+1 +1 / +1 -1)
-                root._splatmapMaterial.albedoTexture.uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
-                root._splatmapMaterial.albedoTexture.vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
-                root._splatmapMaterial.albedoTexture.uOffset = 0.5; //  + (1 / uvScale[0]);
-                root._splatmapMaterial.albedoTexture.vOffset = 0.5 - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
+                (<Texture> matwrapper.material.albedoTexture).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
+                (<Texture> matwrapper.material.albedoTexture).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
+                (<Texture> matwrapper.material.albedoTexture).uOffset = 0.5; //  + (1 / uvScale[0]);
+                (<Texture> matwrapper.material.albedoTexture).vOffset = 0.5 - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
                 /*if (mesh.material.bumpTexture) {
                     mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
                     mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
@@ -683,7 +697,7 @@ class SceneViewer {
                     this.addMaterialToCatalog( metadata["ddd:material"], mesh );
                     mat = this.catalog_materials[key];
 
-                    if ( !( root in this.depends )) {
+                    if ( !( <any>root in this.depends )) {
                         this.depends.push( root );
                     }
                 }
@@ -710,13 +724,13 @@ class SceneViewer {
                      ( metadata["ddd:material"] === "WayPedestrian" && ( !( "ddd:area:type" in metadata ) || ( metadata["ddd:area:type"] !== "stairs" ))) ||
                      metadata["ddd:material"] === "Wetland" || metadata["ddd:material"] === "Asphalt" )) {
 
-                    if ( root._splatmapMaterial ) {
-                        if ( mesh.material && mesh.material !== root._splatmapMaterial ) {
+                    if ((<any>root)._splatmapMaterial) {
+                        if ( mesh.material && mesh.material !== (<any>root)._splatmapMaterial ) {
                             mesh.material.dispose();
                         }
 
-                        mesh.material = root._splatmapMaterial;
-                        root._splatmapMaterial.renderingGroupId = 1;
+                        mesh.material = (<any>root)._splatmapMaterial;
+                        (<any>root)._splatmapMaterial.renderingGroupId = 1;
 
                         // Expensive probe
                         //this.envReflectionProbe.renderList.push(mesh);
@@ -772,20 +786,20 @@ class SceneViewer {
                     newMesh.parent = null;
                     newMesh.parent = mesh.parent; // .parent;
                     newMesh.scaling = mesh.scaling.clone();
-                    newMesh.rotationQuaternion = mesh.rotationQuaternion.clone();
+                    newMesh.rotationQuaternion = mesh.rotationQuaternion!.clone();
                     newMesh.position = mesh.position.clone();
 
                     newMesh.rotate( BABYLON.Vector3.Right(), Math.PI / 2.0, BABYLON.Space.LOCAL );
                     newMesh.scaling.y *= 0.35;
 
                     //Create dynamic texture
-                    const texture = new BABYLON.DynamicTexture( "dynamicTexture_text_" + mesh.id , { width:256, height:128 }, this.scene );
+                    const texture = new BABYLON.DynamicTexture( "dynamicTexture_text_" + mesh.id, { width:256, height:128 }, this.scene, true );
                     //var textureContext = texture.getContext();
                     const font = "bold 36px serif";
                     const text = metadata["ddd:text"];
                     texture.drawText( text, 128.0 - ( text.length * 8 ), 60, font, "blue", "transparent", true, true );
 
-                    const material = new BABYLON.StandardMaterial( "Mat" + mesh.id, this.scene );
+                    const material = new BABYLON.StandardMaterial( "Mat" + mesh.id, <Scene> this.scene );
                     material.diffuseTexture = texture;
                     material.diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = true;
@@ -799,14 +813,14 @@ class SceneViewer {
 
                 mesh.parent = null;
                 mesh.dispose();
-                mesh = newMesh;
+                mesh = <Mesh> newMesh;
 
             } else if ( metadata["ddd:instance:key"]) {
                 replaced = true;
                 const key = metadata["ddd:instance:key"];
 
                 // Ignored objects (devel purpose)
-                const ignored_keys = [];  // ["building-window"]
+                const ignored_keys: string[] = [];  // ["building-window"]
                 if ( ignored_keys.indexOf( key ) >= 0 ) {
                     mesh.parent = null;
                     mesh.dispose();
@@ -816,17 +830,17 @@ class SceneViewer {
                 if ( this.catalog[key]) {
 
                     if ( "ddd:instance:buffer:matrices" in metadata ) {
-                        this.instanceAsThinInstanceBuffers( root, key, mesh );
+                        this.instanceAsThinInstanceBuffers( key, root, mesh );
                     } else {
                         //this.instanceAsNode(root, key, mesh);
-                        this.instanceAsThinInstance( root, key, mesh );  // note this removes the mesh
+                        this.instanceAsThinInstance( key, root, mesh );  // note this removes the mesh
                     }
 
                 } else {
                     // Instance not found. Mark this root for re processing and exit.
                     //console.debug("Instance key not found in catalog: : " + key);
                     this.depends.push( root );
-                    return;
+                    return null;
                 }
             }
 
@@ -850,7 +864,7 @@ class SceneViewer {
             //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
 
             for ( const children of mesh.getChildren()) {
-                this.processMesh( root, children );
+                this.processMesh( root, <Mesh> children );
             }
         }
 
@@ -863,7 +877,7 @@ class SceneViewer {
         return mesh;
     }
 
-    instanceAsThinInstance( root, key, node ) {
+    instanceAsThinInstance( key: string, root: Mesh, node: Mesh ): void {
 
         const instance = this.catalog[key];
         const meshes = instance.getChildMeshes();
@@ -905,7 +919,7 @@ class SceneViewer {
 
                 // Enable shadows for the instances if shadows are set
                 if ( this.shadowGenerator ) {
-                    this.shadowGenerator.getShadowMap().renderList.push( meshInstanceRoot );
+                    this.shadowGenerator.getShadowMap()!.renderList!.push( meshInstanceRoot );
                 }
 
                 //meshInstanceRoot.setEnabled(false);
@@ -934,7 +948,7 @@ class SceneViewer {
             let matrix = scaleMatrix.multiply( nodeMatrix );
             matrix = matrix.multiply( BABYLON.Matrix.Invert( meshInstanceRootMatrix ));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
-            const idx = meshInstanceRoot.thinInstanceAdd( matrix );
+            meshInstanceRoot.thinInstanceAdd( matrix );
             meshInstanceRoot.freezeWorldMatrix();
 
             //let tmpcopy = meshInstanceRoot.clone();
@@ -949,7 +963,7 @@ class SceneViewer {
 
     }
 
-    instanceAsThinInstanceBuffers( root, key, node ) {
+    instanceAsThinInstanceBuffers( key: string, root: Mesh, node: Mesh ): void {
 
         console.debug( "Creating thin instance buffers for: " + key );
 
@@ -1001,7 +1015,7 @@ class SceneViewer {
 
                 // Enable shadows for the instances if shadows are set
                 if ( this.shadowGenerator ) {
-                    this.shadowGenerator.getShadowMap().renderList.push( meshInstanceRoot );
+                    this.shadowGenerator.getShadowMap()!.renderList!.push( meshInstanceRoot );
                 }
 
                 //meshInstanceRoot.setEnabled(false);
@@ -1015,8 +1029,7 @@ class SceneViewer {
 
             const bufferMatrices = metadataNode["ddd:instance:buffer:matrices"];
 
-            const scaleMatrix = BABYLON.Matrix.Compose( new BABYLON.Vector3( 1, 1, -1 ), new BABYLON.Quaternion( 0, 0, 0, 0 ), new BABYLON.Vector3( 0, 0, 0 )); //BABYLON.Matrix.Scaling(-1, 1, 1);
-
+            //const scaleMatrix = BABYLON.Matrix.Compose( new BABYLON.Vector3( 1, 1, -1 ), new BABYLON.Quaternion( 0, 0, 0, 0 ), new BABYLON.Vector3( 0, 0, 0 )); //BABYLON.Matrix.Scaling(-1, 1, 1);
             //let nodeMatrix = node.computeWorldMatrix(true);
             //let meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix(true);
             //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
@@ -1042,7 +1055,7 @@ class SceneViewer {
 
     }
 
-    instanceAsNode( root, key, mesh ) {
+    instanceAsNode( key: string, root: Mesh, mesh: Mesh ): void {
         //console.debug("Replacing mesh: " + key);
         const newMesh = new BABYLON.TransformNode( mesh.id + "_instance", this.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
         //let newMesh = mesh;
@@ -1071,23 +1084,32 @@ class SceneViewer {
         instance.parent = newMesh;
         newMesh.rotate( new BABYLON.Vector3( 1, 0, 0 ), Math.PI / 2, BABYLON.Space.LOCAL );
         instance.setEnabled( true );
-        mesh = newMesh;
+        //mesh = newMesh;
     }
 
-    dispose() {
+    /**
+     * Dispose this DDDViewer instance.
+     * @todo Ensure all events, processes and objects are disconnected and disposed.
+     */
+    dispose(): void {
         if ( this.scene ) {
             console.debug( "Disposing SceneViewer scene." );
             this.scene.dispose();
-            this.scene = null;
+            //this.scene = null;
         }
         if ( this.engine ) {
             console.debug( "Disposing SceneViewer 3D engine (BabylonJS)." );
             this.engine.dispose();
-            this.engine = null;
+            //this.engine = null;
         }
     }
 
-    update( deltaTime ) {
+    /**
+     * DDDViewer main update callback, this is called every frame by the engine.
+     * Children object update method is called recursively from here (sequencer, processes, layers).
+     * @param deltaTime 
+     */
+    update( deltaTime: number ): void {
 
         const positionWGS84 = this.positionWGS84();
         if ( positionWGS84 ) {
@@ -1103,57 +1125,64 @@ class SceneViewer {
 
             // Fix viewer to floor
             if ( this.walkMode ) {
-                if ( terrainElevation !== null ) {
+                if ( terrainElevation !== null && this.camera) {
                     this.camera.position.y = terrainElevation + this.viewerState.sceneCameraWalkHeight; // 3.0;
                 }
             } else {
-                if ( terrainElevation && this.camera.position.y < ( terrainElevation + 1.0 )) {
+                if ( terrainElevation && this.camera && this.camera.position.y < ( terrainElevation + 1.0 )) {
                     this.camera.position.y = terrainElevation + 1.0;
                 }
             }
 
-            if ( this.camera.alpha ) {
-                let heading = -90 + ( -this.camera.alpha * ( 180.0 / Math.PI ));
-                heading = ( heading % 360 + 360 ) % 360;
-                this.viewerState.positionHeading = heading;
+            if (this.camera) {
+                if ( this.camera instanceof ArcRotateCamera ) {
+                    let heading = -90 + ( -this.camera.alpha * ( 180.0 / Math.PI ));
+                    heading = ( heading % 360 + 360 ) % 360;
+                    this.viewerState.positionHeading = heading;
 
-                const tilt = this.camera.beta * ( 180.0 / 3.14159265359 );
-                this.viewerState.positionTilt = tilt;
-            } else if ( this.camera.rotation ) {
+                    const tilt = this.camera.beta * ( 180.0 / 3.14159265359 );
+                    this.viewerState.positionTilt = tilt;
+                
+                } else if ( this.camera instanceof TargetCamera ) {
 
-                let heading = ( this.camera.rotation.y * ( 180.0 / Math.PI ));
-                heading = ( heading % 360 + 360 ) % 360;
-                this.viewerState.positionHeading = heading;
+                    let heading = ( this.camera.rotation.y * ( 180.0 / Math.PI ));
+                    heading = ( heading % 360 + 360 ) % 360;
+                    this.viewerState.positionHeading = heading;
 
-                const yaw = this.camera.rotation.x * ( 180.0 / 3.14159265359 );
-                this.viewerState.positionTilt = 90.0 - yaw;
+                    const yaw = this.camera.rotation.x * ( 180.0 / 3.14159265359 );
+                    this.viewerState.positionTilt = 90.0 - yaw;
 
+                }
             }
         }
 
-        let positionScene = this.camera.position.asArray();
-        positionScene = [ positionScene[0], positionScene[1], positionScene[2] ];  // Copy array
-        this.viewerState.positionScene = positionScene;
+        if (this.camera) {
+            let positionScene = this.camera.position.asArray();
+            positionScene = [ positionScene[0], positionScene[1], positionScene[2] ];  // Copy array
+            this.viewerState.positionScene = positionScene;
 
-
-        if ( this.envReflectionProbe !== null ) {
-            this.envReflectionProbe.position = this.camera.position.clone();
+            if ( this.envReflectionProbe ) {
+                this.envReflectionProbe.position = this.camera.position.clone();
+            }
         }
+
 
 
         this.sequencer.update( deltaTime );
         this.processes.update( deltaTime );
         this.layerManager.update( deltaTime );
 
-        this.viewerState.sceneFPS = this.engine.getFps().toFixed( 1 );
-        this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current.toString() : null;
-        this.viewerState.sceneTriangles = this.sceneInstru ? this.scene.getActiveIndices() / 3 : null;
+        this.viewerState.sceneFPS = this.engine.getFps(); // this.engine.getFps().toFixed( 1 );
+        this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current : 0;
+        this.viewerState.sceneTriangles = this.sceneInstru ? this.scene.getActiveIndices() / 3 : 0;
 
         // Run time
         // TODO: this currently requires a minimum elapsed time so Date.setSeconds work. This approach accumulates error.
         const updateInterval = 100; // 5000;
         const maxUpdateElapsed = 2000;  // 2 sec
-        if ( true ) {
+        const updateSceneTime = true;
+
+        if ( updateSceneTime ) {
             const currentDateUpdate = new Date().getTime();
 
             if (( currentDateUpdate - this.lastDateUpdate ) > updateInterval ) {
@@ -1165,9 +1194,10 @@ class SceneViewer {
                 const scaledElapsed = ( updateElapsed / 1000 ) * ( 24 * 2 );  // 24 * 2 = 48x faster (1 day = 30 min)
                 //if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
                 this.viewerState.positionDate.setSeconds( this.viewerState.positionDate.getSeconds() + scaledElapsed );
-                this.viewerState.positionDateSeconds = this.viewerState.positionDate / 1000;
+                this.viewerState.positionDateSeconds = this.viewerState.positionDate.getTime() / 1000;
 
-                this.lightSetupFromDatePos();
+                // TODO: Temporarily disabled
+                //this.lightSetupFromDatePos();
             }
 
         }
@@ -1176,34 +1206,40 @@ class SceneViewer {
 
     }
 
-    sceneToWGS84( coords ) {
+    sceneToWGS84( coords: number[] ): number[] {
         //let wgs84Pos = this.originShiftWGS84;
         //const point = olProj.transform([coords[0], coords[2]], this.projection, 'EPSG:4326');
-        const point = this.projection.inverse([ coords[0], coords[2] ]);
+        const point = this.projection!.inverse([ coords[0], coords[2] ]);
         return [ point[0], point[1], coords[1] ];
     }
 
-    wgs84ToScene( coords ) {
+    wgs84ToScene( coords: number[] ) : number[] {
         //const point = olProj.transform(coords, 'EPSG:4326', this.projection);
-        const point = this.projection.forward( coords );
+        const point = this.projection!.forward( coords );
 
         return [ point[0], coords[2], point[1] ];
     }
 
-    positionWGS84() {
-        const scenePos = this.camera.position.asArray();
+    positionWGS84() : number[] {
+        const scenePos = this.camera!.position.asArray();
         const wgs84Pos = this.sceneToWGS84([ scenePos[0], scenePos[1], scenePos[2] ]);
         return wgs84Pos;
         /*
-      const extent = this.map.getView().calculateExtent(this.map.getSize());
-      let point = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-      */
+        const extent = this.map.getView().calculateExtent(this.map.getSize());
+        let point = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+        */
     }
 
-    parsePositionString( posString ) {
+    parsePositionString( posString: string ): any {
         //console.debug("Parsing: " + posString);
 
-        const result = {};
+        const result = {
+            positionWGS84: [], 
+            positionTileZoomLevel: null,
+            positionGroundHeight: null,
+            positionHeading: null,
+            positionTilt: null,
+        };
 
         try {
             // Parse at location
@@ -1213,10 +1249,10 @@ class SceneViewer {
             const matches = href.match( regexp );
             //console.debug(matches);
 
-            if ( matches.length >= 3 ) {
+            if ( matches && matches.length >= 3 ) {
                 result.positionWGS84 = [ parseFloat( matches[2]),parseFloat( matches[1]) ];
             }
-            if ( matches.length >= 4 ) {
+            if ( matches && matches.length >= 4 ) {
                 for ( const match of matches[3].split( "," )) {
                     if ( match === "" ) { continue; }
                     const value = parseFloat( match.slice( 0, -1 ));
@@ -1241,7 +1277,7 @@ class SceneViewer {
         return result;
     }
 
-    positionString() {
+    positionString(): string | null {
         // /@43.2505933,5.3736631,126a,35y,20.08h,56.42t/
         const point = this.positionWGS84();
         //const zoom = this.map.getView().getZoom();
@@ -1262,18 +1298,21 @@ class SceneViewer {
 
         let posString = "@" + point[1].toFixed( 7 ) + "," + point[0].toFixed( 7 );
 
-        if ( false ) {
-            posString = posString + "," + parseInt( groundHeight ) + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
+        const shortFormat = false;
+        if ( shortFormat ) {
+            posString = posString + "," + groundHeight + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
         } else {
-            posString = posString + "," + parseInt( groundHeight ) + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
-            posString = posString + "," + parseInt( 35 ) + "y";    // ?
+            posString = posString + "," + groundHeight + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
+            posString = posString + "," + "35" + "y";    // ?
             posString = posString + "," + heading.toFixed( 1 ) + "h"; // Heading
             posString = posString + "," + tilt.toFixed( 2 ) + "t";    // Yaw (0 is vertical, 90 horizontal)
         }
         return posString;
     }
 
-    updateElevation() {
+    updateElevation(): void {
+
+        if (!this.camera) return;
 
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
         const ray = new BABYLON.Ray( new BABYLON.Vector3( this.camera.position.x, -100.0, this.camera.position.z ), new BABYLON.Vector3( 0, 1, 0 ), 3000.0 );
@@ -1328,7 +1367,7 @@ class SceneViewer {
     }
     */
 
-    registerProjectionForCoords( coords ) {
+    registerProjectionForCoords( coords: Coordinate ): void {
 
         console.debug( "Setting Scene Geo transform for coords: " + coords );
 
@@ -1348,7 +1387,7 @@ class SceneViewer {
 
     }
 
-    deselectMesh() {
+    deselectMesh(): void {
         if ( this.selectedMesh ) {
             //this.viewerState.selectedMesh.showBoundingBox = false;
 
@@ -1361,10 +1400,10 @@ class SceneViewer {
         }
     }
 
-    findMeshById( meshId, node ) {
+    findMeshById( meshId: string, node: Mesh | null = null ): Mesh | null {
         let children = null;
         if ( node ) {
-            const nodeUrlId = node.id.split( "/" ).pop().replaceAll( "#", "_" );
+            const nodeUrlId = node.id.split( "/" ).pop()!.replaceAll( "#", "_" );
             if ( nodeUrlId === meshId ) {
                 return node;
             }
@@ -1373,23 +1412,23 @@ class SceneViewer {
             children = this.scene.rootNodes;
         }
 
-        for ( const c of children ) {
-            const result = this.findMeshById( meshId, c );
+        for ( const child of children ) {
+            const result = this.findMeshById( meshId, <Mesh> child );
             if ( result !== null ) { return result; }
         }
 
         return null;
     }
 
-    selectMeshById( meshId, highlight ) {
+    selectMeshById( meshId: string, highlight: boolean ): void {
 
         let mesh = null;
         mesh = this.findMeshById( meshId );
 
-        this.selectMesh( mesh, highlight );
+        if (mesh) this.selectMesh( mesh, highlight );
     }
 
-    selectMesh( mesh, highlight ) {
+    selectMesh( mesh: Mesh, highlight: boolean ): void {
 
         this.deselectMesh();
 
@@ -1410,11 +1449,10 @@ class SceneViewer {
                 const highlightClone = mesh.clone();
 
                 // Iterate clone recursively to set highlight material to all submeshes
-                const that = this;
-                const setHighlightRecursively = function( submesh ) {
-                    submesh.material = that.materialHighlight;
+                const setHighlightRecursively = ( submesh: Mesh ) => {
+                    submesh.material = this.materialHighlight;
                     for ( const mc of submesh.getChildren()) {
-                        setHighlightRecursively( mc );
+                        setHighlightRecursively( <Mesh> mc );
                     }
                 };
                 setHighlightRecursively( highlightClone );
@@ -1427,24 +1465,27 @@ class SceneViewer {
         }
     }
 
-    getBoundsRecursively( node, bounds ) {
+    getBoundsRecursively( node: Mesh, bounds?: BoundingInfo) : BoundingInfo {
         if ( !bounds ) {
-            bounds = { minimumWorld: { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY },
-                maximumWorld: { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY, z: Number.NEGATIVE_INFINITY } };
+            //bounds = { minimumWorld: { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY },
+            //    maximumWorld: { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY, z: Number.NEGATIVE_INFINITY } };
+            bounds = new BoundingInfo(
+                new Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+                new Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY));
         }
         if ( node.getBoundingInfo ) {
             const minWorld = node.getBoundingInfo().boundingBox.minimumWorld;
             const maxWorld = node.getBoundingInfo().boundingBox.maximumWorld;
-            if ( bounds.minimumWorld.x > minWorld.x ) {bounds.minimumWorld.x = minWorld.x;}
-            if ( bounds.minimumWorld.y > minWorld.y ) {bounds.minimumWorld.y = minWorld.y;}
-            if ( bounds.minimumWorld.z > minWorld.z ) {bounds.minimumWorld.z = minWorld.z;}
-            if ( bounds.maximumWorld.x < maxWorld.x ) {bounds.maximumWorld.x = maxWorld.x;}
-            if ( bounds.maximumWorld.y < maxWorld.y ) {bounds.maximumWorld.y = maxWorld.y;}
-            if ( bounds.maximumWorld.z < maxWorld.z ) {bounds.maximumWorld.z = maxWorld.z;}
+            if ( bounds.minimum.x > minWorld.x ) {bounds.minimum.x = minWorld.x;}
+            if ( bounds.minimum.y > minWorld.y ) {bounds.minimum.y = minWorld.y;}
+            if ( bounds.minimum.z > minWorld.z ) {bounds.minimum.z = minWorld.z;}
+            if ( bounds.maximum.x < maxWorld.x ) {bounds.maximum.x = maxWorld.x;}
+            if ( bounds.maximum.y < maxWorld.y ) {bounds.maximum.y = maxWorld.y;}
+            if ( bounds.maximum.z < maxWorld.z ) {bounds.maximum.z = maxWorld.z;}
         }
 
-        for ( const c of node.getChildren()) {
-            bounds = this.getBoundsRecursively( c, bounds );
+        for ( const nc of node.getChildren()) {
+            bounds = this.getBoundsRecursively( <Mesh> nc, bounds );
         }
         return bounds;
     }
@@ -1453,10 +1494,10 @@ class SceneViewer {
     * Find a node within a scene or node recursively.
     * Criteria is a dictionary of key=value pairs. An object will match if any of the pairs matches object's metadata.
     */
-    findNode( node, criteria ) {
+    findNode( node: Mesh, criteria: { [key: string]: any }): Mesh | null {
         //console.debug(node);
         if ( criteria["_node_name"] && node.id ) {
-            const name = node.id.split( "/" ).pop().replaceAll( "#", "_" );
+            const name = node.id.split( "/" ).pop()!.replaceAll( "#", "_" );
             if ( name === criteria["_node_name"]) {
                 return node;
             }
@@ -1470,13 +1511,13 @@ class SceneViewer {
             }
         }
         for ( const sn of node.getChildren()) {
-            const result = this.findNode( sn, criteria );
+            const result = this.findNode( <Mesh> sn, criteria );
             if ( result ) { return result; }
         }
         return null;
     }
 
-    updateRenderPipeline() {
+    updateRenderPipeline(): void {
 
         this.scene.postProcessesEnabled = this.viewerState.scenePostprocessingEnabled;
 
@@ -1485,15 +1526,15 @@ class SceneViewer {
         }
     }
 
-    initRenderPipeline() {
+    initRenderPipeline(): void {
         // Postprocess
         // The default pipeline applies other settings, we'd better off using Bloom independently if possible
         // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
-        const defaultPipeline = new BABYLON.DefaultRenderingPipeline( "default", true, this.scene, [ this.camera ]);
+        const defaultPipeline = new BABYLON.DefaultRenderingPipeline( "default", true, this.scene, [ <Camera> this.camera ]);
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.bloomWeight = 1.0;  // 1.5 is exagerated but maybe usable for pics
-        defaultPipeline.cameraFov = this.camera.fov;
+        //defaultPipeline.cameraFov = this.camera.fov;
         defaultPipeline.imageProcessing.toneMappingEnabled = true;
 
         //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
@@ -1509,7 +1550,7 @@ class SceneViewer {
         this.scene.postProcessRenderPipelineManager.addPipeline(standardPipeline);
         */
 
-        const lensEffect = new BABYLON.LensRenderingPipeline( "lens", {
+        const lensRenderingPipeline = new BABYLON.LensRenderingPipeline( "lens", {
             edge_blur: 0.25,                // 1.0 is too distorted in the borders for walk/view mode (maybe for pictures)
             chromatic_aberration: 1.0,
             distortion: 0.5,                // (dilate effect)
@@ -1520,7 +1561,7 @@ class SceneViewer {
             dof_gain: 1.0,
             dof_threshold: 1.0,
             dof_darken: 0.25
-        }, this.scene, 1.0, this.camera );
+        }, this.scene, 1.0, [ <Camera> this.camera ] );
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
 
         /*
@@ -1563,7 +1604,7 @@ class SceneViewer {
         */
     }
 
-    selectCameraFree() {
+    selectCameraFree(): void {
         if ( this.camera ) {
             this.camera.customRenderTargets = [];
             this.camera.detachControl();
@@ -1581,12 +1622,12 @@ class SceneViewer {
         //camera.touchMoveSensibility = 1.0;
         //camera.inertia = 0.10;
         camera.inertia = 0.5;
-        camera.keysUp += [ 87 ];
-        camera.keysDown += [ 83 ];
-        camera.keysLeft += [ 65 ];
-        camera.keysRight += [ 68 ];
-        camera.keysUpward += [ 81 ];
-        camera.keysDownward += [ 69 ];
+        camera.keysUp.push( 87 );
+        camera.keysDown.push( 83 );
+        camera.keysLeft.push( 65 );
+        camera.keysRight.push( 68 );
+        camera.keysUpward.push( 81 );
+        camera.keysDownward.push( 69 );
         camera.attachControl( this.engine.getRenderingCanvas(), true );
         camera.fov = 40.0 * ( Math.PI / 180.0 );  // 35.0 might be GM, 45.8... is default  // 35
         const positionScene = this.wgs84ToScene( this.viewerState.positionWGS84 );
@@ -1599,20 +1640,21 @@ class SceneViewer {
         this.updateRenderTargets();
     }
 
-    selectCameraWalk() {
+    selectCameraWalk(): void {
         this.selectCameraFree();
         this.walkMode = true;
-        this.camera.inertia = 0.0;
+        this.camera!.inertia = 0.0;
         this.setMoveSpeed( this.viewerState.sceneMoveSpeed );
     }
 
+    /*
     geolocationPosition( enabled ) {
 
         //this.selectCameraFree();
         //this.walkMode = true;
         //this.camera.detachControl();
 
-        /*
+        /-
         this.app.$getLocation({enableHighAccuracy: true}).then(coordinates => {
             console.log(coordinates);
             let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
@@ -1629,7 +1671,7 @@ class SceneViewer {
                 this.camera.rotation = rotation;
             }
         });
-        */
+        -/
 
         this.viewerState.geolocationEnabled = enabled;
 
@@ -1690,7 +1732,7 @@ class SceneViewer {
             this.camera.position.y = altitude;
             this.camera.position.z = scenePos[2];
 
-            /*
+            /-
             let heading = coordinates.heading;
             if (heading !== null && !isNaN(heading)) {
                 this.viewerState.positionHeading = heading;
@@ -1698,7 +1740,7 @@ class SceneViewer {
                 this.camera.rotation = rotation;
                 //console.debug(heading);
             }
-            */
+            -/
         }
 
         if ( this.viewerState.geolocationEnabled ) {
@@ -1709,6 +1751,7 @@ class SceneViewer {
         }
 
     }
+    */
 
 
     /**
@@ -1744,6 +1787,7 @@ class SceneViewer {
     }
     */
 
+    /*
     onDeviceOrientation( e ) {
 
         //let rotation = BABYLON.Quaternion.FromEulerAngles(e.alpha * Math.PI / 180.0, e.beta * Math.PI / 180.0, e.gamma * Math.PI / 180.0);
@@ -1767,22 +1811,23 @@ class SceneViewer {
             if ( tiltRotation < 0 ) { tilt = Math.PI * 2 - tiltRotation; }
             const rotation = new BABYLON.Vector3( tiltRotation, this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
             //let rotation = new BABYLON.Vector3(Math.PI / 2 + -e.beta * Math.PI / 180.0, -e.alpha * Math.PI / 180.0, e.gamma * Math.PI / 180.0 );
-            this.camera.rotation = rotation;
+            this.camera!.rotation = rotation;
             //console.debug(heading);
         }
         //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
     }
+    */
 
-    selectCameraOrbit() {
+    selectCameraOrbit(): void {
 
         this.walkMode = false;
 
         let targetCoords = BABYLON.Vector3.Zero();
         if ( this.selectedMesh ) {
-            const boundingBox = this.getBoundsRecursively( this.selectedMesh );
+            const boundingBox: BoundingInfo = this.getBoundsRecursively( this.selectedMesh );
             //targetCoords = this.selectedMesh.absolutePosition;
-            const minWorld = boundingBox.minimumWorld;
-            const maxWorld = boundingBox.maximumWorld;
+            const minWorld = boundingBox.minimum;
+            const maxWorld = boundingBox.maximum;
             targetCoords = new BABYLON.Vector3(( minWorld.x + maxWorld.x ) / 2, ( minWorld.y + maxWorld.y ) / 2, ( minWorld.z + maxWorld.z ) / 2 );
         }
 
@@ -1806,11 +1851,13 @@ class SceneViewer {
         camera.upperRadiusLimit = 1000;
         camera.upperBetaLimit = Math.PI; // /2; // Math.PI / 2 = limit to flat view
         camera.panningSensibility = 50.0; // 0.5;
-        camera.angularSensibility = 50.0;
+        //camera.angularSensibility = 50.0;
         //camera.inertia = 0.10;
-        camera.multiTouchPanning = false;
-        camera.multiTouchPanAndZoom = false;
-        camera.pinchZoom = true;
+        
+        //camera.multiTouchPanning = false;
+        //camera.multiTouchPanAndZoom = false;
+        //camera.pinchZoom = true;
+        
         camera.useNaturalPinchZoom = true;
         camera.fov = 35.0 * ( Math.PI / 180.0 );
         this.camera = camera;
@@ -1819,14 +1866,15 @@ class SceneViewer {
     }
 
 
-    updateRenderTargets() {
-        if ( this.envReflectionProbe ) {
+    updateRenderTargets(): void {
+        if ( this.camera && this.envReflectionProbe ) {
             this.camera.customRenderTargets.push( this.envReflectionProbe.cubeTexture );
         }
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("standardPipeline", this.camera);
     }
 
-    groundTextureLayerSetKey( key ) {
+    /*
+    groundTextureLayerSetKey( key: string ): void {
 
         this.viewerState.sceneGroundTextureOverride = key;
 
@@ -1837,13 +1885,16 @@ class SceneViewer {
         }
         this.layerManager.layers["ddd-osm-3d"].groundTextureLayerSetUrl( url );
     }
+    */
 
-    setMoveSpeed( speed ) {
+    setMoveSpeed( speed: number ): void {
         this.viewerState.sceneMoveSpeed = speed;
-        this.camera.speed = speed;
+        if ( this.camera && this.camera instanceof TargetCamera ) {
+            this.camera.speed = speed;
+        }
     }
 
-    cycleMoveSpeed() {
+    cycleMoveSpeed(): void {
         if ( this.viewerState.sceneMoveSpeed < 5.0 ) {
             this.setMoveSpeed( 5.0 );
         } else if ( this.viewerState.sceneMoveSpeed < 10.0 ) {
@@ -1853,7 +1904,8 @@ class SceneViewer {
         }
     }
 
-    lightSetupFromDatePos() {
+    /*
+    lightSetupFromDatePos(): void {
 
         //this.envReflectionProbe.update(); // = new BABYLON.ReflectionProbe("envReflectionProbe", 128, this.scene, true, true, true)
         //this.envReflectionProbe.renderList.push(this.skyBox);
@@ -1866,13 +1918,10 @@ class SceneViewer {
         const sunsetStr = times.sunset.getHours() + ":" + times.sunset.getMinutes();
 
         // get position of the sun (azimuth and altitude) at today's sunrise
-        /*
-        var sunrisePos = SunCalc.getPosition(times.sunrise, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
-        var sunriseAzimuth = sunrisePos.azimuth * 180 / Math.PI;
-
-        var sunsetSunPos = SunCalc.getPosition(times.sunset, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
-        var sunsetAzimuth = sunsetPos.azimuth * 180 / Math.PI;
-        */
+        ///*var sunrisePos = SunCalc.getPosition(times.sunrise, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        //var sunriseAzimuth = sunrisePos.azimuth * 180 / Math.PI;
+        //var sunsetSunPos = SunCalc.getPosition(times.sunset, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        //var sunsetAzimuth = sunsetPos.azimuth * 180 / Math.PI; **
 
         const currentSunPos = SunCalc.getPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0], this.viewerState.positionScene[1]);
         const currentMoonPos = SunCalc.getMoonPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
@@ -1959,18 +2008,7 @@ class SceneViewer {
                 }
                 //lampMat.freeze();
             }
-            /*
-            if ('Glass' in this.catalog_materials) {
-                let lampMat = this.catalog_materials['Glass'];
-                lampMat.unfreeze();
-                if (lampMatOn) {
-                    lampMat.emissiveColor = BABYLON.Color3.Black();
-                } else {
-                    lampMat.emissiveColor = new BABYLON.Color3(128 / 255, 120/ 255, 115 / 255);
-                }
-                //lampMat.freeze();
-            }
-            */
+
         }
 
         const semCycleSeconds = 20;
@@ -1995,24 +2033,24 @@ class SceneViewer {
         }
 
     }
+    */
 
-    sceneShadowsSetEnabled( value ) {
+    sceneShadowsSetEnabled( value: boolean ): void {
         this.viewerState.sceneShadowsEnabled = value;
-        localStorage.setItem( "dddSceneShadowsEnabled", value );
+        localStorage.setItem( "dddSceneShadowsEnabled", JSON.stringify( value ));
         alert( "Reload the viewer for changes to take effect." );
     }
 
-    sceneTextsSetEnabled( value ) {
+    sceneTextsSetEnabled( value: boolean ): void {
         this.viewerState.sceneTextsEnabled = value;
-        localStorage.setItem( "dddSceneTextsEnabled", value );
+        localStorage.setItem( "dddSceneTextsEnabled", JSON.stringify( value ));
         alert( "Reload the viewer for changes to take effect." );
     }
 
-    scenePostprocessingSetEnabled( value ) {
+    scenePostprocessingSetEnabled( value: boolean ): void {
         this.viewerState.scenePostprocessingEnabled = value;
         //localStorage.setItem('dddScenePostprocessingSetEnabled', value);
         //alert('Reload the viewer for changes to take effect.');
-
         this.updateRenderPipeline();
     }
 
@@ -2020,9 +2058,10 @@ class SceneViewer {
 
     /**
     */
-    loadTextures() {
+    loadTextures(): void {
 
-        const texturesConfig = this.viewerState.dddConfig.sceneMaterials.filter( item => item.value === this.viewerState.sceneTextureSet )[0];
+        const texturesConfig: DDDMaterialsConfig | undefined = this.viewerState.dddConfig.sceneMaterials.find( item => item.value === this.viewerState.sceneTextureSet );
+        if ( !texturesConfig ) return;
 
         if ( texturesConfig.textures !== null ) {
             this.loadCatalog( "/assets/catalog_materials-" + texturesConfig.textures + ".glb", true );
@@ -2040,11 +2079,16 @@ class SceneViewer {
 
     }
 
-    sceneTextureSet( value ) {
-        this.viewerState.sceneTextureSet = value;
-        localStorage.setItem( "dddSceneTextureSet", JSON.stringify( value ));
+    /**
+     * Changes the materials set used to draw the scene.
+     * @todo this would ideally belong to layers that explicity support DDD export features (splatmaps / texture catalogs)
+     * @param textureSet 
+     */
+    sceneTextureSet( textureSet: string | null ): void {
+        this.viewerState.sceneTextureSet = textureSet;
+        localStorage.setItem( "dddSceneTextureSet", JSON.stringify( textureSet ));
 
-        if ( value !== null ) {
+        if ( textureSet !== null ) {
             this.loadTextures();
         }
         alert( "Reload the app to apply changes." );

@@ -1,32 +1,34 @@
+import DDDViewerConfig from "./DDDViewerConfig";
+
 class ViewerState {
 
     mapVisible = true;
     sceneVisible = false;
-    dddConfig = null;
-    isMobile = null;
+    dddConfig: DDDViewerConfig;
+    isMobile = false;
     positionTileZoomLevel = 9;
     positionWGS84 = [ -8.726, 42.233 ]; // [0.0, 0.0];
 
     // Position in scene, in engine coordinates (elevation is Y)
     positionScene = [ 0, 0, 0 ];
-    positionGroundHeight = 150.0;
+    positionGroundHeight: number = 150.0;
     positionTerrainElevation = 0;
     positionHeading = 0.0;
     positionTilt = 0.0;
-    positionName = "";
+    positionName: string | null = null;
     positionDate: Date = new Date();
     positionDateSeconds: number = this.positionDate.getTime() / 1000;
     geolocationEnabled = false;
     serverInfoShow = true;
 
     // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
-    // TODO: Try removing this and this.sceneViewer
+    // TODO: Try removing this and this.sceneViewer id still used
     sceneSelectedMesh = null;
+    sceneSelectedMeshId: string | null = null;
 
-    // sceneSelectedMeshId = null;
-    sceneFPS = 0;
-    sceneDrawCalls = null;
-    sceneTriangles = null;
+    sceneFPS: number = 0;
+    sceneDrawCalls: number = 0;
+    sceneTriangles: number = 0;
     sceneShadowsEnabled = false;
     sceneTextsEnabled = false;
     scenePostprocessingEnabled = false;
@@ -38,13 +40,16 @@ class ViewerState {
     sceneViewportRescale = 1;
     sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
-    sceneTextureSet = "defaultsplat256";
-    sceneGroundTextureOverride = null;
+    sceneTextureSet: string | null = "defaultsplat256";
+    sceneGroundTextureOverride: string | null = null;
     sceneTitleText = null;
+    
 
-    constructor( initialCoords, isMobile ) {
+    constructor( dddConfig: DDDViewerConfig, initialCoords: number[], isMobile: boolean = false ) {
 
-        this.isMobile = isMobile || false;
+        this.dddConfig = dddConfig;
+
+        this.isMobile = isMobile;
         if ( this.isMobile ) {
             this.sceneViewportRescale = 2;
             this.sceneTextureSet = null;  // "default256";

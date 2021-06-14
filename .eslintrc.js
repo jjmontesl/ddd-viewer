@@ -38,7 +38,7 @@ module.exports = {
             "always"
         ],
         "space-in-parens": [
-            "error",
+            "warn",
             "always",
             {
                 "exceptions": [
@@ -48,6 +48,11 @@ module.exports = {
                     "empty"
                 ]
             }
-        ]
+        ],
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-inferrable-types": "off",
+        "@typescript-eslint/no-empty-function": "off",  
+        "@typescript-eslint/no-unused-vars": "warning"
+
     }
 };

@@ -1,4 +1,4 @@
-import { Vector3 } from "babylonjs";
+import { AbstractMesh, Color3, DynamicTexture, Mesh, MeshBuilder, Node, Ray, StandardMaterial, Texture, TransformNode, Vector3 } from "babylonjs";
 import "babylonjs-loaders";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
@@ -21,7 +21,7 @@ class Tile3D {
 }
 
 class GeoTile3D extends Tile3D {
-    node: BABYLON.Mesh | null;
+    node: Node | null;
     coordsTileGrid: number[] | null;
 
     constructor( key: string ) {
@@ -87,29 +87,31 @@ class GeoTile3DLayer extends Base3DLayer {
         if ( this._lastLoadDynamic > 0 ) { return; }
         this._lastLoadDynamic = 100;
 
-        const sceneViewer: SceneViewer = this.layerManager?.sceneViewer as SceneViewer;
-
-        const coordsUtm: Coordinate = olProj.transform( this.layerManager?.sceneViewer.positionWGS84(), "EPSG:4326", "EPSG:3857" );
+        const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
+    
+        const positionWGS84: number[] = <number[]> this.layerManager?.sceneViewer.positionWGS84();
+        const coordsWGS84: Coordinate = [positionWGS84[0], positionWGS84[1]];
+        const coordsUtm: Coordinate = olProj.transform(coordsWGS84 , "EPSG:4326", "EPSG:3857" );
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ( coordsUtm, 17 );
         //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
 
         // Calculate frustrum (2D)
-        const frustrumOrigin = sceneViewer.camera.position.clone();
+        const frustrumOrigin = sceneViewer.camera!.position.clone();
         //if (this._lastHeight) { frustrumOrigin.y -= this._lastHeight; }  // Considers all tiles in a plane centered on last
         frustrumOrigin.y = 0;
-        const frustrumForward = sceneViewer.camera.getDirection( BABYLON.Vector3.Forward());
+        const frustrumForward = sceneViewer.camera!.getDirection( Vector3.Forward());
         frustrumForward.y = 0;
         frustrumForward.normalize();
         const frustrumSize = sceneViewer.viewerState.sceneTileDrawDistance * 300.0; // 1500.0;
-        const frustrumAngle = sceneViewer.camera.fov * 2.0; // * (Math.PI / 180.0); // 30.0;
+        const frustrumAngle = sceneViewer.camera!.fov * 2.0; // * (Math.PI / 180.0); // 30.0;
 
         this.loadTile( tileCoords );  // ensure elevation for current tile
 
         // Project frustrum corners to tiles
 
         // Calculate tiles inside frustrum
-        const tiledistWalk = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance + 3;
-        const tiledistDraw = this.layerManager.sceneViewer.viewerState.sceneTileDrawDistance + 0.7;
+        const tiledistWalk = sceneViewer.viewerState.sceneTileDrawDistance + 3;
+        const tiledistDraw = sceneViewer.viewerState.sceneTileDrawDistance + 0.7;
         for ( let i = -tiledistWalk; i <= tiledistWalk; i++ ) {
             for ( let j = -tiledistWalk; j <= tiledistWalk; j++ ) {
 
@@ -121,8 +123,8 @@ class GeoTile3DLayer extends Base3DLayer {
                 } else {
                     const tileCenter = this.tileGrid.getTileCoordCenter([ tileCoords[0], tileCoords[1] + i, tileCoords[2] + j ]);
                     const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-                    const tileCenterScene = this.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
-                    const sphereCenter = new BABYLON.Vector3( tileCenterScene[0], 0, tileCenterScene[1]);  // TODO: Get median height from tile
+                    const tileCenterScene = sceneViewer.projection.forward( tileCenterWGS84 );
+                    const sphereCenter = new Vector3( tileCenterScene[0], 0, tileCenterScene[1]);  // TODO: Get median height from tile
                     const sphereRadius = 230.0 / 2.0;
                     if ( this.testConeSphere( frustrumOrigin, frustrumForward, frustrumSize, frustrumAngle, sphereCenter, sphereRadius )) {
                         //console.debug("Loading: ", [tileCoords[0], tileCoords[1] + i, tileCoords[2] + j])
@@ -153,7 +155,7 @@ class GeoTile3DLayer extends Base3DLayer {
         */
     }
 
-    disableTile( tileCoords ) {
+    disableTile( tileCoords: number[] ): void {
         const z = tileCoords[0];
         const x = tileCoords[1];
         const y = tileCoords[2];
@@ -164,9 +166,9 @@ class GeoTile3DLayer extends Base3DLayer {
         }
 
         const tile = this.tiles[tileKey];
-        if ( tile.status !== "loading" && tile.node.isEnabled( false )) {
-            tile.node.setEnabled( false );
-            tile.parent = null;
+        if ( tile.status !== "loading" && tile.node!.isEnabled( false )) {
+            tile.node!.setEnabled( false );
+            tile.node!.parent = null;  // TODO: this was not working before (tile.parent did not apply)
         }
     }
 
@@ -174,7 +176,7 @@ class GeoTile3DLayer extends Base3DLayer {
     * Gets tile metadata.
     * It does this recursively searching for a "Metadata" named node, as the path exporting root metadata to the root node or scene itself hasn't been found to work.
     */
-    getTileMetadata( node ) {
+    getTileMetadata( node: Node ): any {
         /*if (node.id.startsWith("Metadata")) {
             return node.metadata.gltf.extras;
         }*/
@@ -184,13 +186,14 @@ class GeoTile3DLayer extends Base3DLayer {
             }
         }
         for ( const child of node.getChildren()) {
-            const md = this.getTileMetadata( child );
+            const md = this.getTileMetadata( <Mesh>child );
             if ( md !== null ) { return md; }
         }
         return null;
     }
 
-    loadTile( tileCoords ) {
+    // TODO: Tile coordinates should be made a type or reuse OpenLayers grid coordinates type
+    loadTile( tileCoords: number[] ): void {
 
         //console.debug(tileCoords);
         const z = tileCoords[0];
@@ -201,18 +204,18 @@ class GeoTile3DLayer extends Base3DLayer {
         const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
         const tileCenter = extent.getCenter( tileExtent );
         const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-        const tileCenterScene = this.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
+        //const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
-        const tileExtentMinScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
-        const tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMinScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMaxScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         if ( tileKey in this.tiles ) {
             const tile = this.tiles[tileKey];
-            if ( tile.status !== "loading" && !tile.node.isEnabled( false )) {
-                tile.parent = this.layerManager.sceneViewer.scene;
-                tile.node.setEnabled( true );
+            if ( tile.status !== "loading" && !tile.node!.isEnabled( false )) {
+                tile.node!.parent = null; // this.layerManager!.sceneViewer.scene;
+                tile.node!.setEnabled( true );
                 //tile.node.freezeWorldMatrix();
             }
             return;
@@ -231,14 +234,12 @@ class GeoTile3DLayer extends Base3DLayer {
         //const tileUrlBase = 'http://localhost:8000/cache/ddd_http/';
         //const tileUrlBase = 'http://' + app.dddConfig.tileUrlBase + ':8000/cache/ddd_http/';
         //const tileUrlBase = 'http://' + location.hostname + '/cache/ddd_http/';
-        const tileUrlBase = this.layerManager.sceneViewer.viewerState.dddConfig.tileUrlBase;
+        const tileUrlBase = this.layerManager!.sceneViewer.viewerState.dddConfig.tileUrlBase;
         const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
-
-        const that = this;
 
         //console.debug("Loading: " + tileUrl);
 
-        const pivot = new BABYLON.TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager.sceneViewer.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
         //let reversePivot = new BABYLON.TransformNode("chunk_reverse_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
         //let rawPivot = new BABYLON.TransformNode("chunk_raw_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
         //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
@@ -249,9 +250,9 @@ class GeoTile3DLayer extends Base3DLayer {
         let marker = this.loadQuadMarker( tileCoords, BABYLON.Color3.Gray());
         this.tiles[tileKey].node = marker;
 
-        this.layerManager.sceneViewer.queueLoader.enqueueLoadModel( tileUrl,
+        this.layerManager!.sceneViewer.queueLoader.enqueueLoadModel( tileUrl,
             // onSuccess
-            function( newMeshes, particleSystems, skeletons ) {
+            ( newMeshes: AbstractMesh[], particleSystems: any, skeletons: any ) => {
                 //console.log("GLB loaded", newMeshes);
 
                 marker.dispose( false, true );
@@ -259,8 +260,8 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 let minHeight = Number.POSITIVE_INFINITY;
                 let maxHeight = Number.NEGATIVE_INFINITY;
-                newMeshes.forEach(( mesh, i ) => {
-                    if ( that.layerManager.sceneViewer.shadowGenerator ) {
+                newMeshes.forEach(( mesh: AbstractMesh, i: number ) => {
+                    if ( this.layerManager!.sceneViewer.shadowGenerator ) {
                         mesh.receiveShadows = true;
                         if ( mesh.metadata && mesh.metadata.gltf.extras &&
                                 (( mesh.metadata.gltf.extras["ddd:shadows"] === false ) ||
@@ -270,7 +271,7 @@ class GeoTile3DLayer extends Base3DLayer {
                             //console.debug("No shadow");
                             return;
                         }
-                        that.layerManager.sceneViewer.shadowGenerator.getShadowMap().renderList.push( mesh );
+                        this.layerManager!.sceneViewer.shadowGenerator.getShadowMap()!.renderList!.push( mesh );
                     }
 
                     //console.debug(mesh.getBoundingInfo());
@@ -295,49 +296,49 @@ class GeoTile3DLayer extends Base3DLayer {
                 });
 
                 // Reparent root
-                newMeshes[0].parent = pivot;
+                (<Mesh> newMeshes[0]).parent = <Node> pivot;
                 newMeshes[0].id = tileKey.replace( "/", "_" );
-                that.tiles[tileKey].node = pivot;
-                that.tiles[tileKey].status = "loaded";
+                this.tiles[tileKey].node = pivot;
+                this.tiles[tileKey].status = "loaded";
 
 
-                const tileExtent = that.tileGrid.getTileCoordExtent( tileCoords );
+                const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
                 const tileCenter = extent.getCenter( tileExtent );
                 const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-                const tileCenterScene = that.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
+                const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
                 //let distance = 225.0;
                 //pivot.position = new BABYLON.Vector3((x - 62360) * distance, 0, -(y - 48539) * distance);
                 //pivot.scaling = new BABYLON.Vector3(1, 1, -1);
-                pivot.position = new BABYLON.Vector3( tileCenterScene[0], 0, tileCenterScene[1]);
-                pivot.rotation = new BABYLON.Vector3( 0, Math.PI, 0 );
+                pivot.position = new Vector3( tileCenterScene[0], 0, tileCenterScene[1]);
+                pivot.rotation = new Vector3( 0, Math.PI, 0 );
 
                 pivot.freezeWorldMatrix();
 
-                that.tiles[tileKey].node = pivot;
+                this.tiles[tileKey].node = pivot;
 
-                that._lastHeight = minHeight;
+                this._lastHeight = minHeight;
 
-                that._tilesLoadedCount++;
-                if ( ! that._initialHeightSet ) {
+                this.tilesLoadedCount++;
+                if ( ! this._initialHeightSet ) {
                     //console.debug("Repositioning camera height based on terrain height: " + maxHeight);
                     //that.layerManager.sceneViewer.camera.position.y += maxHeight;
 
-                    const ray = new BABYLON.Ray( new BABYLON.Vector3(
-                        that.layerManager.sceneViewer.camera.position.x,
-                        -100.0, that.layerManager.sceneViewer.camera.position.z ),
-                    new BABYLON.Vector3( 0, 1, 0 ), 3000.0 );
-                    const pickResult = that.layerManager.sceneViewer.scene.pickWithRay( ray );
+                    const ray = new Ray( 
+                        new Vector3(this.layerManager!.sceneViewer.camera!.position.x,
+                            -100.0, this.layerManager!.sceneViewer.camera!.position.z ),
+                        new Vector3( 0, 1, 0 ), 3000.0 );
+                    const pickResult = this.layerManager!.sceneViewer.scene.pickWithRay( ray );
                     if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id &&
                               pickResult.pickedMesh.id.indexOf( "placeholder_" ) !== 0 &&
                               pickResult.pickedMesh.id.indexOf( "skyBox" ) !== 0 ) {
                         //console.debug("Setting height from: " + pickResult.pickedMesh.id);
-                        that._initialHeightSet = true;
-                        that.layerManager.sceneViewer.camera.position.y = ( pickResult.distance - 100.0 );
-                        if ( that.layerManager.sceneViewer.viewerState.positionGroundHeight ) {
-                            that.layerManager.sceneViewer.camera.position.y += that.layerManager.sceneViewer.viewerState.positionGroundHeight;
+                        this._initialHeightSet = true;
+                        this.layerManager!.sceneViewer.camera!.position.y = ( pickResult.distance - 100.0 );
+                        if ( this.layerManager!.sceneViewer.viewerState.positionGroundHeight ) {
+                            this.layerManager!.sceneViewer.camera!.position.y += this.layerManager!.sceneViewer.viewerState.positionGroundHeight;
                         } else {
-                            that.layerManager.sceneViewer.camera.position.y += 40.0;
+                            this.layerManager!.sceneViewer.camera!.position.y += 40.0;
                         }
                     } else {
                         //that._tilesLoadedCount--;
@@ -345,7 +346,7 @@ class GeoTile3DLayer extends Base3DLayer {
                     }
                 }
 
-                const tileMetadata = that.getTileMetadata( pivot );
+                const tileMetadata = this.getTileMetadata( pivot );
                 //console.debug("Tile metadata: ", tileMetadata);
 
                 // Replace materials, instancing...
@@ -355,25 +356,25 @@ class GeoTile3DLayer extends Base3DLayer {
                     "tileInfo": tileMetadata,
                 };
 
-                that.layerManager.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = true;
-                that.layerManager.sceneViewer.processMesh( pivot, pivot );
-                that.layerManager.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = false;
+                this.layerManager!.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = true;
+                this.layerManager!.sceneViewer.processMesh( <Mesh>pivot, <Mesh>pivot );  // TODO: Wrong conversion, use Node for "processMesh"
+                this.layerManager!.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = false;
 
                 //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
                 pivot.freezeWorldMatrix();
 
-                that.groundTextureLayerProcessNode( tileCoords, pivot );
+                this.groundTextureLayerProcessNode( tileCoords, pivot );
 
                 // Check if the selected node is in the recently loaded node
                 // TODO: Should use a generic notification + object id/naming system
-                if ( that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId ) {
-                    const criteria = { "_node_name": that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId };
+                if ( this.layerManager!.sceneViewer.viewerState.sceneSelectedMeshId ) {
+                    const criteria = { "_node_name": this.layerManager!.sceneViewer.viewerState.sceneSelectedMeshId };
                     //console.debug(criteria);
-                    const foundMesh = that.layerManager.sceneViewer.findNode( pivot, criteria );
+                    const foundMesh = this.layerManager!.sceneViewer.findNode( <Mesh> pivot, criteria );
                     //console.debug(foundMesh);
                     if ( foundMesh ) {
-                        that.layerManager.sceneViewer.selectMesh( foundMesh );
-                        that.layerManager.sceneViewer.viewerState.sceneSelectedMeshId = null;  // Triggers watchers update
+                        this.layerManager!.sceneViewer.selectMesh( <Mesh> foundMesh, true );
+                        this.layerManager!.sceneViewer.viewerState.sceneSelectedMeshId = null;  // Triggers watchers update
                     }
                 }
 
@@ -387,27 +388,26 @@ class GeoTile3DLayer extends Base3DLayer {
 
             },
             // onError
-            function( scene, msg, ex ) {
+            ( scene: any, msg: string, ex: any ) => {
                 // eslint-disable-next-line no-console
                 console.log( "Tile model (.glb) loading error: ", ex );
 
                 if ( ex.request && ex.request.status === 404 ) {
                     // 404 - tile is being generated, show OSM tile as replacement
                     marker.dispose( false, true );
-                    marker = that.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
-                    that.tiles[tileKey].node = marker; // "notfound";
-                    that.tiles[tileKey].status = "notfound";
-                    that.layerManager.sceneViewer.viewerState.serverInfoShow = true;
+                    marker = this.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
+                    this.tiles[tileKey].node = marker; // "notfound";
+                    this.tiles[tileKey].status = "notfound";
+                    this.layerManager!.sceneViewer.viewerState.serverInfoShow = true;
                 } else {
                     // Error: colour marker red
                     marker.dispose( false, true );
-                    marker = that.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
-                    that.tiles[tileKey].node = marker; // "notfound";
-                    that.tiles[tileKey].status = "error";
+                    marker = this.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
+                    this.tiles[tileKey].node = marker; // "notfound";
+                    this.tiles[tileKey].status = "error";
 
-                    let color = marker.material.emissiveColor;
-                    color = new BABYLON.Color3.Red();
-                    marker.material.emissiveColor = color;
+                    const color = Color3.Red();
+                    (<StandardMaterial>(<Mesh>marker).material).emissiveColor = color;
                 }
 
             }
@@ -416,7 +416,7 @@ class GeoTile3DLayer extends Base3DLayer {
 
     }
 
-    loadQuadMarker( tileCoords, color=BABYLON.Color3.Gray()) {
+    loadQuadMarker( tileCoords: number[], color: Color3 = Color3.Gray()): Node {
         const z = tileCoords[0];
         const x = tileCoords[1];
         const y = tileCoords[2];
@@ -425,20 +425,20 @@ class GeoTile3DLayer extends Base3DLayer {
         const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
         const tileCenter = extent.getCenter( tileExtent );
         const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-        const tileCenterScene = this.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
+        const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
-        const tileExtentMinScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
-        const tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMinScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMaxScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
-        const marker = BABYLON.MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
 
-        marker.position = new BABYLON.Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
-        marker.rotation = new BABYLON.Vector3( Math.PI * 0.5, 0, 0 );
+        marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
+        marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
 
         //Creation of a repeated textured material
-        const materialPlane = new BABYLON.StandardMaterial( "textureTile_" + tileKey, this.layerManager.sceneViewer.scene );
+        const materialPlane = new StandardMaterial( "textureTile_" + tileKey, this.layerManager!.sceneViewer.scene );
         //materialPlane.diffuseTexture = new BABYLON.Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.scene);
         materialPlane.diffuseColor = color;
         materialPlane.specularColor = BABYLON.Color3.Black();
@@ -457,7 +457,7 @@ class GeoTile3DLayer extends Base3DLayer {
         return marker;
     }
 
-    loadQuadTile( tileCoords, color=BABYLON.Color3.White()) {
+    loadQuadTile( tileCoords: number[], color=Color3.White()): Node {
 
         const z = tileCoords[0];
         const x = tileCoords[1];
@@ -467,22 +467,22 @@ class GeoTile3DLayer extends Base3DLayer {
         const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
         const tileCenter = extent.getCenter( tileExtent );
         const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-        const tileCenterScene = this.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
+        const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
-        const tileExtentMinScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
-        const tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMinScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+        const tileExtentMaxScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         //console.debug(sizeWidth, sizeHeight);
-        const marker = BABYLON.MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
 
-        marker.position = new BABYLON.Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
-        marker.rotation = new BABYLON.Vector3( Math.PI * 0.5, 0, 0 );
+        marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
+        marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
 
         //Creation of a repeated textured material
-        const materialPlane = new BABYLON.StandardMaterial( "textureTile_" + tileKey, this.layerManager.sceneViewer.scene );
-        materialPlane.diffuseTexture = new BABYLON.Texture( "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.layerManager.sceneViewer.scene );
+        const materialPlane = new StandardMaterial( "textureTile_" + tileKey, this.layerManager!.sceneViewer.scene );
+        materialPlane.diffuseTexture = new Texture( "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.layerManager!.sceneViewer.scene );
 
         //if (!color) color = BABYLON.Color3.Black; //new BABYLON.Color3(0, 0, 0);
         materialPlane.specularColor = BABYLON.Color3.Black();
@@ -501,7 +501,8 @@ class GeoTile3DLayer extends Base3DLayer {
         return marker;
     }
 
-    groundTextureLayerProcessNode( tileCoords, node ) {
+    /*
+    groundTextureLayerProcessNode( tileCoords: number[], node: Node ): void {
 
         let materialGround = null;
 
@@ -513,10 +514,10 @@ class GeoTile3DLayer extends Base3DLayer {
             const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
             const tileCenter = extent.getCenter( tileExtent );
             const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
-            const tileCenterScene = this.layerManager.sceneViewer.projection.forward( tileCenterWGS84 );
+            const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
-            const tileExtentMinScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
-            const tileExtentMaxScene = this.layerManager.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+            const tileExtentMinScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getBottomLeft( tileExtent ), "EPSG:3857", "EPSG:4326" ));
+            const tileExtentMaxScene = this.layerManager!.sceneViewer.projection.forward( olProj.transform( extent.getTopRight( tileExtent ), "EPSG:3857", "EPSG:4326" ));
             const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
             const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
@@ -524,27 +525,25 @@ class GeoTile3DLayer extends Base3DLayer {
             //console.debug("Creating material for ground texture: " + url);
             const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
             const url = this.replaceTileCoordsUrl( tileCoords, this.groundTextureLayerUrl );
-            materialGround = new BABYLON.StandardMaterial( "materialGround_" + tileKey, this.layerManager.sceneViewer.scene );
+            materialGround = new StandardMaterial( "materialGround_" + tileKey, this.layerManager!.sceneViewer.scene );
             materialGround.roughness = 0.95;
-            materialGround.specularColor = new BABYLON.Color3( 0.15, 0.15, 0.15 ); // BABYLON.Color3.Black();
+            materialGround.specularColor = new Color3( 0.15, 0.15, 0.15 ); // BABYLON.Color3.Black();
             //materialGround.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2); // BABYLON.Color3.Black();
             //materialGround.emissiveColor = BABYLON.Color3.White();  // new BABYLON.Color3(1.0, 1.0, 1.);
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
-            materialGround.diffuseTexture = new BABYLON.Texture( url, this.layerManager.sceneViewer.scene );
+            materialGround.diffuseTexture = new Texture( url, this.layerManager!.sceneViewer.scene );
             materialGround.diffuseTexture.uScale = 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.vScale = 1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.uOffset = -0.5;
             materialGround.diffuseTexture.vOffset = -0.5;
             materialGround.diffuseTexture.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
             materialGround.diffuseTexture.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
-            /*
-            materialGround.bumpTexture = materialGround.diffuseTexture;
-            materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
-            materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
-            materialGround.bumpTexture.uOffset = -0.5;
-            materialGround.bumpTexture.vOffset = -0.5;
-            */
+            //materialGround.bumpTexture = materialGround.diffuseTexture;
+            //materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
+            //materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
+            //materialGround.bumpTexture.uOffset = -0.5;
+            //materialGround.bumpTexture.vOffset = -0.5;
         }
 
         // Assign
@@ -568,41 +567,45 @@ class GeoTile3DLayer extends Base3DLayer {
             }
         }
     }
-
-    replaceTileCoordsUrl( tileCoords, url ) {
-        let result = url;
-        result = result.replace( "{z}", tileCoords[0]);
-        result = result.replace( "{x}", tileCoords[1]);
-        result = result.replace( "{y}", tileCoords[2]);
-        return result;
-    }
-
-    groundTextureLayerSetUrl( url ) {
+    */
+   
+    /*
+    groundTextureLayerSetUrl( url: string ): void {
         // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
         //console.debug("Layer setting ground texture layer: " + url);
         this.groundTextureLayerUrl = url;
-
+       
         // Update existing tiles
         for ( const key in this.tiles ) {
             const tile = this.tiles[key];
-
             this.groundTextureLayerProcessNode( tile.coordsTileGrid, tile.node );
         }
     }
+    */
 
-    createTextMaterial( text ) {
+    replaceTileCoordsUrl( tileCoords: number[], url: string ): string {
+        let result = url;
+        result = result.replace( "{z}", tileCoords[0].toString());
+        result = result.replace( "{x}", tileCoords[1].toString());
+        result = result.replace( "{y}", tileCoords[2].toString());
+        return result;
+    }
+
+    /*
+    createTextMaterial( text: string ): StandardMaterial {
 
         //Create dynamic texture
-        const texture = new BABYLON.DynamicTexture( "dynamicTexture_text_" + text , { width:512, height:256 }, this.layerManager.sceneViewer.scene );
+        const texture = new DynamicTexture( "dynamicTexture_text_" + text , { width:512, height:256 }, this.layerManager!.sceneViewer.scene );
         //var textureContext = texture.getContext();
         const font = "bold 44px monospace";
         texture.drawText( "Generating...\nPlease try again later (5+ min).", 75, 135, font, "green", "white", true, true );
 
-        const material = new BABYLON.StandardMaterial( "Mat" + text, this.layerManager.sceneViewer.scene );
+        const material = new StandardMaterial( "Mat" + text, this.layerManager!.sceneViewer.scene );
         material.diffuseTexture = texture;
 
         return material;
     }
+    */
 
 }
 

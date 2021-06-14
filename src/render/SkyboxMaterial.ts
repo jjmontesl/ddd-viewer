@@ -1,22 +1,25 @@
+/* eslint-disable indent */
 
-import * as BABYLON from 'babylonjs';
-import * as BABYLONMAT from 'babylonjs-materials';
-import 'babylonjs-loaders';
+import * as BABYLON from "babylonjs";
+//import * as BABYLONMAT from 'babylonjs-materials';
+import "babylonjs-loaders";
+import { Material, Scene } from "babylonjs";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 
 class SkyMaterialWrapper {
 
+    material: Material;
 
-    constructor(scene, splatmapTexture, atlasTexture, atlasNormalTexture, options) {
-        this.material = null;
+    constructor(scene: Scene) { //, splatmapTexture, atlasTexture, atlasNormalTexture, options) {
+        this.material = this.initMaterial(scene);
         //this.testSplatMaterial(scene);
-        this.initMaterial(scene, options);
     }
 
-    initMaterial(scene, options) {
+    initMaterial(scene: Scene): Material {
+        //, options: any) {
 
-        BABYLON.Effect.ShadersStore["customVertexShader"]=  `
+        BABYLON.Effect.ShadersStore["customVertexShader"] = `
         precision highp float;
 
         // Attributes
@@ -44,7 +47,7 @@ class SkyMaterialWrapper {
 
         }`;
 
-        BABYLON.Effect.ShadersStore["customFragmentShader"]=  `
+        BABYLON.Effect.ShadersStore["customFragmentShader"] = `
         precision highp float;
 
         uniform mat4 worldView;
@@ -406,22 +409,22 @@ class SkyMaterialWrapper {
 
 
         // Compile
-        var shaderMaterial = new BABYLON.ShaderMaterial("skyShader", scene, {
+        var shaderMaterial = new BABYLON.ShaderMaterial( "skyShader", scene, {
             vertex: "custom",
             fragment: "custom",
-        },
+            },
             {
-                attributes: ["position", "normal", "uv"],
-                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+            attributes: [ "position", "normal", "uv" ],
+            uniforms: [ "world", "worldView", "worldViewProjection", "view", "projection" ]
             });
 
-        let mainTexture = new BABYLON.Texture("/textures/skynoise.png", scene, true, false, 12);  // NEAREST
+        const mainTexture = new BABYLON.Texture("/textures/skynoise.png", scene, true, false, 12);  // NEAREST
 
         //https://www.shadertoy.com/view/ltlSWB
         shaderMaterial.setTexture("iChannel0", mainTexture);
         shaderMaterial.setFloat("time", 0);
         shaderMaterial.setFloat("offset", 10);
-        shaderMaterial.setFloat("sunx",2.0);
+        shaderMaterial.setFloat("sunx", 2.0);
         shaderMaterial.setFloat("suny", 0.9);
         shaderMaterial.backFaceCulling = false;
 
