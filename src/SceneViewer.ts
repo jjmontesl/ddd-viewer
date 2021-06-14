@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
 import * as BABYLON from "babylonjs";
+import 'babylonjs-loaders';
+import "@babylonjs/loaders/glTF";
+
 import { WaterMaterial } from "babylonjs-materials";
 import "babylonjs-materials";
-import "@babylonjs/core/Animations/animatable";
+//import "@babylonjs/core/Animations/animatable";
 import { createXYZ, extentFromProjection, XYZOptions } from "ol/tilegrid";
 import proj4 from "proj4";
 //import {register} from 'ol/proj/proj4';
 import * as olProj from "ol/proj";
 import * as extent from "ol/extent";
-import "babylonjs-loaders";
+
 
 // <reference types="suncalc" />
 // import * as SunCalc from "suncalc";
@@ -24,16 +27,12 @@ import QueueLoader from "./loading/QueueLoader";
 //import ViewerSequencer from "./seq/ViewerSequencer";
 //import ViewerProcesses from "./seq/ViewerProcesses";
 import ViewerState from "./ViewerState";
-import { Camera } from "babylonjs/Cameras/camera";
-import { Engine } from "babylonjs/Engines/engine";
-import { Scene } from "babylonjs/scene";
-import { Material } from "babylonjs/Materials/material";
-import { Mesh } from "babylonjs/Meshes/mesh";
 import TileGrid from "ol/tilegrid/TileGrid";
-import { AbstractMesh, ArcRotateCamera, BoundingInfo, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, LensFlareSystem, PBRMaterial, ReflectionProbe, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
+import { AbstractMesh, ArcRotateCamera, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, Engine, LensFlareSystem, Material, Mesh, PBRMaterial, ReflectionProbe, Scene, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
 import TerrainMaterialWrapper from "./render/TerrainMaterial";
 import { Coordinate } from "ol/coordinate";
 import DDDMaterialsConfig from "./DDDMaterialsConfig";
+import ScenePosition from "./ScenePosition";
 
 
 class SceneViewer {
@@ -44,8 +43,8 @@ class SceneViewer {
     scene: Scene;
     sceneInstru: SceneInstrumentation | null = null;
 
-    sequencer: ViewerSequencer;
-    processes: ViewerProcesses;
+    //sequencer: ViewerSequencer;
+    //processes: ViewerProcesses;
 
     highlightMeshes: Mesh[] = [];
     //materialHighlight: Material | null = null;
@@ -122,8 +121,8 @@ class SceneViewer {
         this.lastDateUpdate = new Date().getTime();
 
         // TODO: Sequencer would better belong to the app
-        this.sequencer = new ViewerSequencer( this );
-        this.processes = new ViewerProcesses( this );
+        //this.sequencer = new ViewerSequencer( this );
+        //this.processes = new ViewerProcesses( this );
 
 
         // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
@@ -290,7 +289,7 @@ class SceneViewer {
         new BABYLON.LensFlare( flareScale * 0.3, 0.8, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
 
         // Setup lighting, flares, etc.
-        this.lightSetupFromDatePos();
+        //this.lightSetupFromDatePos();
 
         //var ssao = new BABYLON.SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
@@ -375,6 +374,7 @@ class SceneViewer {
 
         // Set skybox
         if ( baseUrl === "@dynamic" )  {
+            /*
             const skybox = BABYLON.Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
             
             const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
@@ -384,6 +384,7 @@ class SceneViewer {
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
+            */
 
         } else if ( baseUrl !== null ) {
 
@@ -426,7 +427,7 @@ class SceneViewer {
         console.debug( "Loading catalog: " + filename );
         BABYLON.SceneLoader.ImportMesh( null, filename, "", this.scene, //this.scene,
             // onSuccess
-            ( newMeshes: AbstractMesh[], particleSystems: any, skeletons: any ) => {
+            ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => { 
                 //console.log("GLB loaded", newMeshes);
                 this.loadCatalogFromMesh( <Mesh>newMeshes[0], loadMaterials );
                 newMeshes[0].setParent( null );
@@ -436,8 +437,8 @@ class SceneViewer {
 
                 this.processDepends();
             },
-            ( event ) => { },
-            ( scene, msg, ex ) => {
+            ( _event ) => { },
+            ( _scene, _msg, ex ) => {
                 console.debug( "Could not load scene catalog: " + filename, ex );
             }
         );
@@ -1055,7 +1056,7 @@ class SceneViewer {
 
     }
 
-    instanceAsNode( key: string, root: Mesh, mesh: Mesh ): void {
+    instanceAsNode( key: string, _root: Mesh, mesh: Mesh ): void {
         //console.debug("Replacing mesh: " + key);
         const newMesh = new BABYLON.TransformNode( mesh.id + "_instance", this.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
         //let newMesh = mesh;
@@ -1064,6 +1065,7 @@ class SceneViewer {
         newMesh.position = mesh.position;
         newMesh.rotationQuaternion = mesh.rotationQuaternion;
         newMesh.scaling = mesh.scaling;
+
         //newMesh.absoluteScaling = mesh.absoluteScaling;
         /*for (let cc of mesh.getChildren()) {
             cc.parent = null;
@@ -1168,8 +1170,8 @@ class SceneViewer {
 
 
 
-        this.sequencer.update( deltaTime );
-        this.processes.update( deltaTime );
+        //this.sequencer.update( deltaTime );
+        //this.processes.update( deltaTime );
         this.layerManager.update( deltaTime );
 
         this.viewerState.sceneFPS = this.engine.getFps(); // this.engine.getFps().toFixed( 1 );
@@ -1230,16 +1232,10 @@ class SceneViewer {
         */
     }
 
-    parsePositionString( posString: string ): any {
+    parsePositionString( posString: string ): ScenePosition {
         //console.debug("Parsing: " + posString);
 
-        const result = {
-            positionWGS84: [], 
-            positionTileZoomLevel: null,
-            positionGroundHeight: null,
-            positionHeading: null,
-            positionTilt: null,
-        };
+        const result = new ScenePosition();
 
         try {
             // Parse at location

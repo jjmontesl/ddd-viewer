@@ -4,6 +4,7 @@ module.exports = {
         "es2015": true,
         "commonjs": true
     },
+    "ignorePatterns": [ "../ddd-viewer/**/*.js", "../ddd-viewer/**/*.ts" ],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended"
@@ -52,7 +53,7 @@ module.exports = {
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-empty-function": "off",  
-        "@typescript-eslint/no-unused-vars": "warning"
+        "@typescript-eslint/no-unused-vars": "warn"
 
     }
 };

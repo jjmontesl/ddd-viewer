@@ -9,7 +9,8 @@
         "types": [
             "babylonjs",
             "babylonjs-materials",
-            "@types/ol"
+            "babylonjs-loaders",
+            "ol"
         ],
         "lib": [
             "dom",

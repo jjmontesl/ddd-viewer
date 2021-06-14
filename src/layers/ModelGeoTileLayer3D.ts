@@ -252,7 +252,7 @@ class GeoTile3DLayer extends Base3DLayer {
 
         this.layerManager!.sceneViewer.queueLoader.enqueueLoadModel( tileUrl,
             // onSuccess
-            ( newMeshes: AbstractMesh[], particleSystems: any, skeletons: any ) => {
+            ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => {
                 //console.log("GLB loaded", newMeshes);
 
                 marker.dispose( false, true );
@@ -260,7 +260,7 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 let minHeight = Number.POSITIVE_INFINITY;
                 let maxHeight = Number.NEGATIVE_INFINITY;
-                newMeshes.forEach(( mesh: AbstractMesh, i: number ) => {
+                newMeshes.forEach(( mesh: AbstractMesh, _i: number ) => {
                     if ( this.layerManager!.sceneViewer.shadowGenerator ) {
                         mesh.receiveShadows = true;
                         if ( mesh.metadata && mesh.metadata.gltf.extras &&
@@ -363,7 +363,8 @@ class GeoTile3DLayer extends Base3DLayer {
                 //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
                 pivot.freezeWorldMatrix();
 
-                this.groundTextureLayerProcessNode( tileCoords, pivot );
+                // TODO: Removed during TS migration, but this is needed to support ground texture replacement
+                //this.groundTextureLayerProcessNode( tileCoords, pivot );
 
                 // Check if the selected node is in the recently loaded node
                 // TODO: Should use a generic notification + object id/naming system
@@ -388,7 +389,7 @@ class GeoTile3DLayer extends Base3DLayer {
 
             },
             // onError
-            ( scene: any, msg: string, ex: any ) => {
+            ( _scene: any, _msg: string, ex: any ) => {
                 // eslint-disable-next-line no-console
                 console.log( "Tile model (.glb) loading error: ", ex );
 
@@ -432,7 +433,7 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
-        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
@@ -475,7 +476,7 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         //console.debug(sizeWidth, sizeHeight);
-        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
