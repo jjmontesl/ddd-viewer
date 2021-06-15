@@ -42,7 +42,7 @@ class ViewerState {
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
     sceneTextureSet: string | null = "defaultsplat256";
     sceneGroundTextureOverride: string | null = null;
-    sceneTitleText = null;
+    sceneTitleText:string | null = null;
     
 
     constructor( dddConfig: DDDViewerConfig, initialCoords: number[], isMobile: boolean = false ) {

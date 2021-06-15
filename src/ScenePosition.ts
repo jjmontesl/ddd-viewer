@@ -4,7 +4,7 @@
  */
 class ScenePosition {
 
-    positionWGS84: number[] = [0, 0, 0];
+    positionWGS84: number[] = [ 0, 0, 0 ];
 
     positionTileZoomLevel: number = 0;
 

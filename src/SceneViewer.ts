@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
 import * as BABYLON from "babylonjs";
-import 'babylonjs-loaders';
+import "babylonjs-loaders";
 import "@babylonjs/loaders/glTF";
 
 import { WaterMaterial } from "babylonjs-materials";
@@ -101,7 +101,7 @@ class SceneViewer {
         this.queueLoader = new QueueLoader( this );
 
         this.originShiftWGS84 = [ 0, 0 ];
-        this.projection = proj4("EPSG:4326");
+        this.projection = proj4( "EPSG:4326" );
 
         this.tileGrid = createXYZ({
             extent: extentFromProjection( "EPSG:3857" ),
@@ -190,7 +190,7 @@ class SceneViewer {
         // Environment
         this.envReflectionProbe = null;
         if ( this.viewerState.sceneEnvironmentProbe !== null ) {
-            this.envReflectionProbe = new BABYLON.ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true);
+            this.envReflectionProbe = new BABYLON.ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true );
             this.envReflectionProbe.refreshRate = 6;
             this.envReflectionProbe.position = new BABYLON.Vector3( 0, 0, 0 );
 
@@ -646,7 +646,7 @@ class SceneViewer {
                 const splatmapTexture = new BABYLON.Texture( splatmapUrl, this.scene );
 
                 const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture, {});
-                (<any> root)._splatmapMaterial = matwrapper.material;
+                ( <any> root )._splatmapMaterial = matwrapper.material;
                 
                 
                 let uvScale = [ 225, 225 ]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
@@ -657,10 +657,10 @@ class SceneViewer {
                 }
                 
                 // Seems to work well (+1 +1 / +1 -1)
-                (<Texture> matwrapper.material.albedoTexture).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
-                (<Texture> matwrapper.material.albedoTexture).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
-                (<Texture> matwrapper.material.albedoTexture).uOffset = 0.5; //  + (1 / uvScale[0]);
-                (<Texture> matwrapper.material.albedoTexture).vOffset = 0.5 - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
+                ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
+                ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
+                ( <Texture> matwrapper.material.albedoTexture ).uOffset = 0.5; //  + (1 / uvScale[0]);
+                ( <Texture> matwrapper.material.albedoTexture ).vOffset = 0.5 - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
                 /*if (mesh.material.bumpTexture) {
                     mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
                     mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
@@ -725,13 +725,13 @@ class SceneViewer {
                      ( metadata["ddd:material"] === "WayPedestrian" && ( !( "ddd:area:type" in metadata ) || ( metadata["ddd:area:type"] !== "stairs" ))) ||
                      metadata["ddd:material"] === "Wetland" || metadata["ddd:material"] === "Asphalt" )) {
 
-                    if ((<any>root)._splatmapMaterial) {
-                        if ( mesh.material && mesh.material !== (<any>root)._splatmapMaterial ) {
+                    if (( <any>root )._splatmapMaterial ) {
+                        if ( mesh.material && mesh.material !== ( <any>root )._splatmapMaterial ) {
                             mesh.material.dispose();
                         }
 
-                        mesh.material = (<any>root)._splatmapMaterial;
-                        (<any>root)._splatmapMaterial.renderingGroupId = 1;
+                        mesh.material = ( <any>root )._splatmapMaterial;
+                        ( <any>root )._splatmapMaterial.renderingGroupId = 1;
 
                         // Expensive probe
                         //this.envReflectionProbe.renderList.push(mesh);
@@ -1127,7 +1127,7 @@ class SceneViewer {
 
             // Fix viewer to floor
             if ( this.walkMode ) {
-                if ( terrainElevation !== null && this.camera) {
+                if ( terrainElevation !== null && this.camera ) {
                     this.camera.position.y = terrainElevation + this.viewerState.sceneCameraWalkHeight; // 3.0;
                 }
             } else {
@@ -1136,7 +1136,7 @@ class SceneViewer {
                 }
             }
 
-            if (this.camera) {
+            if ( this.camera ) {
                 if ( this.camera instanceof ArcRotateCamera ) {
                     let heading = -90 + ( -this.camera.alpha * ( 180.0 / Math.PI ));
                     heading = ( heading % 360 + 360 ) % 360;
@@ -1158,7 +1158,7 @@ class SceneViewer {
             }
         }
 
-        if (this.camera) {
+        if ( this.camera ) {
             let positionScene = this.camera.position.asArray();
             positionScene = [ positionScene[0], positionScene[1], positionScene[2] ];  // Copy array
             this.viewerState.positionScene = positionScene;
@@ -1208,14 +1208,14 @@ class SceneViewer {
 
     }
 
-    sceneToWGS84( coords: number[] ): number[] {
+    sceneToWGS84( coords: number[]): number[] {
         //let wgs84Pos = this.originShiftWGS84;
         //const point = olProj.transform([coords[0], coords[2]], this.projection, 'EPSG:4326');
         const point = this.projection!.inverse([ coords[0], coords[2] ]);
         return [ point[0], point[1], coords[1] ];
     }
 
-    wgs84ToScene( coords: number[] ) : number[] {
+    wgs84ToScene( coords: number[]) : number[] {
         //const point = olProj.transform(coords, 'EPSG:4326', this.projection);
         const point = this.projection!.forward( coords );
 
@@ -1308,7 +1308,7 @@ class SceneViewer {
 
     updateElevation(): void {
 
-        if (!this.camera) return;
+        if ( !this.camera ) return;
 
         //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
         const ray = new BABYLON.Ray( new BABYLON.Vector3( this.camera.position.x, -100.0, this.camera.position.z ), new BABYLON.Vector3( 0, 1, 0 ), 3000.0 );
@@ -1421,7 +1421,7 @@ class SceneViewer {
         let mesh = null;
         mesh = this.findMeshById( meshId );
 
-        if (mesh) this.selectMesh( mesh, highlight );
+        if ( mesh ) this.selectMesh( mesh, highlight );
     }
 
     selectMesh( mesh: Mesh, highlight: boolean ): void {
@@ -1461,13 +1461,13 @@ class SceneViewer {
         }
     }
 
-    getBoundsRecursively( node: Mesh, bounds?: BoundingInfo) : BoundingInfo {
+    getBoundsRecursively( node: Mesh, bounds?: BoundingInfo ) : BoundingInfo {
         if ( !bounds ) {
             //bounds = { minimumWorld: { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY },
             //    maximumWorld: { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY, z: Number.NEGATIVE_INFINITY } };
             bounds = new BoundingInfo(
-                new Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
-                new Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY));
+                new Vector3( Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY ),
+                new Vector3( Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY ));
         }
         if ( node.getBoundingInfo ) {
             const minWorld = node.getBoundingInfo().boundingBox.minimumWorld;
@@ -1557,7 +1557,7 @@ class SceneViewer {
             dof_gain: 1.0,
             dof_threshold: 1.0,
             dof_darken: 0.25
-        }, this.scene, 1.0, [ <Camera> this.camera ] );
+        }, this.scene, 1.0, [ <Camera> this.camera ]);
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
 
         /*
