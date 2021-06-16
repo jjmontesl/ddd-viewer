@@ -1,6 +1,11 @@
 {
+    "name": "ddd-viewer",
     "version": "0.1.0",
     "license": "MIT",
+
+    "author": "Jose Juan Montes",
+    "contributors": ["Farvell* (replace with real name)"],
+    "description": "DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes",
     "main": "dist/index.js",
     "typings": "dist/index.d.ts",
     "files": [
@@ -11,7 +16,7 @@
         "node": ">=10"
     },
     "scripts": {
-        "start": "tsdx watch",
+        "watch": "tsdx watch",
         "build": "tsdx build",
         "test": "tsdx test",
         "lint": "tsdx lint",
@@ -24,8 +29,6 @@
             "pre-commit": "tsdx lint"
         }
     },
-    "name": "ddd-viewer",
-    "author": "Jose Juan Montes",
     "module": "dist/dddviewer.esm.js",
     "size-limit": [
         {

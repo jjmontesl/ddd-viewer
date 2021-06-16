@@ -1,10 +1,16 @@
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
 
 // import * as BABYLON from "babylonjs";
 
 import SceneViewer from "../SceneViewer";
+import ViewerProcess from "./ViewerProcess";
 
 
-class ViewerProcesses {
+class ViewerProcessManager {
 
     sceneViewer: SceneViewer;
     currentProcesses: any[];
@@ -31,18 +37,22 @@ class ViewerProcesses {
         }
 
         // Remove finished steps
-        // TODO: Use a task class and mark itself as finished
-        //this.currentProcesses = this.currentProcesses.filter((item) => { return (item.finished); } );
+        this.currentProcesses = this.currentProcesses.filter( ( item ) => { return ( item.finished ); } );
 
     }
 
-    add( process: any ): void {
+    add( process: ViewerProcess ): void {
         //console.debug("Adding process: ", process);
-        process.processes = this;
+
+        // Sanity check
+        if (process.sceneViewer != this.sceneViewer) {
+            throw new Error("");
+        }
+
         this.currentProcesses.push( process );
     }
 
-    remove( process: any ): void {
+    remove( process: ViewerProcess ): void {
         //console.debug("Removing process: ", process);
         this.currentProcesses = this.currentProcesses.filter(( item ) => { return ( item !== process ); });
     }
@@ -50,6 +60,5 @@ class ViewerProcesses {
 
 }
 
-export default ViewerProcesses;
-
+export default ViewerProcessManager;
 

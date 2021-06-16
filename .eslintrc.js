@@ -4,7 +4,7 @@ module.exports = {
         "es2015": true,
         "commonjs": true
     },
-    "ignorePatterns": [ "../ddd-viewer/**/*.js", "../ddd-viewer/**/*.ts" ],
+    "ignorePatterns": [ "**/ddd-viewer/**/*.js", "**/ddd-viewer/**/*.ts" ],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended"
@@ -37,18 +37,6 @@ module.exports = {
         "array-bracket-spacing": [
             "error",
             "always"
-        ],
-        "space-in-parens": [
-            "warn",
-            "always",
-            {
-                "exceptions": [
-                    "{}",
-                    "[]",
-                    "()",
-                    "empty"
-                ]
-            }
         ],
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-inferrable-types": "off",

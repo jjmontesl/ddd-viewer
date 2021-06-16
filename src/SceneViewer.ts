@@ -1,38 +1,40 @@
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
+
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
-import * as BABYLON from "babylonjs";
-import "babylonjs-loaders";
 import "@babylonjs/loaders/glTF";
-
-import { WaterMaterial } from "babylonjs-materials";
+import * as BABYLON from "babylonjs";
+import { AbstractMesh, ArcRotateCamera, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, Engine, LensFlareSystem, Material, Mesh, PBRBaseMaterial, PBRMaterial, ReflectionProbe, Scene, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
+import "babylonjs-loaders";
 import "babylonjs-materials";
-//import "@babylonjs/core/Animations/animatable";
-import { createXYZ, extentFromProjection, XYZOptions } from "ol/tilegrid";
-import proj4 from "proj4";
+import { WaterMaterial } from "babylonjs-materials";
+import { Coordinate } from "ol/coordinate";
+import * as extent from "ol/extent";
 //import {register} from 'ol/proj/proj4';
 import * as olProj from "ol/proj";
-import * as extent from "ol/extent";
-
-
+//import "@babylonjs/core/Animations/animatable";
+import { createXYZ, extentFromProjection } from "ol/tilegrid";
+import TileGrid from "ol/tilegrid/TileGrid";
+import proj4 from "proj4";
+import DDDMaterialsConfig from "./DDDMaterialsConfig";
 // <reference types="suncalc" />
 // import * as SunCalc from "suncalc";
-
 // import TerrainMaterialWrapper from "./render/TerrainMaterial.js";
 //import UniversalTerrainMaterialWrapper from '@/dddviewer/render/UniversalTerrainMaterialWrapper.js';
 //import createOceanMaterial from '@/dddviewer/render/OceanMaterial.js';
 //import SkyMaterialWrapper from "./render/SkyboxMaterial";
-
 import LayerManager from "./layers/LayerManager";
 import QueueLoader from "./loading/QueueLoader";
-//import ViewerSequencer from "./seq/ViewerSequencer";
-//import ViewerProcesses from "./seq/ViewerProcesses";
-import ViewerState from "./ViewerState";
-import TileGrid from "ol/tilegrid/TileGrid";
-import { AbstractMesh, ArcRotateCamera, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, Engine, LensFlareSystem, Material, Mesh, PBRMaterial, ReflectionProbe, Scene, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
+import ViewerProcesses from "./process/ViewerProcessManager";
 import TerrainMaterialWrapper from "./render/TerrainMaterial";
-import { Coordinate } from "ol/coordinate";
-import DDDMaterialsConfig from "./DDDMaterialsConfig";
 import ScenePosition from "./ScenePosition";
+import ViewerSequencer from "./process/sequencer/ViewerSequencer";
+import ViewerState from "./ViewerState";
+
 
 
 class SceneViewer {
@@ -43,8 +45,8 @@ class SceneViewer {
     scene: Scene;
     sceneInstru: SceneInstrumentation | null = null;
 
-    //sequencer: ViewerSequencer;
-    //processes: ViewerProcesses;
+    sequencer: ViewerSequencer;
+    processes: ViewerProcesses;
 
     highlightMeshes: Mesh[] = [];
     //materialHighlight: Material | null = null;
@@ -120,10 +122,8 @@ class SceneViewer {
 
         this.lastDateUpdate = new Date().getTime();
 
-        // TODO: Sequencer would better belong to the app
-        //this.sequencer = new ViewerSequencer( this );
-        //this.processes = new ViewerProcesses( this );
-
+        this.processes = new ViewerProcesses( this );
+        this.sequencer = new ViewerSequencer( this );
 
         // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
         this.engine = new BABYLON.Engine( canvas, true ); // , null, true); // , { stencil: true });
@@ -139,7 +139,7 @@ class SceneViewer {
 
     }
 
-    initialize(): void {
+    private initialize(): void {
 
         //const that = this;
 
@@ -561,16 +561,20 @@ class SceneViewer {
                     if (( metadata["ddd:material"] === "Fence" )) {
                         uvScale = 0.5;
                         mesh.material.backFaceCulling = false;
-                        ( <Texture> mesh.material.albedoTexture ).vOffset = 0.0725;
+                        if ( mesh.material.albedoTexture && mesh.material instanceof PBRBaseMaterial ) {
+                            ( <Texture> mesh.material.albedoTexture ).vOffset = 0.0725;
+                        }
                         if ( mesh.material.bumpTexture ) { ( <Texture> mesh.material.bumpTexture ).vOffset = 0.0725; }
                     }
 
                     if ( uvScale !== 1.0 ) {
-                        ( <Texture> mesh.material.albedoTexture ).uScale = uvScale;
-                        ( <Texture> mesh.material.albedoTexture ).vScale = uvScale;
-                        if ( mesh.material.bumpTexture ) {
-                            ( <Texture> mesh.material.bumpTexture ).uScale = uvScale;
-                            ( <Texture> mesh.material.bumpTexture ).vScale = uvScale;
+                        if ( mesh.material.albedoTexture && mesh.material instanceof PBRBaseMaterial ) {
+                            ( <Texture> mesh.material.albedoTexture ).uScale = uvScale;
+                            ( <Texture> mesh.material.albedoTexture ).vScale = uvScale;
+                            if ( mesh.material.bumpTexture ) {
+                                ( <Texture> mesh.material.bumpTexture ).uScale = uvScale;
+                                ( <Texture> mesh.material.bumpTexture ).vScale = uvScale;
+                            }
                         }
                     }
 

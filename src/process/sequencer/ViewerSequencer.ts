@@ -1,24 +1,29 @@
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
+
 
 // import * as BABYLON from "babylonjs";
-import CameraMoveAnimationProcess from "./CameraMoveAnimationProcess";
-import DateTimeAnimationProcess from "./DateTimeAnimationProcess";
-import TextAnimationProcess from "./TextAnimationProcess";
+import CameraMoveAnimationProcess from "../anim/CameraMoveAnimationProcess";
+import DateTimeAnimationProcess from "../anim/DateTimeAnimationProcess";
+import TextAnimationProcess from "../anim/TextAnimationProcess";
 
-import SceneViewer from "../SceneViewer";
+import SceneViewer from "../../SceneViewer";
 // import ScenePosition from "../ScenePosition";
 /* eslint-disable no-console,  */
 
-type Step = [string | number];
-type Sequence = [ Step ];
+type Step = (string | number)[];
+type Sequence = Step[];
 
 export default class {
 
     sceneViewer: SceneViewer;
-    seq: Sequence[] | null;
+    seq: Sequence | null;
     time: number;
     index: number;
     playing: boolean;
-    currentTasks: any[];
 
     waitTime: number;
 
@@ -31,8 +36,6 @@ export default class {
         this.time = 0.0;
         this.index = 0;
         this.waitTime = 0.0;
-
-        this.currentTasks = [];
     }
 
     update( deltaTime: number ): void {
@@ -60,7 +63,7 @@ export default class {
         console.debug( "Running step: ", step );
 
         const command: string | number = step[0];
-        if ( command instanceof string | number ) throw new Error( "No command specified." );
+        //if ( ! ((command instanceof String )) throw new Error( "No command specified." );
 
         if ( command === "m" ) {
             const posString: string | null = this.sceneViewer.positionString();
@@ -68,8 +71,8 @@ export default class {
             if ( posString ) {
                 const move_start = this.sceneViewer.parsePositionString( posString );
                 const move_end = this.sceneViewer.parsePositionString( posString );
-                const animTime = step[ 2 ];
-                const moveAnimationProcess = new CameraMoveAnimationProcess( move_start, move_end, animTime );
+                const animTime = <number> step[2];
+                const moveAnimationProcess = new CameraMoveAnimationProcess( this.sceneViewer, move_start, move_end, animTime );
                 this.sceneViewer.processes.add( moveAnimationProcess );
             }
 
@@ -78,21 +81,21 @@ export default class {
             console.debug( dtStart );
             const dtEnd = new Date( dtStart );
             console.debug( dtEnd );
-            dtEnd.setHours( parseInt( step[1].split( ":" )[0]));
-            dtEnd.setMinutes( parseInt( step[1].split( ":" )[1]));
+            dtEnd.setHours( parseInt( (<string> step[1]).split( ":" )[0]));
+            dtEnd.setMinutes( parseInt( (<string> step[1]).split( ":" )[1]));
             console.debug( dtEnd );
-            const animTime = step[2];
-            const process = new DateTimeAnimationProcess( dtStart, dtEnd, animTime );
+            const animTime = <number> step[2];
+            const process = new DateTimeAnimationProcess( this.sceneViewer, dtStart, dtEnd, animTime );
             this.sceneViewer.processes.add( process );
 
         } else if ( command === "t" ) {
-            const text = step[1];
-            const animTime = step[2];
-            const process = new TextAnimationProcess( text, animTime );
+            const text = <string> step[1];
+            const animTime = <number> step[2];
+            const process = new TextAnimationProcess( this.sceneViewer, text, animTime );
             this.sceneViewer.processes.add( process );
 
         } else if ( command === "s" ) {
-            this.waitTime = step[1];
+            this.waitTime = <number> step[1];
 
 
             /*} else if ( command === "u" ) {
@@ -105,9 +108,9 @@ export default class {
 
 
         } else if ( command === "goto" ) {
-            this.index = step[1];
+            this.index = <number> step[1];
 
-        } else if ( command.startsWith( "#" )) {
+        } else if ( (<string>command).startsWith( "#" )) {
             // Command is a comment. Ignore.
         } else {
             // Unknown step type
@@ -115,8 +118,9 @@ export default class {
         }
     }
 
-    play( seq ) {
+    play( seq: Sequence ): void {
         console.debug( "Playing sequence: ", seq );
+
         this.sceneViewer.camera!.detachControl();
         this.sceneViewer.viewerState.sceneViewModeShow = false;
         this.seq = seq;

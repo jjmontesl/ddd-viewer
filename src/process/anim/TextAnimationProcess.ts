@@ -1,35 +1,36 @@
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
 
 
 // import * as BABYLON from "babylonjs";
-import DDDViewerConfig from "../DDDViewerConfig";
-import SceneViewer from "../SceneViewer";
-import ViewerState from "../ViewerState";
+import SceneViewer from "SceneViewer";
 import AnimationProcess from "./AnimationProcess";
-import ViewerProcesses from "./ViewerProcesses";
 
+/**
+ * 
+ */
 class TextAnimation extends AnimationProcess {
 
     text: string;
 
-    constructor( text: string, animTime: number ) {
-        
-        super(( new ViewerProcesses(
-            new SceneViewer(
-                new HTMLCanvasElement(),
-                new ViewerState(
-                    new DDDViewerConfig(),
-                    [ 0, 0, 0 ]
-                )
-            )
-        )
-        ), animTime );
-        
+    /**
+     * 
+     * @param text Text to animate.
+     * @param animTime Animation duration in seconds.
+     */
+    constructor( sceneViewer: SceneViewer, text: string, animTime: number ) {
+        super( sceneViewer, animTime );
         this.text = text;
     }
 
     update( deltaTime: number ): void {
         
-        const sceneViewer = this.processes!.sceneViewer;
+        super.update( deltaTime );
+
+        const sceneViewer = this.sceneViewer;
         const textCompleteTime = 2.0;
 
         AnimationProcess.prototype.update.call( this, deltaTime, textCompleteTime );
@@ -46,9 +47,8 @@ class TextAnimation extends AnimationProcess {
         const interpText = this.text.substr( 0, interpChars );
         
         sceneViewer.viewerState.sceneTitleText = interpText;
-        if ( this.time >= this.animTime ) {
+        if ( this.finished ) {
             sceneViewer.viewerState.sceneTitleText = null;
-            this.processes!.remove( this );
         }
     }
 }

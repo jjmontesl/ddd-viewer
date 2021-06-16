@@ -5,6 +5,7 @@
         "types"
     ],
     "compilerOptions": {
+        "baseUrl": "src",
         "module": "es2015",
         "types": [
             "babylonjs",
@@ -12,7 +13,7 @@
             "babylonjs-loaders",
             "ol"
         ],
-        "lib": [
+        "lib": [ 
             "dom",
             "esnext"
         ],

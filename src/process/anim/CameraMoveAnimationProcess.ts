@@ -1,28 +1,24 @@
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
 
 
 import * as BABYLON from "babylonjs";
-import { SceneViewer, ViewerState } from "..";
-import DDDViewerConfig from "../DDDViewerConfig";
+import { ArcRotateCamera } from "babylonjs";
+import ScenePosition from "ScenePosition";
+import SceneViewer from "SceneViewer";
 import AnimationProcess from "./AnimationProcess";
-import ViewerProcesses from "./ViewerProcesses";
 
 class CameraMovementAnimationProcess extends AnimationProcess {
 
-    moveStart: any;
-    moveEnd: any;
+    moveStart: ScenePosition;
+    moveEnd: ScenePosition;
 
-    constructor( moveStart: any, moveEnd: any, animTime: number ) {
-        
-        super(( new ViewerProcesses(
-            new SceneViewer(
-                new HTMLCanvasElement(),
-                new ViewerState(
-                    new DDDViewerConfig(),
-                    [ 0, 0, 0 ]
-                )
-            )
-        )
-        ), animTime );
+    constructor( sceneViewer: SceneViewer, moveStart: ScenePosition, moveEnd: ScenePosition, animTime: number ) {
+
+        super(sceneViewer, animTime);
 
         this.moveStart = moveStart;
         this.moveEnd = moveEnd;
@@ -33,7 +29,7 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         const move_start = this.moveStart;
         const move_end = this.moveEnd;
 
-        const sceneViewer = this.processes!.sceneViewer;
+        const sceneViewer = this.sceneViewer;
 
         AnimationProcess.prototype.update.call( this, deltaTime );
         
@@ -42,8 +38,9 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         //     interp_factor = 1.0;
         // }
 
-        sceneViewer.viewerState.positionWGS84 = [ BABYLON.Scalar.Lerp( move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor ),
-            BABYLON.Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor)];
+        sceneViewer.viewerState.positionWGS84 = [ 
+            BABYLON.Scalar.Lerp( move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor ),
+            BABYLON.Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor) ];
         
         
         sceneViewer.viewerState.positionGroundHeight = BABYLON.Scalar.Lerp( move_start.positionGroundHeight, move_end.positionGroundHeight, this.interpFactor );
@@ -67,11 +64,10 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         const rotation = new BABYLON.Vector3(( 90.0 - sceneViewer.viewerState.positionTilt ) * ( Math.PI / 180.0 ), sceneViewer.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
 
         sceneViewer.camera!.position = position;
-        sceneViewer.camera.rotation = rotation;
-
-        if ( this.interpFactor >= 1.0 ) {
-            this.processes!.remove( this );
+        if (sceneViewer.camera instanceof ArcRotateCamera) {
+            (<ArcRotateCamera> sceneViewer.camera!).rotation = rotation;
         }
+
     }
 
 }
