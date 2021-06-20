@@ -1,21 +1,26 @@
 {
     // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
     "include": [
-        "src",
-        "types"
+        "src"
+        //"types"
     ],
     "compilerOptions": {
         "baseUrl": "src",
-        "module": "es2015",
+        /*"paths": {
+            "./*": ["dddviewer/*"],
+            "./layers/*": ["layers/*"],
+            "./loading/*": ["loading/*"],
+            "./process/*": ["process/*"],
+            "./render/*": ["render/*"],
+        },*/
+        "target": "esnext",
         "types": [
-            "babylonjs",
-            "babylonjs-materials",
-            "babylonjs-loaders",
-            "ol"
+            "ol",
+            "proj4"
         ],
         "lib": [ 
-            "dom",
-            "esnext"
+            "DOM",
+            "ESNext"
         ],
         "importHelpers": true,
         // output .d.ts declaration files for consumers
@@ -33,9 +38,9 @@
         "noUnusedLocals": false,
         "noUnusedParameters": true,
         // use Node's module resolution algorithm, instead of the legacy TS one
-        "moduleResolution": "node",
+        //"moduleResolution": "node",
         // transpile JSX to React.createElement
-        "jsx": "react",
+        //"jsx": "react",
         // interop between ESM and CJS modules. Recommended by TS
         "esModuleInterop": true,
         // significant perf increase by skipping checking .d.ts files, particularly those in node_modules. Recommended by TS
@@ -46,3 +51,6 @@
         "noEmit": true
     }
 }
+
+
+

@@ -5,19 +5,18 @@
 */
 
 
-// import * as BABYLON from "babylonjs";
-import CameraMoveAnimationProcess from "../anim/CameraMoveAnimationProcess";
-import DateTimeAnimationProcess from "../anim/DateTimeAnimationProcess";
-import TextAnimationProcess from "../anim/TextAnimationProcess";
+import { CameraMovementAnimationProcess } from "../anim/CameraMoveAnimationProcess";
+import { DateTimeAnimationProcess } from "../anim/DateTimeAnimationProcess";
+import { TextAnimationProcess } from "../anim/TextAnimationProcess";
 
-import SceneViewer from "../../SceneViewer";
+import { SceneViewer } from "../../SceneViewer";
 // import ScenePosition from "../ScenePosition";
 /* eslint-disable no-console,  */
 
 type Step = (string | number)[];
 type Sequence = Step[];
 
-export default class {
+class ViewerSequencer {
 
     sceneViewer: SceneViewer;
     seq: Sequence | null;
@@ -72,7 +71,7 @@ export default class {
                 const move_start = this.sceneViewer.parsePositionString( posString );
                 const move_end = this.sceneViewer.parsePositionString( posString );
                 const animTime = <number> step[2];
-                const moveAnimationProcess = new CameraMoveAnimationProcess( this.sceneViewer, move_start, move_end, animTime );
+                const moveAnimationProcess = new CameraMovementAnimationProcess( this.sceneViewer, move_start, move_end, animTime );
                 this.sceneViewer.processes.add( moveAnimationProcess );
             }
 
@@ -129,3 +128,5 @@ export default class {
         this.index = 0;
     }
 }
+
+export { ViewerSequencer };

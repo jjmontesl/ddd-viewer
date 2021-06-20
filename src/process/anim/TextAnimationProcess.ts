@@ -5,14 +5,13 @@
 */
 
 
-// import * as BABYLON from "babylonjs";
-import SceneViewer from "SceneViewer";
-import AnimationProcess from "./AnimationProcess";
+import { SceneViewer } from "../../SceneViewer";
+import { AnimationProcess } from "./AnimationProcess";
 
 /**
  * 
  */
-class TextAnimation extends AnimationProcess {
+class TextAnimationProcess extends AnimationProcess {
 
     text: string;
 
@@ -53,4 +52,4 @@ class TextAnimation extends AnimationProcess {
     }
 }
 
-export default TextAnimation;
+export { TextAnimationProcess };

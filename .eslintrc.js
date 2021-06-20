@@ -2,7 +2,7 @@ module.exports = {
     "env": {
         "browser": true,
         "es2015": true,
-        "commonjs": true
+        //"commonjs": true
     },
     "ignorePatterns": [ "**/ddd-viewer/**/*.js", "**/ddd-viewer/**/*.ts" ],
     "extends": [

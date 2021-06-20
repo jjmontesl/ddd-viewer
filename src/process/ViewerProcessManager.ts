@@ -4,10 +4,8 @@
 * MIT License (see LICENSE file)
 */
 
-// import * as BABYLON from "babylonjs";
-
-import SceneViewer from "../SceneViewer";
-import ViewerProcess from "./ViewerProcess";
+import { SceneViewer } from "../SceneViewer";
+import { ViewerProcess } from "./ViewerProcess";
 
 
 class ViewerProcessManager {
@@ -60,5 +58,5 @@ class ViewerProcessManager {
 
 }
 
-export default ViewerProcessManager;
+export { ViewerProcessManager };
 

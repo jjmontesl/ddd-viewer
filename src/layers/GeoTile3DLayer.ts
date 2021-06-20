@@ -1,12 +1,11 @@
-import { AbstractMesh, Color3, DynamicTexture, Mesh, MeshBuilder, Node, Ray, StandardMaterial, Texture, TransformNode, Vector3 } from "babylonjs";
-import "babylonjs-loaders";
+import { AbstractMesh, Color3, Mesh, MeshBuilder, Node, Ray, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
 import * as olProj from "ol/proj";
 import { createXYZ, extentFromProjection } from "ol/tilegrid";
 import TileGrid from "ol/tilegrid/TileGrid";
-import Base3DLayer from "./Base3DLayer";
-import SceneViewer from "../SceneViewer";
+import { SceneViewer } from "../SceneViewer";
+import { Base3DLayer } from "./Base3DLayer";
 
 
 
@@ -90,7 +89,7 @@ class GeoTile3DLayer extends Base3DLayer {
         const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
     
         const positionWGS84: number[] = <number[]> this.layerManager?.sceneViewer.positionWGS84();
-        const coordsWGS84: Coordinate = [positionWGS84[0], positionWGS84[1]];
+        const coordsWGS84: Coordinate = [ positionWGS84[0], positionWGS84[1] ];
         const coordsUtm: Coordinate = olProj.transform(coordsWGS84 , "EPSG:4326", "EPSG:3857" );
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ( coordsUtm, 17 );
         //const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
@@ -239,15 +238,15 @@ class GeoTile3DLayer extends Base3DLayer {
 
         //console.debug("Loading: " + tileUrl);
 
-        const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
-        //let reversePivot = new BABYLON.TransformNode("chunk_reverse_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
-        //let rawPivot = new BABYLON.TransformNode("chunk_raw_" + tileKey, this.scene);  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
-        //reversePivot.scaling = new BABYLON.Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
+        const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        //let reversePivot = new TransformNode("chunk_reverse_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
+        //let rawPivot = new TransformNode("chunk_raw_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
+        //reversePivot.scaling = new Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
         //rawPivot.parent = reversePivot;
         //reversePivot.parent = pivot;
         //pivot.parent = this.scene;
 
-        let marker = this.loadQuadMarker( tileCoords, BABYLON.Color3.Gray());
+        let marker = this.loadQuadMarker( tileCoords, Color3.Gray());
         this.tiles[tileKey].node = marker;
 
         this.layerManager!.sceneViewer.queueLoader.enqueueLoadModel( tileUrl,
@@ -285,12 +284,12 @@ class GeoTile3DLayer extends Base3DLayer {
                           if (mesh.id.indexOf("Item") < 0 && mesh.id.indexOf("Building") < 0) {
                               mesh.material = materialPlane;
                           }
-                          //mesh.overrideMaterialSideOrientation = BABYLON.Mesh.DOUBLESIDE;
+                          //mesh.overrideMaterialSideOrientation = Mesh.DOUBLESIDE;
                           //mesh.updateMeshPositions();
                       }
                       */
                     //console.debug(mesh.absolutePosition);
-                    //mesh.position = new BABYLON.Vector3(mesh.position.x, mesh.position.y, -mesh.position.z);
+                    //mesh.position = new Vector3(mesh.position.x, mesh.position.y, -mesh.position.z);
                     //mesh.updateMeshPositions();
                     //mesh.parent = rawPivot;
                 });
@@ -308,8 +307,8 @@ class GeoTile3DLayer extends Base3DLayer {
                 const tileCenterScene = this.layerManager!.sceneViewer.projection.forward( tileCenterWGS84 );
 
                 //let distance = 225.0;
-                //pivot.position = new BABYLON.Vector3((x - 62360) * distance, 0, -(y - 48539) * distance);
-                //pivot.scaling = new BABYLON.Vector3(1, 1, -1);
+                //pivot.position = new Vector3((x - 62360) * distance, 0, -(y - 48539) * distance);
+                //pivot.scaling = new Vector3(1, 1, -1);
                 pivot.position = new Vector3( tileCenterScene[0], 0, tileCenterScene[1]);
                 pivot.rotation = new Vector3( 0, Math.PI, 0 );
 
@@ -360,7 +359,7 @@ class GeoTile3DLayer extends Base3DLayer {
                 this.layerManager!.sceneViewer.processMesh( <Mesh>pivot, <Mesh>pivot );  // TODO: Wrong conversion, use Node for "processMesh"
                 this.layerManager!.sceneViewer.scene.blockfreeActiveMeshesAndRenderingGroups = false;
 
-                //pivot.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
+                //pivot.occlusionType = AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
                 pivot.freezeWorldMatrix();
 
                 // TODO: Removed during TS migration, but this is needed to support ground texture replacement
@@ -396,14 +395,14 @@ class GeoTile3DLayer extends Base3DLayer {
                 if ( ex.request && ex.request.status === 404 ) {
                     // 404 - tile is being generated, show OSM tile as replacement
                     marker.dispose( false, true );
-                    marker = this.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
+                    marker = this.loadQuadTile( tileCoords );  // , Color3.Red()
                     this.tiles[tileKey].node = marker; // "notfound";
                     this.tiles[tileKey].status = "notfound";
                     this.layerManager!.sceneViewer.viewerState.serverInfoShow = true;
                 } else {
                     // Error: colour marker red
                     marker.dispose( false, true );
-                    marker = this.loadQuadTile( tileCoords );  // , BABYLON.Color3.Red()
+                    marker = this.loadQuadTile( tileCoords );  // , Color3.Red()
                     this.tiles[tileKey].node = marker; // "notfound";
                     this.tiles[tileKey].status = "error";
 
@@ -433,23 +432,23 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
-        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
 
         //Creation of a repeated textured material
         const materialPlane = new StandardMaterial( "textureTile_" + tileKey, this.layerManager!.sceneViewer.scene );
-        //materialPlane.diffuseTexture = new BABYLON.Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.scene);
+        //materialPlane.diffuseTexture = new Texture("https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.scene);
         materialPlane.diffuseColor = color;
-        materialPlane.specularColor = BABYLON.Color3.Black();
+        materialPlane.specularColor = Color3.Black();
         /*
         materialPlane.diffuseTexture.uScale = 1.0 / 225.0;
         materialPlane.diffuseTexture.vScale = -1.0 / 225.0;
         materialPlane.diffuseTexture.uOffset = -0.5;
         materialPlane.diffuseTexture.vOffset = -0.5;
         */
-        materialPlane.emissiveColor = color; // new BABYLON.Color3(1.0, 1.0, 1.);
+        materialPlane.emissiveColor = color; // new Color3(1.0, 1.0, 1.);
         materialPlane.disableLighting = true;
         materialPlane.backFaceCulling = false;
 
@@ -476,7 +475,7 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         //console.debug(sizeWidth, sizeHeight);
-        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
+        const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
@@ -485,15 +484,15 @@ class GeoTile3DLayer extends Base3DLayer {
         const materialPlane = new StandardMaterial( "textureTile_" + tileKey, this.layerManager!.sceneViewer.scene );
         materialPlane.diffuseTexture = new Texture( "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png", this.layerManager!.sceneViewer.scene );
 
-        //if (!color) color = BABYLON.Color3.Black; //new BABYLON.Color3(0, 0, 0);
-        materialPlane.specularColor = BABYLON.Color3.Black();
+        //if (!color) color = Color3.Black; //new Color3(0, 0, 0);
+        materialPlane.specularColor = Color3.Black();
         /*
         materialPlane.diffuseTexture.uScale = 1.0 / 225.0;
         materialPlane.diffuseTexture.vScale = -1.0 / 225.0;
         materialPlane.diffuseTexture.uOffset = -0.5;
         materialPlane.diffuseTexture.vOffset = -0.5;
         */
-        materialPlane.emissiveColor = color;  // new BABYLON.Color3(1.0, 1.0, 1.);
+        materialPlane.emissiveColor = color;  // new Color3(1.0, 1.0, 1.);
         materialPlane.disableLighting = true;
         materialPlane.backFaceCulling = false;
 
@@ -528,9 +527,9 @@ class GeoTile3DLayer extends Base3DLayer {
             const url = this.replaceTileCoordsUrl( tileCoords, this.groundTextureLayerUrl );
             materialGround = new StandardMaterial( "materialGround_" + tileKey, this.layerManager!.sceneViewer.scene );
             materialGround.roughness = 0.95;
-            materialGround.specularColor = new Color3( 0.15, 0.15, 0.15 ); // BABYLON.Color3.Black();
-            //materialGround.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2); // BABYLON.Color3.Black();
-            //materialGround.emissiveColor = BABYLON.Color3.White();  // new BABYLON.Color3(1.0, 1.0, 1.);
+            materialGround.specularColor = new Color3( 0.15, 0.15, 0.15 ); // Color3.Black();
+            //materialGround.specularColor = new Color3(0.2, 0.2, 0.2); // Color3.Black();
+            //materialGround.emissiveColor = Color3.White();  // new Color3(1.0, 1.0, 1.);
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
             materialGround.diffuseTexture = new Texture( url, this.layerManager!.sceneViewer.scene );
@@ -538,8 +537,8 @@ class GeoTile3DLayer extends Base3DLayer {
             materialGround.diffuseTexture.vScale = 1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
             materialGround.diffuseTexture.uOffset = -0.5;
             materialGround.diffuseTexture.vOffset = -0.5;
-            materialGround.diffuseTexture.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
-            materialGround.diffuseTexture.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+            materialGround.diffuseTexture.wrapU = Texture.WRAP_ADDRESSMODE;
+            materialGround.diffuseTexture.wrapV = Texture.WRAP_ADDRESSMODE;
             //materialGround.bumpTexture = materialGround.diffuseTexture;
             //materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
             //materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
@@ -611,5 +610,5 @@ class GeoTile3DLayer extends Base3DLayer {
 }
 
 
-export default GeoTile3DLayer;
+export { GeoTile3DLayer };
 

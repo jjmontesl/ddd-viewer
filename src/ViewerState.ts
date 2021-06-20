@@ -4,8 +4,13 @@
 * MIT License (see LICENSE file)
 */
 
-import DDDViewerConfig from "./DDDViewerConfig";
+import { DDDViewerConfig } from "./DDDViewerConfig";
 
+/**
+ * Holds DDDViewer global state like viewer position, date/time, configuration...
+ * Some internal values are also stored here for convenience (FPS, drawcalls, mobile detection...).
+ * This object must be JSON-serializable.
+ */
 class ViewerState {
 
     mapVisible = true;
@@ -79,4 +84,4 @@ class ViewerState {
     }
 }
 
-export default ViewerState;
+export { ViewerState };

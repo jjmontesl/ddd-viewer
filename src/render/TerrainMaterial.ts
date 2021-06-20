@@ -2,12 +2,13 @@
 /* eslint-disable array-bracket-spacing */
 /* eslint-disable indent */
 
-import * as BABYLON from "babylonjs";
-import * as BABYLONMAT from "babylonjs-materials";
-import "babylonjs-loaders";
-import { Material, Scene, Texture, Vector2 } from "babylonjs";
-import SceneViewer from "../SceneViewer";
-import { PBRCustomMaterial } from "babylonjs-materials";
+//import * as BABYLON from "babylonjs";
+//import * as BABYLONMAT from "babylonjs-materials";
+
+//import "babylonjs-loaders";
+import { PBRCustomMaterial } from "@babylonjs/materials";
+import { Color3, Scene, Texture, Vector2 } from "@babylonjs/core";
+import { SceneViewer } from "../SceneViewer";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 
@@ -99,13 +100,13 @@ class TerrainMaterialWrapper {
         this.numTilesHorizontal = options.numTilesHorizontal;
         this.numTilesVertical = options.numTilesVertical;
         this.totalTiles = this.numTilesVertical*this.numTilesHorizontal;
-        this.tileScale = new BABYLON.Vector2(1.0/this.numTilesHorizontal,1.0/this.numTilesVertical);
+        this.tileScale = new Vector2(1.0/this.numTilesHorizontal,1.0/this.numTilesVertical);
 
         // 2x2 = 4
         this.numSplatTilesHorizontal = options.numSplatTilesHorizontal;
         this.numSplatTilesVertical = options.numSplatTilesVertical;
         this.totalSplatTiles = this.numSplatTilesVertical * this.numSplatTilesHorizontal;
-        this.splatScale = new BABYLON.Vector2(1.0/this.numSplatTilesHorizontal,1.0/this.numSplatTilesVertical);
+        this.splatScale = new Vector2(1.0/this.numSplatTilesHorizontal,1.0/this.numSplatTilesVertical);
 
         this.shaderinjectpoint1 += "vec2 splatScale = vec2("+this.splatScale.x+","+this.splatScale.y+");\r\n";
         this.shaderinjectpoint1 += "vec2 scale = vec2("+this.tileScale.x+","+this.tileScale.y+");\r\n";
@@ -171,15 +172,15 @@ class TerrainMaterialWrapper {
         //this.needsUpdating = true;
 
         
-        this.material = new BABYLONMAT.PBRCustomMaterial("splatMaterial", scene);
+        this.material = new PBRCustomMaterial("splatMaterial", scene);
         this.material.metallic = 0.0;
         this.material.roughness = 0.95;
         //this.material.twoSidedLighting = true;
         //this.material.disableLighting = false;
-        this.material.ambientColor = new BABYLON.Color3(1.0, 1.0, 1.0); // BABYLON.Color3.Black();
+        this.material.ambientColor = new Color3(1.0, 1.0, 1.0); // Color3.Black();
         //this.material.disableBumpMap = true;
-        //this.material.specularColor = new BABYLON.Color3(0.15, 0.15, 0.15); // BABYLON.Color3.Black();
-        //this.material.emissiveColor = new BABYLON.Color3(0.0, 0.0, 0.0); // BABYLON.Color3.Black();
+        //this.material.specularColor = new Color3(0.15, 0.15, 0.15); // Color3.Black();
+        //this.material.emissiveColor = new Color3(0.0, 0.0, 0.0); // Color3.Black();
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
 
@@ -403,4 +404,4 @@ class TerrainMaterialWrapper {
 
 }
 
-export default TerrainMaterialWrapper;
+export { TerrainMaterialWrapper };

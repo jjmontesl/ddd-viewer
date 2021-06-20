@@ -22,4 +22,4 @@ class ScenePosition {
 
 }
 
-export default ScenePosition;
+export { ScenePosition };

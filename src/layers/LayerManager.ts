@@ -1,9 +1,9 @@
-import SceneViewer from "../SceneViewer";
-import Base3DLayer from "./Base3DLayer";
-import GeoTile3DLayer from "./ModelGeoTileLayer3D";
+import { SceneViewer } from "../SceneViewer";
+import { Base3DLayer } from "./Base3DLayer";
+import { GeoTile3DLayer } from "./GeoTile3DLayer";
 
 
-export default class LayerManager {
+class LayerManager {
     sceneViewer: SceneViewer;
     layers: { [ key: string ]: Base3DLayer };
 
@@ -25,3 +25,4 @@ export default class LayerManager {
     }
 }
 
+export { LayerManager };

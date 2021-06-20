@@ -6,34 +6,27 @@
 
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
-import "@babylonjs/loaders/glTF";
-import * as BABYLON from "babylonjs";
-import { AbstractMesh, ArcRotateCamera, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DirectionalLight, Engine, LensFlareSystem, Material, Mesh, PBRBaseMaterial, PBRMaterial, ReflectionProbe, Scene, SceneInstrumentation, SceneOptions, StandardMaterial, TargetCamera, Texture, Vector3 } from "babylonjs";
-import "babylonjs-loaders";
-import "babylonjs-materials";
-import { WaterMaterial } from "babylonjs-materials";
+import { GLTF2 } from "@babylonjs/loaders/glTF";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
+import { WaterMaterial } from "@babylonjs/materials";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
 //import {register} from 'ol/proj/proj4';
-import * as olProj from "ol/proj";
-//import "@babylonjs/core/Animations/animatable";
 import { createXYZ, extentFromProjection } from "ol/tilegrid";
 import TileGrid from "ol/tilegrid/TileGrid";
-import proj4 from "proj4";
-import DDDMaterialsConfig from "./DDDMaterialsConfig";
-// <reference types="suncalc" />
+import { DDDMaterialsConfig } from "./DDDViewerConfig";
 // import * as SunCalc from "suncalc";
-// import TerrainMaterialWrapper from "./render/TerrainMaterial.js";
-//import UniversalTerrainMaterialWrapper from '@/dddviewer/render/UniversalTerrainMaterialWrapper.js';
-//import createOceanMaterial from '@/dddviewer/render/OceanMaterial.js';
+// <reference types="suncalc" />
+import { LayerManager } from "./layers/LayerManager";
+import { QueueLoader } from "./loading/QueueLoader";
+import { ViewerProcessManager } from "./process/ViewerProcessManager";
 //import SkyMaterialWrapper from "./render/SkyboxMaterial";
-import LayerManager from "./layers/LayerManager";
-import QueueLoader from "./loading/QueueLoader";
-import ViewerProcesses from "./process/ViewerProcessManager";
-import TerrainMaterialWrapper from "./render/TerrainMaterial";
-import ScenePosition from "./ScenePosition";
-import ViewerSequencer from "./process/sequencer/ViewerSequencer";
-import ViewerState from "./ViewerState";
+import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
+import { ScenePosition } from "./ScenePosition";
+import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
+import { ViewerState } from "./ViewerState";
+import * as proj4 from "proj4";
+import { transform } from "ol/proj";
 
 
 
@@ -46,7 +39,7 @@ class SceneViewer {
     sceneInstru: SceneInstrumentation | null = null;
 
     sequencer: ViewerSequencer;
-    processes: ViewerProcesses;
+    processes: ViewerProcessManager;
 
     highlightMeshes: Mesh[] = [];
     //materialHighlight: Material | null = null;
@@ -59,7 +52,7 @@ class SceneViewer {
     queueLoader: QueueLoader;
 
     originShiftWGS84: number[];
-    projection: proj4.Converter;
+    projection: proj4.InterfaceProjection;
 
     tileGrid: TileGrid;
 
@@ -103,7 +96,7 @@ class SceneViewer {
         this.queueLoader = new QueueLoader( this );
 
         this.originShiftWGS84 = [ 0, 0 ];
-        this.projection = proj4( "EPSG:4326" );
+        this.projection = proj4.Proj( "EPSG:4326" );
 
         this.tileGrid = createXYZ({
             extent: extentFromProjection( "EPSG:3857" ),
@@ -122,11 +115,11 @@ class SceneViewer {
 
         this.lastDateUpdate = new Date().getTime();
 
-        this.processes = new ViewerProcesses( this );
+        this.processes = new ViewerProcessManager( this );
         this.sequencer = new ViewerSequencer( this );
 
         // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
-        this.engine = new BABYLON.Engine( canvas, true ); // , null, true); // , { stencil: true });
+        this.engine = new Engine( canvas, true ); // , null, true); // , { stencil: true });
 
         console.warn( "Scene option 'useGeometryIdsMap' is disabled." );
         this.scene = new Scene( this.engine, { useGeometryIdsMap: true } as SceneOptions );
@@ -156,23 +149,23 @@ class SceneViewer {
         this.scene.pointerDownPredicate = function() { return false; };
 
         //this.sceneInstru = null;
-        this.sceneInstru = new BABYLON.SceneInstrumentation( this.scene );
+        this.sceneInstru = new SceneInstrumentation( this.scene );
 
-        //that.highlightLayer = new BABYLON.HighlightLayer("hl1", that.scene);
+        //that.highlightLayer = new HighlightLayer("hl1", that.scene);
 
 
-        const water = new WaterMaterial( "water", this.scene, new BABYLON.Vector2( 512, 512 ));
+        const water = new WaterMaterial( "water", this.scene, new Vector2( 512, 512 ));
         //water.backFaceCulling = true;
-        //water.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", that.scene);
+        //water.bumpTexture = new Texture("/textures/waterbump.png", that.scene);
         water.windForce = 5;
         water.waveHeight = 0.1;
         water.waveSpeed = 100.0;
         water.bumpHeight = 0.05;
         water.waveLength = 10.0;
-        water.alpha = 0.8;
+        //water.alpha = 0.8;
         //water.useSpecularOverAlpha = true;
         //water.useReflectionOverAlpha = true;
-        water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
+        //water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
         //water.renderingGroupId = 3;
         water.colorBlendFactor = 0.2;
         this.scene.setRenderingAutoClearDepthStencil( 3, false, false, false );
@@ -181,8 +174,8 @@ class SceneViewer {
         this.materialWater = water;
 
         /*
-        that.materialGrass = new BABYLON.StandardMaterial("bawl", that.scene);
-        that.textureGrass = new BABYLON.GrassProceduralTexture("textbawl", 256, that.scene);
+        that.materialGrass = new StandardMaterial("bawl", that.scene);
+        that.textureGrass = new GrassProceduralTexture("textbawl", 256, that.scene);
         that.materialGrass.ambientTexture = that.textureGrass;
         */
 
@@ -190,16 +183,16 @@ class SceneViewer {
         // Environment
         this.envReflectionProbe = null;
         if ( this.viewerState.sceneEnvironmentProbe !== null ) {
-            this.envReflectionProbe = new BABYLON.ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true );
+            this.envReflectionProbe = new ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true );
             this.envReflectionProbe.refreshRate = 6;
-            this.envReflectionProbe.position = new BABYLON.Vector3( 0, 0, 0 );
+            this.envReflectionProbe.position = new Vector3( 0, 0, 0 );
 
             // Assign to a material to see it
-            //var pbr = new BABYLON.PBRMaterial('envReflectionTestMaterial', this.scene);
+            //var pbr = new PBRMaterial('envReflectionTestMaterial', this.scene);
             //pbr.reflectionTexture = this.envReflectionProbe.cubeTexture;
 
             // Force PBR material udpate and show for debugging
-            //var sphere = BABYLON.Mesh.CreateSphere("envReflectionTestSphere", 16, 5, this.scene);
+            //var sphere = Mesh.CreateSphere("envReflectionTestSphere", 16, 5, this.scene);
             //sphere.position.y = 150;
             //sphere.material = pbr;
 
@@ -209,7 +202,7 @@ class SceneViewer {
 
         } else {
             //this.scene.createDefaultEnvironment();
-            //var hdrTexture = new BABYLON.CubeTexture.CreateFromPrefilteredData("/textures/environment.env", this.scene);
+            //var hdrTexture = new CubeTexture.CreateFromPrefilteredData("/textures/environment.env", this.scene);
             const hdrTexture = CubeTexture.CreateFromPrefilteredData( "/textures/country.env", this.scene );
             this.scene.environmentTexture = hdrTexture;
         }
@@ -219,7 +212,7 @@ class SceneViewer {
 
 
         /*
-        const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2-0.5, 500, BABYLON.Vector3.Zero(), that.scene);
+        const camera = new ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2-0.5, 500, Vector3.Zero(), that.scene);
         camera.attachControl(canvas, true);
         camera.minZ = 1;
         //camera.maxZ = 2500;  // Automatic? see focusOn()
@@ -242,31 +235,31 @@ class SceneViewer {
         // Lighting
 
         //this.scene.ambientColor = this.ambientColorDay.clone();
-        //this.scene.ambientColor = new BABYLON.Color3(0, 0, 0);
-        this.scene.ambientColor = new BABYLON.Color3( 0.3, 0.3, 0.3 );
+        //this.scene.ambientColor = new Color3(0, 0, 0);
+        this.scene.ambientColor = new Color3( 0.3, 0.3, 0.3 );
         /*
-        that.lightHemi = new BABYLON.HemisphericLight("lightHemi", new BABYLON.Vector3(-0.5, 1, -1), that.scene);
+        that.lightHemi = new HemisphericLight("lightHemi", new Vector3(-0.5, 1, -1), that.scene);
         that.lightHemi.intensity = 1.15;
-        that.lightHemi.diffuse = new BABYLON.Color3(0.95, 0.95, 1);
-        that.lightHemi.specular = new BABYLON.Color3(1, 1, 0.95);
-        that.lightHemi.groundColor = new BABYLON.Color3(0.95, 1, 0.95);
+        that.lightHemi.diffuse = new Color3(0.95, 0.95, 1);
+        that.lightHemi.specular = new Color3(1, 1, 0.95);
+        that.lightHemi.groundColor = new Color3(0.95, 1, 0.95);
         */
-        this.light = new BABYLON.DirectionalLight( "light", new BABYLON.Vector3( 0.3, -0.5, 0.5 ).normalizeToNew(), this.scene );
-        this.light.diffuse = new BABYLON.Color3( 0.95, 0.95, 1.00 );
-        this.light.specular = new BABYLON.Color3( 1, 1, 0.95 );
+        this.light = new DirectionalLight( "light", new Vector3( 0.3, -0.5, 0.5 ).normalizeToNew(), this.scene );
+        this.light.diffuse = new Color3( 0.95, 0.95, 1.00 );
+        this.light.specular = new Color3( 1, 1, 0.95 );
         this.light.intensity = 2.5;
 
         /*
-        that.light2 = new BABYLON.DirectionalLight("light2", new BABYLON.Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
-        that.light.diffuse = new BABYLON.Color3(223 / 255, 242 / 255, 196 / 255);
-        that.light.specular = new BABYLON.Color3(1, 1, 0.95);
+        that.light2 = new DirectionalLight("light2", new Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
+        that.light.diffuse = new Color3(223 / 255, 242 / 255, 196 / 255);
+        that.light.specular = new Color3(1, 1, 0.95);
         that.light2.intensity = 1.5;
         */
 
 
         this.shadowGenerator = null;
         if ( this.viewerState.sceneShadowsEnabled ) {
-            this.shadowGenerator = new BABYLON.CascadedShadowGenerator( 1024, this.light );
+            this.shadowGenerator = new CascadedShadowGenerator( 1024, this.light );
             //that.shadowGenerator.debug = true;
             this.shadowGenerator.shadowMaxZ = 500;
             this.shadowGenerator.autoCalcDepthBounds = true;
@@ -278,38 +271,38 @@ class SceneViewer {
         }
 
 
-        const lensFlareEmitter: Mesh = new BABYLON.Mesh( "lensFlareEmitter", this.scene );
-        this.lensFlareSystem = new BABYLON.LensFlareSystem( "lensFlareSystem", lensFlareEmitter, this.scene );
+        const lensFlareEmitter: Mesh = new Mesh( "lensFlareEmitter", this.scene );
+        this.lensFlareSystem = new LensFlareSystem( "lensFlareSystem", lensFlareEmitter, this.scene );
         const flareScale = 0.5;
-        new BABYLON.LensFlare( flareScale * 0.2, 0, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
-        new BABYLON.LensFlare( flareScale * 0.5, 0.2, new BABYLON.Color3( 0.5, 0.5, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        new BABYLON.LensFlare( flareScale * 0.2, 1.0, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        new BABYLON.LensFlare( flareScale * 0.4, 0.4, new BABYLON.Color3( 1, 0.5, 1 ), "/textures/flare.png", this.lensFlareSystem );
-        new BABYLON.LensFlare( flareScale * 0.1, 0.6, new BABYLON.Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
-        new BABYLON.LensFlare( flareScale * 0.3, 0.8, new BABYLON.Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.2, 0, new Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.5, 0.2, new Color3( 0.5, 0.5, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.2, 1.0, new Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.4, 0.4, new Color3( 1, 0.5, 1 ), "/textures/flare.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.1, 0.6, new Color3( 1, 1, 1 ), "/textures/flare3.png", this.lensFlareSystem );
+        new LensFlare( flareScale * 0.3, 0.8, new Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
 
         // Setup lighting, flares, etc.
         //this.lightSetupFromDatePos();
 
-        //var ssao = new BABYLON.SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
+        //var ssao = new SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
-        this.materialHighlight = new BABYLON.StandardMaterial( "materialHighlight", this.scene );
-        this.materialHighlight.diffuseColor = new BABYLON.Color3( 1, 1, 1 );
-        //that.materialHighlight.specularColor = new BABYLON.Color3(1, 1, 1);
-        this.materialHighlight.emissiveColor = new BABYLON.Color3( 1.0, 1.0, 1. );
+        this.materialHighlight = new StandardMaterial( "materialHighlight", this.scene );
+        this.materialHighlight.diffuseColor = new Color3( 1, 1, 1 );
+        //that.materialHighlight.specularColor = new Color3(1, 1, 1);
+        this.materialHighlight.emissiveColor = new Color3( 1.0, 1.0, 1. );
         this.materialHighlight.wireframe = true;
         this.materialHighlight.disableLighting = true;
         this.materialHighlight.backFaceCulling = true;
 
         // The first parameter can be used to specify which mesh to import. Here we import all meshes
-        //BABYLON.SceneLoader.ImportMesh('', '', https://models.babylonjs.com/', 'alien.glb', that.scene, function (newMeshes) {
+        //SceneLoader.ImportMesh('', '', https://models.babylonjs.com/', 'alien.glb', that.scene, function (newMeshes) {
         //    console.debug("Preparing model.");
         //    that.scene.createDefaultCameraOrLight(true);
         //    that.scene.activeCamera.attachControl(canvas, false);
         //    that.scene.activeCamera.alpha += Math.PI; // camera +180°
         //});
 
-        this.textureDetailSurfaceImp = new BABYLON.Texture( "/textures/SurfaceImperfections12_ddd.png", this.scene );
+        this.textureDetailSurfaceImp = new Texture( "/textures/SurfaceImperfections12_ddd.png", this.scene );
 
         this.loadCatalog( "/assets/catalog.glb", false );
 
@@ -324,7 +317,7 @@ class SceneViewer {
 
         // Shaders
         /*
-        BABYLON.Effect.ShadersStore["customVertexShader"]= `
+        Effect.ShadersStore["customVertexShader"]= `
             precision highp float;
 
             // Attributes
@@ -375,7 +368,7 @@ class SceneViewer {
         // Set skybox
         if ( baseUrl === "@dynamic" )  {
             /*
-            const skybox = BABYLON.Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
+            const skybox = Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
             
             const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
             skyboxMaterial.disableDepthWrite = true;
@@ -388,13 +381,13 @@ class SceneViewer {
 
         } else if ( baseUrl !== null ) {
 
-            const skybox = BABYLON.MeshBuilder.CreateBox( "skyBox", { size:3000.0 }, this.scene );
-            const skyboxMaterial = new BABYLON.StandardMaterial( "skyBox", <Scene> this.scene );
+            const skybox = MeshBuilder.CreateBox( "skyBox", { size:3000.0 }, this.scene );
+            const skyboxMaterial = new StandardMaterial( "skyBox", <Scene> this.scene );
             skyboxMaterial.backFaceCulling = false;
-            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture( baseUrl, <Scene> this.scene );
-            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-            skyboxMaterial.diffuseColor = new BABYLON.Color3( 0, 0, 0 );
-            skyboxMaterial.specularColor = new BABYLON.Color3( 0, 0, 0 );
+            skyboxMaterial.reflectionTexture = new CubeTexture( baseUrl, <Scene> this.scene );
+            skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = new Color3( 0, 0, 0 );
+            skyboxMaterial.specularColor = new Color3( 0, 0, 0 );
             skyboxMaterial.disableDepthWrite = true;
 
             skybox.material = skyboxMaterial;
@@ -425,7 +418,7 @@ class SceneViewer {
 
     loadCatalog( filename: string, loadMaterials: boolean ): void {
         console.debug( "Loading catalog: " + filename );
-        BABYLON.SceneLoader.ImportMesh( null, filename, "", this.scene, //this.scene,
+        SceneLoader.ImportMesh( null, filename, "", this.scene, //this.scene,
             // onSuccess
             ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => { 
                 //console.log("GLB loaded", newMeshes);
@@ -515,7 +508,7 @@ class SceneViewer {
                     mesh.material.transparencyMode = 2;  // ALPHA_BLEND
                     mesh.material.useSpecularOverAlpha = true;
                     mesh.material.useReflectionOverAlpha = true;
-                    mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+                    mesh.material.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
                     */
 
                     // This "WaterInstanced" is to avoid WaterMaterial from being used in instances (seems to fail, causing the material to disappear).
@@ -523,8 +516,10 @@ class SceneViewer {
                     this.catalog_materials["WaterInstanced"].alpha = 0.7;
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
                     this.catalog_materials["WaterInstanced"].freeze();
-
-                    this.catalog_materials[key] = <Material> this.materialWater;
+                    
+                    console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
+                    //this.catalog_materials[key] = <WaterMaterial> this.materialWater;
+                    
                     dontFreeze = true;
 
                 } else if ( metadata["ddd:material"] === "Water4Advanced" ) {
@@ -533,17 +528,18 @@ class SceneViewer {
                     mesh.material.transparencyMode = 2;  // ALPHA_BLEND
                     mesh.material.useSpecularOverAlpha = true;
                     mesh.material.useReflectionOverAlpha = true;
-                    mesh.material.bumpTexture = new BABYLON.Texture("/textures/waterbump.png", this.scene);
+                    mesh.material.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
                     */
-                    this.catalog_materials[key] = <Material> this.materialWater;
+                    console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
+                    //this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
                 } else if ( mesh.material instanceof PBRMaterial ) {
 
-                    //mesh.material.specularColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.2);
-                    //mesh.material.albedoColor = BABYLON.Color3.Lerp(mesh.material.albedoColor, BABYLON.Color3.White(), 0.5);
-                    //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
-                    //mesh.material.albedoColor = BABYLON.Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
+                    //mesh.material.specularColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.2);
+                    //mesh.material.albedoColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.5);
+                    //mesh.material.albedoColor = Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
+                    //mesh.material.albedoColor = Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
 
                     let uvScale = 0.25;
 
@@ -610,7 +606,7 @@ class SceneViewer {
                     this.catalog_materials[key].zOffset = metadata["zoffset"];
                 }
 
-                //mesh.material.ambientColor = mesh.material.albedoColor; // new BABYLON.Color3(1, 1, 1);
+                //mesh.material.ambientColor = mesh.material.albedoColor; // new Color3(1, 1, 1);
                 if ( !dontFreeze ) {
                     this.catalog_materials[key].freeze();
                 }
@@ -647,7 +643,7 @@ class SceneViewer {
                 const tileUrlBase = this.viewerState.dddConfig.tileUrlBase;
                 const splatmapUrl = tileUrlBase + "17" + "/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
 
-                const splatmapTexture = new BABYLON.Texture( splatmapUrl, this.scene );
+                const splatmapTexture = new Texture( splatmapUrl, this.scene );
 
                 const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture, {});
                 ( <any> root )._splatmapMaterial = matwrapper.material;
@@ -768,13 +764,13 @@ class SceneViewer {
             if ( metadata["ddd:light:color"]) {
                 replaced = true;
                 /*
-                var light = new BABYLON.PointLight("light_" + mesh.id, mesh.position, this.scene);
+                var light = new PointLight("light_" + mesh.id, mesh.position, this.scene);
                 light.parent = mesh.parent;
                 light.position = mesh.position;
                 light.position.y = light.position.z + 1;
                 light.intensity = 20;
-                light.diffuse = new BABYLON.Color3(1, 0, 0);
-                light.specular = new BABYLON.Color3(0, 1, 0);
+                light.diffuse = new Color3(1, 0, 0);
+                light.specular = new Color3(0, 1, 0);
                 */
 
                 mesh.parent = null;
@@ -787,24 +783,24 @@ class SceneViewer {
                 const showText = this.viewerState.sceneTextsEnabled;
                 if ( showText ) {
                     // Text should be (possibly) exported as meshes by the generator.
-                    newMesh = BABYLON.MeshBuilder.CreatePlane( "text_" + mesh.id, { size: 2.4, sideOrientation: BABYLON.Mesh.DOUBLESIDE, updatable: true }, this.scene );
+                    newMesh = MeshBuilder.CreatePlane( "text_" + mesh.id, { size: 2.4, sideOrientation: Mesh.DOUBLESIDE, updatable: true }, this.scene );
                     newMesh.parent = null;
                     newMesh.parent = mesh.parent; // .parent;
                     newMesh.scaling = mesh.scaling.clone();
                     newMesh.rotationQuaternion = mesh.rotationQuaternion!.clone();
                     newMesh.position = mesh.position.clone();
 
-                    newMesh.rotate( BABYLON.Vector3.Right(), Math.PI / 2.0, BABYLON.Space.LOCAL );
+                    newMesh.rotate( Vector3.Right(), Math.PI / 2.0, Space.LOCAL );
                     newMesh.scaling.y *= 0.35;
 
                     //Create dynamic texture
-                    const texture = new BABYLON.DynamicTexture( "dynamicTexture_text_" + mesh.id, { width:256, height:128 }, this.scene, true );
+                    const texture = new DynamicTexture( "dynamicTexture_text_" + mesh.id, { width:256, height:128 }, this.scene, true );
                     //var textureContext = texture.getContext();
                     const font = "bold 36px serif";
                     const text = metadata["ddd:text"];
                     texture.drawText( text, 128.0 - ( text.length * 8 ), 60, font, "blue", "transparent", true, true );
 
-                    const material = new BABYLON.StandardMaterial( "Mat" + mesh.id, <Scene> this.scene );
+                    const material = new StandardMaterial( "Mat" + mesh.id, <Scene> this.scene );
                     material.diffuseTexture = texture;
                     material.diffuseTexture.hasAlpha = true;
                     material.useAlphaFromDiffuseTexture = true;
@@ -853,17 +849,17 @@ class SceneViewer {
 
         }
 
-        //mesh.occlusionType = BABYLON.AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
+        //mesh.occlusionType = AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
         if ( mesh ) {  // && !replaced
 
             /*
             if (mesh.simplify && mesh.getTotalVertices() > 0 && !replaced) {
-                mesh.simplify([{ quality: 0.1, distance: 100 }, ], false, BABYLON.SimplificationType.QUADRATIC);
+                mesh.simplify([{ quality: 0.1, distance: 100 }, ], false, SimplificationType.QUADRATIC);
             }
             */
 
-            mesh.cullingStrategy = BABYLON.AbstractMesh.CULLINGSTRATEGY_BOUNDINGSPHERE_ONLY;
+            mesh.cullingStrategy = AbstractMesh.CULLINGSTRATEGY_BOUNDINGSPHERE_ONLY;
             //mesh.freezeWorldMatrix();
 
             //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
@@ -914,8 +910,8 @@ class SceneViewer {
 
                 //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
                 meshInstanceRoot.toLeftHanded();
-                //meshInstanceRoot.rotate(BABYLON.Vector3.Up(), Math.PI / 2);
-                //meshInstanceRoot.scaling = new BABYLON.Vector3(1, 1, -1);
+                //meshInstanceRoot.rotate(Vector3.Up(), Math.PI / 2);
+                //meshInstanceRoot.scaling = new Vector3(1, 1, -1);
                 this.instanceRoots[instanceRootKey] = meshInstanceRoot;
                 meshInstanceRoot.parent = root;
                 //meshInstanceRoot.position = root.computeWorldMatrix(true);  // Seems to cause problems, but should not :? (freezing may be involved)
@@ -940,18 +936,18 @@ class SceneViewer {
             let localRot = mesh.rotationQuaternion;
             let localScaling = mesh.scaling;
             localScaling.x = -1 * localScaling.x;
-            var meshMatrix = BABYLON.Matrix.Compose(localScaling, localRot, localPos);
+            var meshMatrix = Matrix.Compose(localScaling, localRot, localPos);
             */
 
-            //var adaptMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
+            //var adaptMatrix = Matrix.Compose(new Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
 
-            const scaleMatrix = BABYLON.Matrix.Compose( new BABYLON.Vector3( 1, 1, -1 ), new BABYLON.Quaternion( 0, 0, 0, 0 ), new BABYLON.Vector3( 0, 0, 0 )); //BABYLON.Matrix.Scaling(-1, 1, 1);
+            const scaleMatrix = Matrix.Compose( new Vector3( 1, 1, -1 ), new Quaternion( 0, 0, 0, 0 ), new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
 
             const nodeMatrix = node.computeWorldMatrix( true );
             const meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix( true );
             //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
             let matrix = scaleMatrix.multiply( nodeMatrix );
-            matrix = matrix.multiply( BABYLON.Matrix.Invert( meshInstanceRootMatrix ));
+            matrix = matrix.multiply( Matrix.Invert( meshInstanceRootMatrix ));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
             meshInstanceRoot.thinInstanceAdd( matrix );
             meshInstanceRoot.freezeWorldMatrix();
@@ -1001,14 +997,14 @@ class SceneViewer {
 
                 //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
                 //meshInstanceRoot.toRightHanded();
-                //meshInstanceRoot.rotate(BABYLON.Vector3.Right(), Math.PI / 2);
+                //meshInstanceRoot.rotate(Vector3.Right(), Math.PI / 2);
 
                 // This section is critical. The bakeCurrentTransformIntoVertices in the middle is too.
-                meshInstanceRoot.scaling = new BABYLON.Vector3( 1, 1, -1 );
-                meshInstanceRoot.rotate( BABYLON.Vector3.Up(), -Math.PI / 2 );
+                meshInstanceRoot.scaling = new Vector3( 1, 1, -1 );
+                meshInstanceRoot.rotate( Vector3.Up(), -Math.PI / 2 );
                 meshInstanceRoot.bakeCurrentTransformIntoVertices();
-                meshInstanceRoot.rotate( BABYLON.Vector3.Forward(), -Math.PI / 2 );
-                meshInstanceRoot.rotate( BABYLON.Vector3.Right(), Math.PI );
+                meshInstanceRoot.rotate( Vector3.Forward(), -Math.PI / 2 );
+                meshInstanceRoot.rotate( Vector3.Right(), Math.PI );
                 meshInstanceRoot.bakeCurrentTransformIntoVertices();
                 //meshInstanceRoot.flipFaces(true);
 
@@ -1030,16 +1026,16 @@ class SceneViewer {
                 //instance.dispose();
             }
 
-            //var adaptMatrix = BABYLON.Matrix.Compose(new BABYLON.Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
+            //var adaptMatrix = Matrix.Compose(new Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
 
             const bufferMatrices = metadataNode["ddd:instance:buffer:matrices"];
 
-            //const scaleMatrix = BABYLON.Matrix.Compose( new BABYLON.Vector3( 1, 1, -1 ), new BABYLON.Quaternion( 0, 0, 0, 0 ), new BABYLON.Vector3( 0, 0, 0 )); //BABYLON.Matrix.Scaling(-1, 1, 1);
+            //const scaleMatrix = Matrix.Compose( new Vector3( 1, 1, -1 ), new Quaternion( 0, 0, 0, 0 ), new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
             //let nodeMatrix = node.computeWorldMatrix(true);
             //let meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix(true);
             //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
             //let matrix = scaleMatrix.multiply(nodeMatrix);
-            //matrix = matrix.multiply(BABYLON.Matrix.Invert(meshInstanceRootMatrix));
+            //matrix = matrix.multiply(Matrix.Invert(meshInstanceRootMatrix));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
             //var idx = meshInstanceRoot.thinInstanceAdd(matrix);
             const bufferMatricesArray = new Float32Array( bufferMatrices.length );
@@ -1062,7 +1058,7 @@ class SceneViewer {
 
     instanceAsNode( key: string, _root: Mesh, mesh: Mesh ): void {
         //console.debug("Replacing mesh: " + key);
-        const newMesh = new BABYLON.TransformNode( mesh.id + "_instance", this.scene );  // new BABYLON.Mesh("chunk_" + tileKey, this.scene);
+        const newMesh = new TransformNode( mesh.id + "_instance", this.scene );  // new Mesh("chunk_" + tileKey, this.scene);
         //let newMesh = mesh;
         //newMesh.geometry = null;
         newMesh.parent = mesh.parent;
@@ -1088,7 +1084,7 @@ class SceneViewer {
         instance.id = mesh.id + "_clone";
         //instance.isVisible = true;
         instance.parent = newMesh;
-        newMesh.rotate( new BABYLON.Vector3( 1, 0, 0 ), Math.PI / 2, BABYLON.Space.LOCAL );
+        newMesh.rotate( new Vector3( 1, 0, 0 ), Math.PI / 2, Space.LOCAL );
         instance.setEnabled( true );
         //mesh = newMesh;
     }
@@ -1245,7 +1241,7 @@ class SceneViewer {
             // Parse at location
             //http://localhost:8080/maps/@42.1354407,-0.4126472,17.0z
             const href = posString;
-            const regexp = /.*@([0-9.\-]+),([0-9.\-]+)((,(([0-9.\-]+)[ayhtz]))*).*/;
+            const regexp = /.*@([0-9.\\-]+),([0-9.\\-]+)((,(([0-9.\\-]+)[ayhtz]))*).*/;
             const matches = href.match( regexp );
             //console.debug(matches);
 
@@ -1314,8 +1310,8 @@ class SceneViewer {
 
         if ( !this.camera ) return;
 
-        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
-        const ray = new BABYLON.Ray( new BABYLON.Vector3( this.camera.position.x, -100.0, this.camera.position.z ), new BABYLON.Vector3( 0, 1, 0 ), 3000.0 );
+        //const ray = new Ray(this.camera.position, new Vector3(0, -1, 0));
+        const ray = new Ray( new Vector3( this.camera.position.x, -100.0, this.camera.position.z ), new Vector3( 0, 1, 0 ), 3000.0 );
         const pickResult = this.scene.pickWithRay( ray );
         //const pickResult = null;
         if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
@@ -1337,8 +1333,8 @@ class SceneViewer {
 
     /*
     positionGroundHeight() {
-        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
-        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
+        //const ray = new Ray(this.camera.position, new Vector3(0, -1, 0));
+        const ray = new Ray(new Vector3(this.camera.position.x, -100.0, this.camera.position.z), new Vector3(0, 1, 0), 3000.0);
         const pickResult = this.scene.pickWithRay(ray);
         if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
             //console.debug(pickResult.pickedMesh.id);
@@ -1349,8 +1345,8 @@ class SceneViewer {
     }
 
     positionTerrainElevation() {
-        //const ray = new BABYLON.Ray(this.camera.position, new BABYLON.Vector3(0, -1, 0));
-        const ray = new BABYLON.Ray(new BABYLON.Vector3(this.camera.position.x, -100.0, this.camera.position.z), new BABYLON.Vector3(0, 1, 0), 3000.0);
+        //const ray = new Ray(this.camera.position, new Vector3(0, -1, 0));
+        const ray = new Ray(new Vector3(this.camera.position.x, -100.0, this.camera.position.z), new Vector3(0, 1, 0), 3000.0);
         const pickResult = this.scene.pickWithRay(ray);
         if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== 'skyBox') {
 
@@ -1367,20 +1363,35 @@ class SceneViewer {
     }
     */
 
+    /**
+     * Untested
+     * (from: https://gist.github.com/spite/051604efd1d971ab4b6ef1bc1ae2636e)
+     */
+    /*
+    _getTileFromLatLon(zoom, lat, lon) {
+        const width = Math.pow(2, zoom);
+        const height = Math.pow(2, zoom);
+        const latRad = (lat * Math.PI) / 180;
+        const x = ~~((width * (lon + 180)) / 360);
+        const y = ~~(((1 - Math.asinh(Math.tan(latRad)) / Math.PI) / 2.0) * height);
+        return {zoom, x, y};
+    }
+    */
+
     registerProjectionForCoords( coords: Coordinate ): void {
 
         console.debug( "Setting Scene Geo transform for coords: " + coords );
 
         // Get tile grid coordinates
-        const coordsUtm = olProj.transform( coords, "EPSG:4326", "EPSG:3857" );
+        const coordsUtm = transform( coords, "EPSG:4326", "EPSG:3857" );
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ( coordsUtm, 17 );
 
         const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
         const tileCenter = extent.getCenter( tileExtent );
-        const tileCenterWGS84 = olProj.transform( tileCenter, "EPSG:3857", "EPSG:4326" );
+        const tileCenterWGS84 = transform( tileCenter, "EPSG:3857", "EPSG:4326" );
 
         // Using coords of tile center for custom projection as DDD does
-        this.projection = proj4(
+        this.projection = proj4.Proj(
             "+proj=tmerc +lat_0=" + tileCenterWGS84[1] + " +lon_0=" + tileCenterWGS84[0] + " +k_0=1 " +
             "+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 " +
             "+towgs84=0,0,0,0,0,0,0 +units=m +no_defs" );
@@ -1440,7 +1451,7 @@ class SceneViewer {
 
             if ( highlight ) {
                 // Highlight
-                //that.highlightLayer.addMesh(pickResult.pickedMesh, BABYLON.Color3.White()); // , true);
+                //that.highlightLayer.addMesh(pickResult.pickedMesh, Color3.White()); // , true);
                 //pickResult.pickedMesh.material = that.materialHighlight;
                 //pickResult.pickedMesh.material = that.materialGrass;
 
@@ -1530,27 +1541,27 @@ class SceneViewer {
         // Postprocess
         // The default pipeline applies other settings, we'd better off using Bloom independently if possible
         // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
-        const defaultPipeline = new BABYLON.DefaultRenderingPipeline( "default", true, this.scene, [ <Camera> this.camera ]);
+        const defaultPipeline = new DefaultRenderingPipeline( "default", true, this.scene, [ <Camera> this.camera ]);
         defaultPipeline.fxaaEnabled = true;
         defaultPipeline.bloomEnabled = true;
         defaultPipeline.bloomWeight = 1.0;  // 1.5 is exagerated but maybe usable for pics
         //defaultPipeline.cameraFov = this.camera.fov;
         defaultPipeline.imageProcessing.toneMappingEnabled = true;
 
-        //var postProcessHighlights = new BABYLON.HighlightsPostProcess("highlights", 0.1, camera);
-        //var postProcessTonemap = new BABYLON.TonemapPostProcess("tonemap", BABYLON.TonemappingOperator.Hable, 1.2, camera);
+        //var postProcessHighlights = new HighlightsPostProcess("highlights", 0.1, camera);
+        //var postProcessTonemap = new TonemapPostProcess("tonemap", TonemappingOperator.Hable, 1.2, camera);
 
         // See: https://doc.babylonjs.com/divingDeeper/postProcesses/postProcessRenderPipeline
         /*
-        var standardPipeline = new BABYLON.PostProcessRenderPipeline(this.engine, "standardPipeline");
-        var effectBloom = new BABYLON.BloomEffect(this.scene, 4, 5.0, 2.0);
-        //var effectDepthOfField = new BABYLON.DepthOfFieldEffect(this.scene);
-        var postProcessChain = new BABYLON.PostProcessRenderEffect(this.engine, "postProcessChain", function() { return [effectBloom, effectDepthOfField] });
+        var standardPipeline = new PostProcessRenderPipeline(this.engine, "standardPipeline");
+        var effectBloom = new BloomEffect(this.scene, 4, 5.0, 2.0);
+        //var effectDepthOfField = new DepthOfFieldEffect(this.scene);
+        var postProcessChain = new PostProcessRenderEffect(this.engine, "postProcessChain", function() { return [effectBloom, effectDepthOfField] });
         standardPipeline.addEffect(effectBloom);
         this.scene.postProcessRenderPipelineManager.addPipeline(standardPipeline);
         */
 
-        const lensRenderingPipeline = new BABYLON.LensRenderingPipeline( "lens", {
+        const lensRenderingPipeline = new LensRenderingPipeline( "lens", {
             edge_blur: 0.25,                // 1.0 is too distorted in the borders for walk/view mode (maybe for pictures)
             chromatic_aberration: 1.0,
             distortion: 0.5,                // (dilate effect)
@@ -1565,14 +1576,14 @@ class SceneViewer {
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
 
         /*
-        const ssao = new BABYLON.SSAO2RenderingPipeline('ssao', this.scene, {
+        const ssao = new SSAO2RenderingPipeline('ssao', this.scene, {
           ssaoRatio: .5,
           blurRatio: 1
         }, [ this.camera ], true)
         */
 
         /*
-        var curve = new BABYLON.ColorCurves();
+        var curve = new ColorCurves();
         curve.globalHue = 0;
         curve.globalDensity = 80;
         curve.globalSaturation = 5;
@@ -1584,17 +1595,17 @@ class SceneViewer {
         curve.shadowsSaturation = 40;
         this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
         this.scene.imageProcessingConfiguration.colorCurves = curve;
-        var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
+        var postProcess = new ImageProcessingPostProcess("processing", 1.0, camera);
         */
 
         /*
         // Fog
-        //this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+        //this.scene.fogMode = Scene.FOGMODE_EXP;
         //this.scene.fogDensity = 0.005;  // default is 0.1
-        this.scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+        this.scene.fogMode = Scene.FOGMODE_LINEAR;
         this.scene.fogStart = 250.0;
         this.scene.fogEnd = 500.0;
-        this.scene.fogColor = new BABYLON.Color3(0.75, 0.75, 0.85);
+        this.scene.fogColor = new Color3(0.75, 0.75, 0.85);
         */
         /*
         pixels = rp.cubeTexture.readPixels(0,0)
@@ -1614,7 +1625,7 @@ class SceneViewer {
         //console.debug("Creating free camera.");
         this.walkMode = false;
 
-        const camera = new BABYLON.UniversalCamera( "Camera", BABYLON.Vector3.Zero(), this.scene );
+        const camera = new UniversalCamera( "Camera", Vector3.Zero(), this.scene );
         camera.minZ = 1;
         camera.maxZ = 4500;
         camera.angularSensibility = 500.0;
@@ -1631,9 +1642,9 @@ class SceneViewer {
         camera.attachControl( this.engine.getRenderingCanvas(), true );
         camera.fov = 40.0 * ( Math.PI / 180.0 );  // 35.0 might be GM, 45.8... is default  // 35
         const positionScene = this.wgs84ToScene( this.viewerState.positionWGS84 );
-        camera.position = new BABYLON.Vector3( positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
-        camera.rotation = new BABYLON.Vector3(( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 ), this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
-        //camera.cameraRotation = new BABYLON.Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
+        camera.position = new Vector3( positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
+        camera.rotation = new Vector3(( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 ), this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
+        //camera.cameraRotation = new Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
         this.camera = camera;
         this.setMoveSpeed( this.viewerState.sceneMoveSpeed );
 
@@ -1667,7 +1678,7 @@ class SceneViewer {
             let heading = coordinates.heading;
             if (heading) {
                 this.sceneViewer.viewerState.positionHeading = heading;
-                let rotation = new BABYLON.Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                let rotation = new Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
                 this.camera.rotation = rotation;
             }
         });
@@ -1736,7 +1747,7 @@ class SceneViewer {
             let heading = coordinates.heading;
             if (heading !== null && !isNaN(heading)) {
                 this.viewerState.positionHeading = heading;
-                let rotation = new BABYLON.Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
+                let rotation = new Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
                 this.camera.rotation = rotation;
                 //console.debug(heading);
             }
@@ -1783,15 +1794,15 @@ class SceneViewer {
       var z = cX * cY * sZ + sX * sY * cZ;
 
       //return [ w, x, y, z ];
-      return new BABYLON.Quaternion(x, y, z, w);
+      return new Quaternion(x, y, z, w);
     }
     */
 
     /*
     onDeviceOrientation( e ) {
 
-        //let rotation = BABYLON.Quaternion.FromEulerAngles(e.alpha * Math.PI / 180.0, e.beta * Math.PI / 180.0, e.gamma * Math.PI / 180.0);
-        //let forward = BABYLON.Vector3.Forward().rotateByQuaternionToRef(rotation, new BABYLON.Vector3());
+        //let rotation = Quaternion.FromEulerAngles(e.alpha * Math.PI / 180.0, e.beta * Math.PI / 180.0, e.gamma * Math.PI / 180.0);
+        //let forward = Vector3.Forward().rotateByQuaternionToRef(rotation, new Vector3());
         //let heading = Math.atan2(forward.y, forward.x) * 180.0 / Math.PI;
         //alert(heading);
 
@@ -1809,8 +1820,8 @@ class SceneViewer {
 
             const tiltRotation = ( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 );
             if ( tiltRotation < 0 ) { tilt = Math.PI * 2 - tiltRotation; }
-            const rotation = new BABYLON.Vector3( tiltRotation, this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
-            //let rotation = new BABYLON.Vector3(Math.PI / 2 + -e.beta * Math.PI / 180.0, -e.alpha * Math.PI / 180.0, e.gamma * Math.PI / 180.0 );
+            const rotation = new Vector3( tiltRotation, this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
+            //let rotation = new Vector3(Math.PI / 2 + -e.beta * Math.PI / 180.0, -e.alpha * Math.PI / 180.0, e.gamma * Math.PI / 180.0 );
             this.camera!.rotation = rotation;
             //console.debug(heading);
         }
@@ -1822,18 +1833,18 @@ class SceneViewer {
 
         this.walkMode = false;
 
-        let targetCoords = BABYLON.Vector3.Zero();
+        let targetCoords = Vector3.Zero();
         if ( this.selectedMesh ) {
             const boundingBox: BoundingInfo = this.getBoundsRecursively( this.selectedMesh );
             //targetCoords = this.selectedMesh.absolutePosition;
             const minWorld = boundingBox.minimum;
             const maxWorld = boundingBox.maximum;
-            targetCoords = new BABYLON.Vector3(( minWorld.x + maxWorld.x ) / 2, ( minWorld.y + maxWorld.y ) / 2, ( minWorld.z + maxWorld.z ) / 2 );
+            targetCoords = new Vector3(( minWorld.x + maxWorld.x ) / 2, ( minWorld.y + maxWorld.y ) / 2, ( minWorld.z + maxWorld.z ) / 2 );
         }
 
         let distance = 75.0;
         if ( this.camera ) {
-            distance = BABYLON.Vector3.Distance( this.camera.position, targetCoords );
+            distance = Vector3.Distance( this.camera.position, targetCoords );
 
             this.camera.customRenderTargets = [];
 
@@ -1843,7 +1854,7 @@ class SceneViewer {
 
         console.debug( "Creating orbit camera pointing to: " + targetCoords );
 
-        const camera = new BABYLON.ArcRotateCamera( "Camera", -( 90 + this.viewerState.positionHeading ) * Math.PI / 180.0, this.viewerState.positionTilt * Math.PI / 180.0, distance, targetCoords, this.scene );
+        const camera = new ArcRotateCamera( "Camera", -( 90 + this.viewerState.positionHeading ) * Math.PI / 180.0, this.viewerState.positionTilt * Math.PI / 180.0, distance, targetCoords, this.scene );
         camera.attachControl( this.engine.getRenderingCanvas(), true );
         camera.minZ = 1;
         //camera.maxZ = 2500;  // Automatic? see focusOn()
@@ -1907,7 +1918,7 @@ class SceneViewer {
     /*
     lightSetupFromDatePos(): void {
 
-        //this.envReflectionProbe.update(); // = new BABYLON.ReflectionProbe("envReflectionProbe", 128, this.scene, true, true, true)
+        //this.envReflectionProbe.update(); // = new ReflectionProbe("envReflectionProbe", 128, this.scene, true, true, true)
         //this.envReflectionProbe.renderList.push(this.skyBox);
         //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
 
@@ -1939,17 +1950,17 @@ class SceneViewer {
         sunlightAmountNorm = 1 - Math.pow( 1 - sunlightAmountNorm, 4 );
 
         //let lightAltitude = altitudeLessHorizonAtmAprox >= 0 && altitudeLessHorizonAtmAprox < Math.PI ? altitudeLessHorizonAtmAprox : Math.PI - altitudeLessHorizonAtmAprox;
-        const lightRot = BABYLON.Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );  // Use moon
-        const lightSunAndFlareRot = BABYLON.Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );
+        const lightRot = Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );  // Use moon
+        const lightSunAndFlareRot = Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );
 
-        //this.light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.3, -0.5, 0.5).normalizeToNew(), this.scene);
-        //this.light.diffuse = new BABYLON.Color3(0.95, 0.95, 1.00);
-        //this.light.specular = new BABYLON.Color3(1, 1, 0.95);
+        //this.light = new DirectionalLight("light", new Vector3(0.3, -0.5, 0.5).normalizeToNew(), this.scene);
+        //this.light.diffuse = new Color3(0.95, 0.95, 1.00);
+        //this.light.specular = new Color3(1, 1, 0.95);
         const minLightDay = 0.0;
         const maxLightDay = 3.0;
 
         // Set light dir and intensity
-        BABYLON.Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light.direction );
+        Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light.direction );
         const lightIntensity = minLightDay + ( maxLightDay - minLightDay ) * sunlightAmountNorm;
         //console.debug("Sunlight amount norm: " + sunlightAmountNorm + " lightIntensity: " + lightIntensity);
         this.light.intensity = lightIntensity;
@@ -1957,7 +1968,7 @@ class SceneViewer {
 
         //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
         //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
-        //BABYLON.Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        //Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
 
         if ( this.skybox && this.skybox.material && this.skybox.material.reflectionTexture ) {
             this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
@@ -1982,7 +1993,7 @@ class SceneViewer {
         }
 
 
-        BABYLON.Vector3.Forward().rotateByQuaternionToRef( lightSunAndFlareRot, this.lensFlareEmitter.position );
+        Vector3.Forward().rotateByQuaternionToRef( lightSunAndFlareRot, this.lensFlareEmitter.position );
         this.lensFlareEmitter.position.scaleInPlace( -1400.0 );
         this.lensFlareEmitter.position.addInPlace( this.camera.position );
         this.lensFlareSystem.setEmitter( this.lensFlareEmitter );
@@ -2002,7 +2013,7 @@ class SceneViewer {
                 const lampMat = this.catalog_materials["LightLampOff"];
                 lampMat.unfreeze();
                 if ( lampMatOn ) {
-                    lampMat.emissiveColor = BABYLON.Color3.Black();
+                    lampMat.emissiveColor = Color3.Black();
                 } else {
                     lampMat.emissiveColor = this.colorLightLamp;
                 }
@@ -2017,18 +2028,18 @@ class SceneViewer {
         if ( "LightRed" in this.catalog_materials ) {
             const lampMat = this.catalog_materials["LightRed"];
             lampMat.unfreeze();
-            lampMat.emissiveColor = ( semColor === 0 ) ? this.colorLightRed : BABYLON.Color3.Black();
+            lampMat.emissiveColor = ( semColor === 0 ) ? this.colorLightRed : Color3.Black();
             //lampMat.freeze();
         }
         if ( "LightGreen" in this.catalog_materials ) {
             const lampMat = this.catalog_materials["LightGreen"];
             lampMat.unfreeze();
-            lampMat.emissiveColor = ( semColor === 1 ) ? this.colorLightGreen : BABYLON.Color3.Black();
+            lampMat.emissiveColor = ( semColor === 1 ) ? this.colorLightGreen : Color3.Black();
         }
         if ( "LightOrange" in this.catalog_materials ) {
             const lampMat = this.catalog_materials["LightOrange"];
             lampMat.unfreeze();
-            lampMat.emissiveColor = ( semColor === 2 ) ? this.colorLightOrange : BABYLON.Color3.Black();
+            lampMat.emissiveColor = ( semColor === 2 ) ? this.colorLightOrange : Color3.Black();
             //lampMat.freeze();
         }
 
@@ -2071,8 +2082,8 @@ class SceneViewer {
             this.useSplatMap = true;
             const atlasTextureUrl = "/assets/splatmap-textures-atlas-" + texturesConfig.splatmap + ".png";
             const atlasNormalsTextureUrl = "/assets/splatmap-textures-atlas-normals-" + texturesConfig.splatmap + ".png";
-            this.splatmapAtlasTexture = new BABYLON.Texture( atlasTextureUrl, this.scene,  false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR ); // , BABYLON.Texture.NEAREST_SAMPLINGMODE);
-            this.splatmapAtlasNormalsTexture = new BABYLON.Texture( atlasNormalsTextureUrl, this.scene, false, true, BABYLON.Texture.NEAREST_NEAREST_MIPLINEAR );
+            this.splatmapAtlasTexture = new Texture( atlasTextureUrl, this.scene,  false, true, Texture.NEAREST_NEAREST_MIPLINEAR ); // , Texture.NEAREST_SAMPLINGMODE);
+            this.splatmapAtlasNormalsTexture = new Texture( atlasNormalsTextureUrl, this.scene, false, true, Texture.NEAREST_NEAREST_MIPLINEAR );
         } else {
             this.useSplatMap = false;
         }
@@ -2096,4 +2107,4 @@ class SceneViewer {
 
 }
 
-export default SceneViewer;
+export { SceneViewer };

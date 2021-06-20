@@ -4,7 +4,7 @@
 * MIT License (see LICENSE file)
 */
 
-import SceneViewer from "../SceneViewer";
+import { SceneViewer } from "../SceneViewer";
 
 /**
  * A process that can be running in a DDDViewer instance.
@@ -29,7 +29,7 @@ abstract class ViewerProcess {
 
 }
 
-export default ViewerProcess;
+export { ViewerProcess }; 
 
 
 

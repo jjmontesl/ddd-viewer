@@ -4,8 +4,8 @@
 * MIT License (see LICENSE file)
 */
 
-import SceneViewer from "../../SceneViewer";
-import ViewerProcess from "../ViewerProcess";
+import { SceneViewer } from "../../SceneViewer";
+import { ViewerProcess } from "../ViewerProcess";
 
 abstract class AnimationProcess extends ViewerProcess {
 
@@ -42,4 +42,4 @@ abstract class AnimationProcess extends ViewerProcess {
 
 }
 
-export default AnimationProcess;
+export { AnimationProcess };

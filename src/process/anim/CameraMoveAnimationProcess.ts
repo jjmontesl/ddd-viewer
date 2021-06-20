@@ -5,11 +5,10 @@
 */
 
 
-import * as BABYLON from "babylonjs";
-import { ArcRotateCamera } from "babylonjs";
-import ScenePosition from "ScenePosition";
-import SceneViewer from "SceneViewer";
-import AnimationProcess from "./AnimationProcess";
+import { ArcRotateCamera, Scalar, Vector3 } from "@babylonjs/core";
+import { ScenePosition } from "../../ScenePosition";
+import { SceneViewer } from "../../SceneViewer";
+import { AnimationProcess } from "./AnimationProcess";
 
 class CameraMovementAnimationProcess extends AnimationProcess {
 
@@ -39,12 +38,12 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         // }
 
         sceneViewer.viewerState.positionWGS84 = [ 
-            BABYLON.Scalar.Lerp( move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor ),
-            BABYLON.Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor) ];
+            Scalar.Lerp( move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor ),
+            Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor) ];
         
         
-        sceneViewer.viewerState.positionGroundHeight = BABYLON.Scalar.Lerp( move_start.positionGroundHeight, move_end.positionGroundHeight, this.interpFactor );
-        sceneViewer.viewerState.positionTilt = BABYLON.Scalar.Lerp( move_start.positionTilt, move_end.positionTilt, this.interpFactor );
+        sceneViewer.viewerState.positionGroundHeight = Scalar.Lerp( move_start.positionGroundHeight, move_end.positionGroundHeight, this.interpFactor );
+        sceneViewer.viewerState.positionTilt = Scalar.Lerp( move_start.positionTilt, move_end.positionTilt, this.interpFactor );
 
         let startHeading = move_start.positionHeading;
         const targetHeading = move_end.positionHeading;
@@ -55,13 +54,13 @@ class CameraMovementAnimationProcess extends AnimationProcess {
                 startHeading -= 360;
             }
         }
-        const newPositionHeading = BABYLON.Scalar.Lerp( startHeading, targetHeading, this.interpFactor );
+        const newPositionHeading = Scalar.Lerp( startHeading, targetHeading, this.interpFactor );
         sceneViewer.viewerState.positionHeading = (( newPositionHeading % 360 ) + 360 ) % 360;
-        //sceneViewer.viewerState.positionHeading = 180 / Math.PI * BABYLON.Scalar.LerpAngle(move_start.positionHeading * Math.PI / 180.0, move_end.positionHeading * Math.PI / 180.0, interp_factor);
+        //sceneViewer.viewerState.positionHeading = 180 / Math.PI * Scalar.LerpAngle(move_start.positionHeading * Math.PI / 180.0, move_end.positionHeading * Math.PI / 180.0, interp_factor);
 
         const positionScene = sceneViewer.wgs84ToScene( sceneViewer.viewerState.positionWGS84 );
-        const position = new BABYLON.Vector3( positionScene[0], sceneViewer.viewerState.positionGroundHeight + sceneViewer.viewerState.positionTerrainElevation + 1, positionScene[2]);
-        const rotation = new BABYLON.Vector3(( 90.0 - sceneViewer.viewerState.positionTilt ) * ( Math.PI / 180.0 ), sceneViewer.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
+        const position = new Vector3( positionScene[0], sceneViewer.viewerState.positionGroundHeight + sceneViewer.viewerState.positionTerrainElevation + 1, positionScene[2]);
+        const rotation = new Vector3(( 90.0 - sceneViewer.viewerState.positionTilt ) * ( Math.PI / 180.0 ), sceneViewer.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
 
         sceneViewer.camera!.position = position;
         if (sceneViewer.camera instanceof ArcRotateCamera) {
@@ -72,4 +71,4 @@ class CameraMovementAnimationProcess extends AnimationProcess {
 
 }
 
-export default CameraMovementAnimationProcess;
+export { CameraMovementAnimationProcess };

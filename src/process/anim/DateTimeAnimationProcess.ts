@@ -5,10 +5,8 @@
 */
 
 
-// import * as BABYLON from "babylonjs";
-
-import SceneViewer from "SceneViewer";
-import AnimationProcess from "./AnimationProcess";
+import { SceneViewer } from "../../SceneViewer";
+import { AnimationProcess } from "./AnimationProcess";
 
 class DateTimeAnimationProcess extends AnimationProcess {
 
@@ -36,10 +34,11 @@ class DateTimeAnimationProcess extends AnimationProcess {
 
         sceneViewer.viewerState.positionDate = new Date( this.dtStart.getTime() + interpTime * 1000 );
         
+        console.debug("TODO: Restore light setup from date position.");
         //sceneViewer.lightSetupFromDatePos();
 
     }
 
 }
 
-export default DateTimeAnimationProcess;
+export { DateTimeAnimationProcess };

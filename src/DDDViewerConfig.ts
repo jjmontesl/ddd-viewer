@@ -1,6 +1,8 @@
-import DDDMaterialsConfig from "./DDDMaterialsConfig";
-
-
+/* 
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
 
 
 class DDDViewerConfig {
@@ -13,4 +15,15 @@ class DDDViewerConfig {
 
 }
 
-export default DDDViewerConfig;
+class DDDMaterialsConfig {
+    
+    value!: string;
+
+    textures!: string;
+    
+    splatmap!: string;
+}
+
+
+export { DDDViewerConfig };
+export { DDDMaterialsConfig };

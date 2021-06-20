@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import * as BABYLON from "babylonjs";
-import "babylonjs-loaders";
-import SceneViewer from "../SceneViewer";
+import { SceneLoader } from "@babylonjs/core";
+import { SceneViewer } from "../SceneViewer";
+//import "babylonjs-loaders";
 
 
 class QueueLoaderTask {
@@ -51,7 +51,7 @@ class QueueLoader {
 
     processTask( task: {[key: string]: any} ): void {
         const url: string = <string> task["url"];
-        BABYLON.SceneLoader.ImportMesh( null, "", url, this.sceneViewer.scene,
+        SceneLoader.ImportMesh( null, "", url, this.sceneViewer.scene,
             ( newMeshes, particleSystems, skeletons ) => {
                 this.processNext();
                 task.onSuccess( newMeshes, particleSystems, skeletons );
@@ -70,4 +70,4 @@ class QueueLoader {
 
 }
 
-export default QueueLoader;
+export { QueueLoader };

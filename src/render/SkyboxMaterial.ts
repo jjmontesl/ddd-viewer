@@ -1,9 +1,6 @@
 /* eslint-disable indent */
 
-import * as BABYLON from "babylonjs";
-//import * as BABYLONMAT from 'babylonjs-materials';
-import "babylonjs-loaders";
-import { Material, Scene } from "babylonjs";
+import { Effect, Material, Scene, ShaderMaterial, Texture } from "@babylonjs/core";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 
@@ -19,7 +16,7 @@ class SkyMaterialWrapper {
     initMaterial(scene: Scene): Material {
         //, options: any) {
 
-        BABYLON.Effect.ShadersStore["customVertexShader"] = `
+        Effect.ShadersStore["customVertexShader"] = `
         precision highp float;
 
         // Attributes
@@ -47,7 +44,7 @@ class SkyMaterialWrapper {
 
         }`;
 
-        BABYLON.Effect.ShadersStore["customFragmentShader"] = `
+        Effect.ShadersStore["customFragmentShader"] = `
         precision highp float;
 
         uniform mat4 worldView;
@@ -409,7 +406,7 @@ class SkyMaterialWrapper {
 
 
         // Compile
-        var shaderMaterial = new BABYLON.ShaderMaterial( "skyShader", scene, {
+        var shaderMaterial = new ShaderMaterial( "skyShader", scene, {
             vertex: "custom",
             fragment: "custom",
             },
@@ -418,7 +415,7 @@ class SkyMaterialWrapper {
             uniforms: [ "world", "worldView", "worldViewProjection", "view", "projection" ]
             });
 
-        const mainTexture = new BABYLON.Texture("/textures/skynoise.png", scene, true, false, 12);  // NEAREST
+        const mainTexture = new Texture("/textures/skynoise.png", scene, true, false, 12);  // NEAREST
 
         //https://www.shadertoy.com/view/ltlSWB
         shaderMaterial.setTexture("iChannel0", mainTexture);
@@ -449,4 +446,4 @@ class SkyMaterialWrapper {
 
 }
 
-export default SkyMaterialWrapper;
+export { SkyMaterialWrapper };
