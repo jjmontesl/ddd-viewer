@@ -6,7 +6,9 @@
 
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
-import { GLTF2 } from "@babylonjs/loaders/glTF";
+//import { GLTF2 } from "@babylonjs/loaders/glTF";
+import "@babylonjs/loaders/glTF"; 
+
 import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 import { Coordinate } from "ol/coordinate";
@@ -25,9 +27,9 @@ import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
 import { ScenePosition } from "./ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
-import * as proj4 from "proj4";
 import { transform } from "ol/proj";
-
+//import { Proj } from "proj4";
+import * as proj4 from "proj4";
 
 
 class SceneViewer {
@@ -52,7 +54,8 @@ class SceneViewer {
     queueLoader: QueueLoader;
 
     originShiftWGS84: number[];
-    projection: proj4.InterfaceProjection;
+    //projection: proj4.InterfaceProjection;
+    projection: proj4.Converter;
 
     tileGrid: TileGrid;
 
@@ -96,7 +99,7 @@ class SceneViewer {
         this.queueLoader = new QueueLoader( this );
 
         this.originShiftWGS84 = [ 0, 0 ];
-        this.projection = proj4.Proj( "EPSG:4326" );
+        this.projection = proj4.default( "EPSG:4326" );
 
         this.tileGrid = createXYZ({
             extent: extentFromProjection( "EPSG:3857" ),
@@ -1383,7 +1386,7 @@ class SceneViewer {
         console.debug( "Setting Scene Geo transform for coords: " + coords );
 
         // Get tile grid coordinates
-        const coordsUtm = transform( coords, "EPSG:4326", "EPSG:3857" );
+        const coordsUtm = transform(coords, "EPSG:4326", "EPSG:3857" );
         const tileCoords = this.tileGrid.getTileCoordForCoordAndZ( coordsUtm, 17 );
 
         const tileExtent = this.tileGrid.getTileCoordExtent( tileCoords );
@@ -1391,7 +1394,7 @@ class SceneViewer {
         const tileCenterWGS84 = transform( tileCenter, "EPSG:3857", "EPSG:4326" );
 
         // Using coords of tile center for custom projection as DDD does
-        this.projection = proj4.Proj(
+        this.projection = proj4.default(
             "+proj=tmerc +lat_0=" + tileCenterWGS84[1] + " +lon_0=" + tileCenterWGS84[0] + " +k_0=1 " +
             "+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 " +
             "+towgs84=0,0,0,0,0,0,0 +units=m +no_defs" );

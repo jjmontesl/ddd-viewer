@@ -17,8 +17,8 @@
         "node": ">=10"
     },
     "scripts": {
-        "watch": "tsdx watch --format esm,umd --target web",
-        "build": "tsdx build --max_old_space_size=32000 --format esm,umd --target web",
+        "watch": "tsdx watch --format esm --target web",
+        "build": "tsdx build --max_old_space_size=32000 --format esm --target web",
         "_build": "tsdx build",
         "test": "tsdx test",
         "lint": "tsdx lint",
@@ -32,7 +32,7 @@
             "pre-commit": "tsdx lint"
         }
     },
-    "module": "dist/dddviewer.esm.js",
+    "module": "dist/ddd-viewer.esm.js",
     "size-limit": [
         {
             "path": "dist/ddd-viewer.cjs.production.min.js",
@@ -62,6 +62,7 @@
     "dependencies": {
         "@babylonjs/core": "^5.0.0-alpha.17",
         "@babylonjs/loaders": "^5.0.0-alpha.25",
-        "@babylonjs/materials": "^5.0.0-alpha.17"
+        "@babylonjs/materials": "^5.0.0-alpha.17",
+        "earcut": "^2.2.2"
     }
 }

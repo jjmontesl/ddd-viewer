@@ -7,13 +7,14 @@
     "compilerOptions": {
         "baseUrl": "src",
         /*"paths": {
-            "./*": ["dddviewer/*"],
+            "./main/*": ["main/*"],
             "./layers/*": ["layers/*"],
             "./loading/*": ["loading/*"],
             "./process/*": ["process/*"],
             "./render/*": ["render/*"],
         },*/
-        "target": "esnext",
+        "target": "es5",
+        "module": "esnext",
         "types": [
             "ol",
             "proj4"
@@ -38,7 +39,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": true,
         // use Node's module resolution algorithm, instead of the legacy TS one
-        //"moduleResolution": "node",
+        "moduleResolution": "node",
         // transpile JSX to React.createElement
         //"jsx": "react",
         // interop between ESM and CJS modules. Recommended by TS

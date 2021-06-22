@@ -16,14 +16,17 @@ module.exports = {
         
         // In order to bundle external deps in UMD format:
         // From: https://github.com/formium/tsdx/issues/179
+        //  and: https://github.com/formium/tsdx/issues/898
         if (config.output.format === "umd") {
+            const origExternal = config.external;
             config.external = (id) => {
                 //console.log(id);
                 //if (id.startsWith("@babylonjs")) return true;
-                return false;
+                return origExternal(id);
+                //return false;
             };
+            //config.output.globals["babylon"] = "BABYLON";
         }
-        
         
         // Return final customized config for the plugin
         return config; 
