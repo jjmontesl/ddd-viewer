@@ -22,8 +22,8 @@ module.exports = {
             config.external = (id) => {
                 //console.log(id);
                 //if (id.startsWith("@babylonjs")) return true;
-                return origExternal(id);
-                //return false;
+                //return origExternal(id);
+                return false;  // Embed all libraries by default
             };
             //config.output.globals["babylon"] = "BABYLON";
         }

@@ -18,14 +18,15 @@
     },
     "scripts": {
         "watch": "tsdx watch --format esm --target web",
-        "build": "tsdx build --max_old_space_size=32000 --format esm --target web",
+        "build": "barrelsby -d src --delete && tsdx build --max_old_space_size=32000 --format esm --target web",
+        "build-umd": "barrelsby -d src --delete && tsdx build --max_old_space_size=32000 --format umd --target web",
+        "barrelsby": "barrelsby -d src --delete",
         "_build": "tsdx build",
         "test": "tsdx test",
         "lint": "tsdx lint",
         "_prepare": "tsdx build --format esm,umd --target web",
         "size": "size-limit",
-        "analyze": "size-limit --why",
-        "barrelsby": "barrelsby -d src --delete"
+        "analyze": "size-limit --why"
     },
     "husky": {
         "hooks": {

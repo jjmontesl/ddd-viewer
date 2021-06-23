@@ -13,9 +13,9 @@
 
     <script>var exports = {};</script>
 
-    <script src="https://preview.babylonjs.com/babylon.js"></script>
-
-    <script src="../../dist/ddd-viewer.umd.development.js"></script>
+    <!-- <script src="https://preview.babylonjs.com/babylon.js"></script> -->
+    <!-- <script src="../../dist/ddd-viewer.umd.development.js"></script> -->
+    <script src="../../dist/ddd-viewer.umd.production.min.js"></script>
     
 
 </head>
@@ -30,7 +30,6 @@
 
         function initViewer() {
 
-            var BABYLON = window['babylonjs'];
             var dddviewer = window['ddd-viewer'];
             
             const dddConfig = {
@@ -41,8 +40,8 @@
                 "analyticsTag": null,
                 "sceneGroundLayers": {},
                 "sceneMaterials": [
-                    { "value": "defaultsplat256", "text": "Default Set and Splatmaps (256x256)", "textures": "default256", "splatmap": 256 },
-                    { "value": "defaultsplat512", "text": "Default Set and Splatmaps (512x512)", "textures": "default512", "splatmap": 512 },
+                    //{ "value": "defaultsplat256", "text": "Default Set and Splatmaps (256x256)", "textures": "default256", "splatmap": 256 },
+                    //{ "value": "defaultsplat512", "text": "Default Set and Splatmaps (512x512)", "textures": "default512", "splatmap": 512 },
                     { "value": "default256", "text": "Default Set (256x256)", "textures": "default256", "splatmap": null },
                     { "value": "default512", "text": "Default Set (512x512)", "textures": "default512", "splatmap": null },
                     { "value": "minimal", "text": "Minimal Set", "textures": "minimal", "splatmap": null },
