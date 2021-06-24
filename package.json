@@ -48,6 +48,7 @@
         "@size-limit/preset-small-lib": "^4.11.0",
         "@types/ol": "^6.5.1",
         "@types/proj4": "^2.5.0",
+        "@types/suncalc": "^1.8.0",
         "@typescript-eslint/eslint-plugin": "^4.26.1",
         "@typescript-eslint/parser": "^4.26.1",
         "barrelsby": "^2.2.0",
@@ -64,6 +65,7 @@
         "@babylonjs/core": "^5.0.0-alpha.17",
         "@babylonjs/loaders": "^5.0.0-alpha.25",
         "@babylonjs/materials": "^5.0.0-alpha.17",
-        "earcut": "^2.2.2"
+        "earcut": "^2.2.2",
+        "suncalc": "^1.8.0"
     }
 }

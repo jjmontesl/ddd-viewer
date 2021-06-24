@@ -17,7 +17,8 @@
         "module": "esnext",
         "types": [
             "ol",
-            "proj4"
+            "proj4",
+            "suncalc"
         ],
         "lib": [ 
             "DOM",

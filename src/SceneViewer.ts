@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF"; 
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
@@ -17,18 +17,16 @@ import * as extent from "ol/extent";
 import { createXYZ, extentFromProjection } from "ol/tilegrid";
 import TileGrid from "ol/tilegrid/TileGrid";
 import { DDDMaterialsConfig } from "./DDDViewerConfig";
-// import * as SunCalc from "suncalc";
-// <reference types="suncalc" />
 import { LayerManager } from "./layers/LayerManager";
 import { QueueLoader } from "./loading/QueueLoader";
 import { ViewerProcessManager } from "./process/ViewerProcessManager";
-//import SkyMaterialWrapper from "./render/SkyboxMaterial";
+import { SkyMaterialWrapper } from "./render/SkyboxMaterial";
 import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
 import { ScenePosition } from "./ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
 import { transform } from "ol/proj";
-//import { Proj } from "proj4";
+import * as SunCalc from "suncalc";
 import * as proj4 from "proj4";
 
 
@@ -165,11 +163,13 @@ class SceneViewer {
         water.waveSpeed = 100.0;
         water.bumpHeight = 0.05;
         water.waveLength = 10.0;
-        //water.alpha = 0.8;
+        
+        water.alpha = 0.8;
         //water.useSpecularOverAlpha = true;
         //water.useReflectionOverAlpha = true;
-        //water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
+        water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
         //water.renderingGroupId = 3;
+
         water.colorBlendFactor = 0.2;
         this.scene.setRenderingAutoClearDepthStencil( 3, false, false, false );
         //water.addToRenderList(ground);
@@ -285,7 +285,7 @@ class SceneViewer {
         new LensFlare( flareScale * 0.3, 0.8, new Color3( 1, 1, 1 ), "/textures/Flare2.png", this.lensFlareSystem );
 
         // Setup lighting, flares, etc.
-        //this.lightSetupFromDatePos();
+        this.lightSetupFromDatePos();
 
         //var ssao = new SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
@@ -370,7 +370,6 @@ class SceneViewer {
 
         // Set skybox
         if ( baseUrl === "@dynamic" )  {
-            /*
             const skybox = Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
             
             const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
@@ -380,7 +379,6 @@ class SceneViewer {
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
             this.skybox = skybox;
-            */
 
         } else if ( baseUrl !== null ) {
 
@@ -520,9 +518,8 @@ class SceneViewer {
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
                     this.catalog_materials["WaterInstanced"].freeze();
                     
-                    console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
-                    //this.catalog_materials[key] = <WaterMaterial> this.materialWater;
-                    
+                    //console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
+                    this.catalog_materials[key] = <WaterMaterial> this.materialWater;
                     dontFreeze = true;
 
                 } else if ( metadata["ddd:material"] === "Water4Advanced" ) {
@@ -533,8 +530,8 @@ class SceneViewer {
                     mesh.material.useReflectionOverAlpha = true;
                     mesh.material.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
                     */
-                    console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
-                    //this.catalog_materials[key] = <Material> this.materialWater;
+                    //console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
+                    this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
                 } else if ( mesh.material instanceof PBRMaterial ) {
@@ -1201,8 +1198,7 @@ class SceneViewer {
                 this.viewerState.positionDate.setSeconds( this.viewerState.positionDate.getSeconds() + scaledElapsed );
                 this.viewerState.positionDateSeconds = this.viewerState.positionDate.getTime() / 1000;
 
-                // TODO: Temporarily disabled
-                //this.lightSetupFromDatePos();
+                this.lightSetupFromDatePos();
             }
 
         }
@@ -1918,7 +1914,6 @@ class SceneViewer {
         }
     }
 
-    /*
     lightSetupFromDatePos(): void {
 
         //this.envReflectionProbe.update(); // = new ReflectionProbe("envReflectionProbe", 128, this.scene, true, true, true)
@@ -1937,7 +1932,7 @@ class SceneViewer {
         //var sunsetSunPos = SunCalc.getPosition(times.sunset, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
         //var sunsetAzimuth = sunsetPos.azimuth * 180 / Math.PI; **
 
-        const currentSunPos = SunCalc.getPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0], this.viewerState.positionScene[1]);
+        const currentSunPos = SunCalc.getPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]); // , this.viewerState.positionScene[1]
         const currentMoonPos = SunCalc.getMoonPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
         //var crrentMoonIlum = SunCalc.getMoonIllumination(this.viewerState.positionDate);
 
@@ -1963,23 +1958,23 @@ class SceneViewer {
         const maxLightDay = 3.0;
 
         // Set light dir and intensity
-        Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light.direction );
+        Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light!.direction );
         const lightIntensity = minLightDay + ( maxLightDay - minLightDay ) * sunlightAmountNorm;
         //console.debug("Sunlight amount norm: " + sunlightAmountNorm + " lightIntensity: " + lightIntensity);
-        this.light.intensity = lightIntensity;
+        this.light!.intensity = lightIntensity;
 
 
         //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
         //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         //Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
 
-        if ( this.skybox && this.skybox.material && this.skybox.material.reflectionTexture ) {
-            this.skybox.material.reflectionTexture.level = 0.1 + sunlightAmountNorm;
+        if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
+            (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.1 + sunlightAmountNorm;
             this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));
         }
 
         if ( this.skybox ) {
-            const shaderMaterial = this.scene.getMaterialByName( "skyShader" );
+            const shaderMaterial: ShaderMaterial | null = <ShaderMaterial | null> this.scene.getMaterialByName( "skyShader" );
             if ( shaderMaterial ) {
                 shaderMaterial.setFloat( "time", ( this.viewerState.positionDate.getTime() % ( 100000000.0 )) / 500000.0 );
                 if ( currentSunPos.altitude > 0 ) {
@@ -1996,14 +1991,16 @@ class SceneViewer {
         }
 
 
-        Vector3.Forward().rotateByQuaternionToRef( lightSunAndFlareRot, this.lensFlareEmitter.position );
-        this.lensFlareEmitter.position.scaleInPlace( -1400.0 );
-        this.lensFlareEmitter.position.addInPlace( this.camera.position );
-        this.lensFlareSystem.setEmitter( this.lensFlareEmitter );
+        if (this.lensFlareSystem) {
+            Vector3.Forward().rotateByQuaternionToRef( lightSunAndFlareRot, this.lensFlareSystem.getEmitter().position );
+            this.lensFlareSystem.getEmitter().position.scaleInPlace( -1400.0 );
+            this.lensFlareSystem.getEmitter().position.addInPlace( this.camera!.position );
+            this.lensFlareSystem.setEmitter( this.lensFlareSystem.getEmitter() );
 
-        const flareEnabled = currentSunPos.altitude > 0;
-        if ( this.lensFlareSystem.isEnabled !== flareEnabled ) {
-            this.lensFlareSystem.isEnabled = flareEnabled;
+            const flareEnabled = currentSunPos.altitude > 0;
+            if ( this.lensFlareSystem.isEnabled !== flareEnabled ) {
+                this.lensFlareSystem.isEnabled = flareEnabled;
+            }
         }
 
         //console.debug(this.scene.ambientColor);
@@ -2013,7 +2010,7 @@ class SceneViewer {
         if ( lampMatOn !== this._previousLampPatOn ) {
             this._previousLampPatOn = lampMatOn;
             if ( "LightLampOff" in this.catalog_materials ) {
-                const lampMat = this.catalog_materials["LightLampOff"];
+                const lampMat : StandardMaterial = <StandardMaterial> this.catalog_materials["LightLampOff"];
                 lampMat.unfreeze();
                 if ( lampMatOn ) {
                     lampMat.emissiveColor = Color3.Black();
@@ -2029,25 +2026,24 @@ class SceneViewer {
         let semColor = ( this.viewerState.positionDate.getMinutes() % semCycleSeconds ) / semCycleSeconds;
         semColor = ( semColor < 0.5 ? 0 : ( semColor < 0.9 ? 1 : 2 ));
         if ( "LightRed" in this.catalog_materials ) {
-            const lampMat = this.catalog_materials["LightRed"];
+            const lampMat: StandardMaterial = <StandardMaterial> this.catalog_materials["LightRed"];
             lampMat.unfreeze();
             lampMat.emissiveColor = ( semColor === 0 ) ? this.colorLightRed : Color3.Black();
             //lampMat.freeze();
         }
         if ( "LightGreen" in this.catalog_materials ) {
-            const lampMat = this.catalog_materials["LightGreen"];
+            const lampMat: StandardMaterial = <StandardMaterial> this.catalog_materials["LightGreen"];
             lampMat.unfreeze();
             lampMat.emissiveColor = ( semColor === 1 ) ? this.colorLightGreen : Color3.Black();
         }
         if ( "LightOrange" in this.catalog_materials ) {
-            const lampMat = this.catalog_materials["LightOrange"];
+            const lampMat: StandardMaterial = <StandardMaterial> this.catalog_materials["LightOrange"];
             lampMat.unfreeze();
             lampMat.emissiveColor = ( semColor === 2 ) ? this.colorLightOrange : Color3.Black();
             //lampMat.freeze();
         }
 
     }
-    */
 
     sceneShadowsSetEnabled( value: boolean ): void {
         this.viewerState.sceneShadowsEnabled = value;
