@@ -290,7 +290,7 @@ class SceneViewer {
             this.shadowGenerator = new CascadedShadowGenerator( 1024, this.light );
             //that.shadowGenerator.debug = true;
             this.shadowGenerator.shadowMaxZ = 500;
-            this.shadowGenerator.autoCalcDepthBounds = true;
+            //this.shadowGenerator.autoCalcDepthBounds = true;  // Enabling it causes shadow artifacts after switching cameras (?)
             this.shadowGenerator.penumbraDarkness = 0.8;
             this.shadowGenerator.lambda = 0.5;
             //that.shadowGenerator.depthClamp = false;
@@ -1299,6 +1299,8 @@ class SceneViewer {
     }
 
     positionString(): string | null {
+        // TODO: This would not be a SceneViewer method, a utility module at most
+
         // /@43.2505933,5.3736631,126a,35y,20.08h,56.42t/
         const point = this.positionWGS84();
         //const zoom = this.map.getView().getZoom();
@@ -1321,9 +1323,9 @@ class SceneViewer {
 
         const shortFormat = false;
         if ( shortFormat ) {
-            posString = posString + "," + groundHeight + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
+            posString = posString + "," + groundHeight.toFixed(0) + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
         } else {
-            posString = posString + "," + groundHeight + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
+            posString = posString + "," + groundHeight.toFixed(0) + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
             posString = posString + "," + "35" + "y";    // ?
             posString = posString + "," + heading.toFixed( 1 ) + "h"; // Heading
             posString = posString + "," + tilt.toFixed( 2 ) + "t";    // Yaw (0 is vertical, 90 horizontal)
@@ -1642,7 +1644,7 @@ class SceneViewer {
 
     selectCameraFree(): void {
         if ( this.camera ) {
-            this.camera.customRenderTargets = [];
+            this.camera.customRenderTargets.length = 0; //4 = [];
             this.camera.detachControl();
             this.camera.dispose();
         }
@@ -1674,6 +1676,10 @@ class SceneViewer {
         this.setMoveSpeed( this.viewerState.sceneMoveSpeed );
 
         this.updateRenderTargets();
+
+        if (this.shadowGenerator) {
+            this.shadowGenerator.splitFrustum();
+        }
     }
 
     selectCameraWalk(): void {
@@ -1871,7 +1877,7 @@ class SceneViewer {
         if ( this.camera ) {
             distance = Vector3.Distance( this.camera.position, targetCoords );
 
-            this.camera.customRenderTargets = [];
+            this.camera.customRenderTargets.length = 0; //  = [];
 
             this.camera.detachControl();
             this.camera.dispose();
@@ -1899,6 +1905,10 @@ class SceneViewer {
         this.camera = camera;
 
         this.updateRenderTargets();
+
+        if (this.shadowGenerator) {
+            this.shadowGenerator.splitFrustum();
+        }
     }
 
 
@@ -2027,6 +2037,14 @@ class SceneViewer {
             }
         }
 
+        // Update light position for correct shadows calculation
+        // TODO: This shall not be done as part of datetime/sun update, as it is needed even if time is not moving
+        Vector3.Forward().rotateByQuaternionToRef(lightSunAndFlareRot, this.light!.position);
+        this.light!.position.scaleInPlace( -1400.0 );
+        this.light!.position.addInPlace( this.camera!.position );
+        this.light!.position = this.light!.position;
+
+
         //console.debug(this.scene.ambientColor);
 
         // Lamps
@@ -2072,12 +2090,19 @@ class SceneViewer {
     sceneShadowsSetEnabled( value: boolean ): void {
         this.viewerState.sceneShadowsEnabled = value;
         localStorage.setItem( "dddSceneShadowsEnabled", JSON.stringify( value ));
+        
+        // TODO: If shadows were off, we'd still need to create the shadowgenerator and add shadow casters
+        this.scene.shadowsEnabled = value;
+        
+        // TODO: this persistent setting belongs to the app
         alert( "Reload the viewer for changes to take effect." );
     }
 
     sceneTextsSetEnabled( value: boolean ): void {
         this.viewerState.sceneTextsEnabled = value;
         localStorage.setItem( "dddSceneTextsEnabled", JSON.stringify( value ));
+        
+        // TODO: this persistent setting belongs to the app
         alert( "Reload the viewer for changes to take effect." );
     }
 

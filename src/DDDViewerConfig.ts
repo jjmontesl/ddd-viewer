@@ -7,6 +7,8 @@
 
 class DDDViewerConfig {
 
+    defaultCoords: number[] | null = [ -8.726, 42.233 ]; // [0.0, 0.0];
+
     tileUrlBase: string = "/data/tiles/";
 
     assetsUrlbase: string = "/assets/";

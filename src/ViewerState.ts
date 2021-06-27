@@ -68,6 +68,10 @@ class ViewerState {
             this.dddConfig.materialsTextureSet = null;  // "default256";
         }
 
+        if (dddConfig.defaultCoords) {
+            this.positionWGS84 = dddConfig.defaultCoords;
+        }
+
         if (initialCoords) {
             this.positionWGS84 = initialCoords;
         }

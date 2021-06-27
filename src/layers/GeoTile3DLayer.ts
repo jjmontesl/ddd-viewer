@@ -270,6 +270,8 @@ class GeoTile3DLayer extends Base3DLayer {
                             //console.debug("No shadow");
                             return;
                         }
+                        
+                        // TODO: Do this at SceneViewer processMesh level
                         this.layerManager!.sceneViewer.shadowGenerator.getShadowMap()!.renderList!.push( mesh );
                     }
 
