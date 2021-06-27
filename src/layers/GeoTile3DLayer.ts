@@ -501,8 +501,9 @@ class GeoTile3DLayer extends Base3DLayer {
         return marker;
     }
 
-    /*
-    groundTextureLayerProcessNode( tileCoords: number[], node: Node ): void {
+    groundTextureLayerProcessNode(tile: GeoTile3D, node: Node): void {
+
+        const tileCoords: number[] = <number[]> tile.coordsTileGrid;
 
         let materialGround = null;
 
@@ -532,13 +533,14 @@ class GeoTile3DLayer extends Base3DLayer {
             //materialGround.emissiveColor = Color3.White();  // new Color3(1.0, 1.0, 1.);
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
-            materialGround.diffuseTexture = new Texture( url, this.layerManager!.sceneViewer.scene );
-            materialGround.diffuseTexture.uScale = 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
-            materialGround.diffuseTexture.vScale = 1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
-            materialGround.diffuseTexture.uOffset = -0.5;
-            materialGround.diffuseTexture.vOffset = -0.5;
-            materialGround.diffuseTexture.wrapU = Texture.WRAP_ADDRESSMODE;
-            materialGround.diffuseTexture.wrapV = Texture.WRAP_ADDRESSMODE;
+            const materialGroundTexture: Texture = new Texture( url, this.layerManager!.sceneViewer.scene );
+            materialGround.diffuseTexture = materialGroundTexture;
+            materialGroundTexture.uScale = 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
+            materialGroundTexture.vScale = 1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
+            materialGroundTexture.uOffset = -0.5;
+            materialGroundTexture.vOffset = -0.5;
+            materialGroundTexture.wrapU = Texture.WRAP_ADDRESSMODE;
+            materialGroundTexture.wrapV = Texture.WRAP_ADDRESSMODE;
             //materialGround.bumpTexture = materialGround.diffuseTexture;
             //materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
             //materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
@@ -554,22 +556,20 @@ class GeoTile3DLayer extends Base3DLayer {
                 if (( metadata["ddd:path"].indexOf( "/Areas" ) > 0 ) ||
                     ( metadata["ddd:path"].indexOf( "/Ways" ) > 0 )) {
                     if ( materialGround !== null ) {
-                        if ( !( "_ground_material_original" in mesh )) {
-                            mesh._ground_material_original = mesh.material;
+                        if ( !( "_ground_material_original" in mesh.metadata )) {
+                            mesh.metadata["_ground_material_original"] = mesh.material;
                         }
                         mesh.material = materialGround;
                     } else {
-                        if ( mesh._ground_material_original ) {
-                            mesh.material = mesh._ground_material_original;
+                        if ( mesh.metadata["_ground_material_original"] ) {
+                            mesh.material = mesh.metadata["_ground_material_original"];
                         }
                     }
                 }
             }
         }
     }
-    */
    
-    /*
     groundTextureLayerSetUrl( url: string ): void {
         // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
         //console.debug("Layer setting ground texture layer: " + url);
@@ -578,10 +578,9 @@ class GeoTile3DLayer extends Base3DLayer {
         // Update existing tiles
         for ( const key in this.tiles ) {
             const tile = this.tiles[key];
-            this.groundTextureLayerProcessNode( tile.coordsTileGrid, tile.node );
+            this.groundTextureLayerProcessNode( tile, <Node> tile.node );
         }
     }
-    */
 
     replaceTileCoordsUrl( tileCoords: number[], url: string ): string {
         let result = url;

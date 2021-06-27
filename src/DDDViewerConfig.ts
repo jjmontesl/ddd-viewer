@@ -9,12 +9,17 @@ class DDDViewerConfig {
 
     tileUrlBase: string = "/data/tiles/";
 
-    sceneGroundLayers: any;
+    assetsUrlbase: string = "/assets/";
 
-    sceneMaterials: DDDMaterialsConfig[] = [];
+    materialsTextureSet: string | null = "default256";
+    materialsSplatmap: number | null = null; // 256
+    
+    //sceneGroundTextureOverrideUrl: string | null = null;
 
+    timeScale: number = 0.0;
 }
 
+/*
 class DDDMaterialsConfig {
     
     value!: string;
@@ -23,7 +28,7 @@ class DDDMaterialsConfig {
     
     splatmap!: string;
 }
-
+export { DDDMaterialsConfig };
+*/
 
 export { DDDViewerConfig };
-export { DDDMaterialsConfig };

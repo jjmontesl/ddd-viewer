@@ -13,7 +13,7 @@ import { SceneViewer } from "../SceneViewer";
 abstract class ViewerProcess {
 
     sceneViewer: SceneViewer;
-    finished: boolean;
+    finished: boolean = false;
     time: number = 0;
 
     constructor( sceneViewer: SceneViewer ) {

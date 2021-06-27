@@ -51,22 +51,26 @@ class ViewerState {
     sceneViewportRescale = 1;
     sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
-    sceneTextureSet: string | null = "defaultsplat256";
-    sceneGroundTextureOverride: string | null = null;
+    
+    // TODO: This shall be a per-layer setting
+    sceneGroundTextureOverrideUrl: string | null = null;
+
     sceneTitleText:string | null = null;
     
 
-    constructor( dddConfig: DDDViewerConfig, initialCoords: number[], isMobile: boolean = false ) {
+    constructor( dddConfig: DDDViewerConfig, initialCoords: number[] | null = null, isMobile: boolean = false ) {
 
         this.dddConfig = dddConfig;
 
         this.isMobile = isMobile;
         if ( this.isMobile ) {
             this.sceneViewportRescale = 2;
-            this.sceneTextureSet = null;  // "default256";
+            this.dddConfig.materialsTextureSet = null;  // "default256";
         }
 
-        this.positionWGS84 = initialCoords;
+        if (initialCoords) {
+            this.positionWGS84 = initialCoords;
+        }
 
         const shadowsEnabled = localStorage.getItem( "dddSceneShadowsEnabled" );
         this.sceneShadowsEnabled = shadowsEnabled ? JSON.parse( shadowsEnabled ) : this.sceneShadowsEnabled;
@@ -74,8 +78,13 @@ class ViewerState {
         const textsEnabled = localStorage.getItem( "dddSceneTextsEnabled" );
         this.sceneTextsEnabled = textsEnabled ? JSON.parse( textsEnabled ) : this.sceneTextsEnabled;
 
+        /*
         const textureSet = localStorage.getItem( "dddSceneTextureSet" );
         this.sceneTextureSet = textureSet ? JSON.parse( textureSet ) : this.sceneTextureSet;
+
+        if (dddConfig.materialsTextureSet) this.sceneTextureSet = dddConfig.materialsTextureSet;
+        if (dddConfig.materialsSplatmap) this.sceneTextureSet = dddConfig.materialsTextureSet;
+        */
 
         // Start time
         this.positionDate.setHours( 11 );

@@ -17,9 +17,9 @@
         "node": ">=10"
     },
     "scripts": {
-        "watch": "tsdx watch --format esm --target web",
-        "build": "barrelsby -d src --delete && tsdx build --max_old_space_size=32000 --format esm --target web",
-        "build-umd": "barrelsby -d src --delete && tsdx build --max_old_space_size=32000 --format umd --target web",
+        "dev": "tsdx watch --format esm --target web",
+        "build": "barrelsby -d src --delete && tsdx build --format esm --target web",
+        "build-umd": "barrelsby -d src --delete && tsdx build --max_old_space_size=8192 --format umd --target web",
         "barrelsby": "barrelsby -d src --delete",
         "_build": "tsdx build",
         "test": "tsdx test",
@@ -59,13 +59,13 @@
         "tsdx": "^0.14.1",
         "tslib": "^2.2.0",
         "typescript": "^4.3.2",
-        "proj4": "^2.7.2"
+        "proj4": "^2.7.2",
+        "suncalc": "^1.8.0"
     },
     "dependencies": {
         "@babylonjs/core": "^5.0.0-alpha.17",
         "@babylonjs/loaders": "^5.0.0-alpha.25",
         "@babylonjs/materials": "^5.0.0-alpha.17",
-        "earcut": "^2.2.2",
-        "suncalc": "^1.8.0"
+        "earcut": "^2.2.2"
     }
 }

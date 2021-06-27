@@ -11,12 +11,17 @@ import "@babylonjs/loaders/glTF";
 
 import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
+
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
-//import {register} from 'ol/proj/proj4';
 import { createXYZ, extentFromProjection } from "ol/tilegrid";
 import TileGrid from "ol/tilegrid/TileGrid";
-import { DDDMaterialsConfig } from "./DDDViewerConfig";
+//import {register} from 'ol/proj/proj4';
+import { transform } from "ol/proj";
+
+import * as proj4 from "proj4";
+import SunCalc from "suncalc";
+
 import { LayerManager } from "./layers/LayerManager";
 import { QueueLoader } from "./loading/QueueLoader";
 import { ViewerProcessManager } from "./process/ViewerProcessManager";
@@ -25,12 +30,15 @@ import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
 import { ScenePosition } from "./ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
-import { transform } from "ol/proj";
-import * as SunCalc from "suncalc";
-import * as proj4 from "proj4";
+import { DDDViewerConfig } from "./DDDViewerConfig";
+import { GeoTile3DLayer } from "layers/GeoTile3DLayer";
 
 
+/**
+ * This is the main DDDViewer library entry point. Represents a DDDViewer instance.
+ */
 class SceneViewer {
+
     camera: Camera | null = null;
     viewerState: ViewerState;
 
@@ -46,7 +54,7 @@ class SceneViewer {
     materialHighlight: StandardMaterial | null = null;
 
     walkMode: boolean = false;
-    useSplatMap: boolean = true;
+    useSplatMap: boolean = false;
 
     layerManager: LayerManager;
     queueLoader: QueueLoader;
@@ -90,8 +98,25 @@ class SceneViewer {
     _geolocationWatchId: string | null = null;
 
 
-    constructor( canvas: HTMLCanvasElement, viewerState: ViewerState ) {
-        this.viewerState = viewerState;
+    /**
+     * Constructs a new DDDViewer instance, and mounts it on the given HTMLCanvasElement.
+     * @param canvas 
+     * @param viewerState 
+     */
+    constructor( canvas: HTMLCanvasElement, dddConfig: DDDViewerConfig | null = null) {
+
+        /*
+        // Accept selector for canvas
+        if (canvas instanceof String) {
+            canvas = document.getElementById('ddd-scene');
+        }
+        */
+
+        if (dddConfig == null) {
+            dddConfig = new DDDViewerConfig();
+        }
+
+        this.viewerState = new ViewerState(dddConfig);
         
         this.layerManager = new LayerManager( this );
         this.queueLoader = new QueueLoader( this );
@@ -307,7 +332,7 @@ class SceneViewer {
 
         this.textureDetailSurfaceImp = new Texture( "/textures/SurfaceImperfections12_ddd.png", this.scene );
 
-        this.loadCatalog( "/assets/catalog.glb", false );
+        this.loadCatalog( this.viewerState.dddConfig.assetsUrlbase + "/catalog.glb", false );
 
         this.loadTextures();
 
@@ -635,8 +660,11 @@ class SceneViewer {
 
         //mesh.isPickable = false;
 
-        if ( !( "_splatmapMaterial" in root ) && this.useSplatMap && this.viewerState.sceneTextureSet && this.viewerState.sceneTextureSet.indexOf( "default" ) >= 0 ) {
-            if (( "metadata" in mesh ) && ( "tileCoords" in mesh.metadata )) {
+        // TODO: Ground/texture override shall be done per layer settings (and passed here into processMesh as needed)
+        if (!("_splatmapMaterial" in root) && this.useSplatMap && this.viewerState.sceneGroundTextureOverrideUrl &&
+            this.viewerState.dddConfig.materialsTextureSet && this.viewerState.dddConfig.materialsTextureSet.indexOf("default") >= 0) {
+
+            if (("metadata" in mesh) && ("tileCoords" in mesh.metadata)) {
                 const coords = root.metadata["tileCoords"];
                 //console.debug("Creating splat material for: ", coords);
 
@@ -715,7 +743,7 @@ class SceneViewer {
                 */
 
                 // TODO: Indicate when to splat in metadata
-                if ( this.useSplatMap && this.viewerState.sceneTextureSet &&
+                if ( this.useSplatMap && this.viewerState.dddConfig.materialsTextureSet &&
                     (( "ddd:material:splatmap" in metadata ) && metadata["ddd:material:splatmap"] === true ) &&
                     ( !( "ddd:layer" in metadata ) || metadata["ddd:layer"] === "0" ) &&
                     ( metadata["ddd:material"] === "Park" || metadata["ddd:material"] === "Grass" || metadata["ddd:material"] === "Terrain" ||
@@ -1168,10 +1196,8 @@ class SceneViewer {
             }
         }
 
-
-
         //this.sequencer.update( deltaTime );
-        //this.processes.update( deltaTime );
+        this.processes.update( deltaTime );
         this.layerManager.update( deltaTime );
 
         this.viewerState.sceneFPS = this.engine.getFps(); // this.engine.getFps().toFixed( 1 );
@@ -1883,19 +1909,13 @@ class SceneViewer {
         //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("standardPipeline", this.camera);
     }
 
-    /*
-    groundTextureLayerSetKey( key: string ): void {
+    groundTextureLayerSetUrl( url: string ): void {
+        // TODO: This shall not be a global viewer setting, but a layer setting
+        // This method is keep here for compatibility during TS migration / refactoring
 
-        this.viewerState.sceneGroundTextureOverride = key;
-
-        let url = null;
-        const layers = this.viewerState.dddConfig.sceneGroundLayers;
-        if ( layers[key]) {
-            url = layers[key].url;
-        }
-        this.layerManager.layers["ddd-osm-3d"].groundTextureLayerSetUrl( url );
+        this.viewerState.sceneGroundTextureOverrideUrl = url;
+        (<GeoTile3DLayer> this.layerManager.layers["ddd-osm-3d"]).groundTextureLayerSetUrl( url );
     }
-    */
 
     setMoveSpeed( speed: number ): void {
         this.viewerState.sceneMoveSpeed = speed;
@@ -1967,10 +1987,13 @@ class SceneViewer {
         //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
         //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         //Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        
+        if (this.skybox) {
+            this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));
+        }
 
         if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
             (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.1 + sunlightAmountNorm;
-            this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));
         }
 
         if ( this.skybox ) {
@@ -1986,7 +2009,8 @@ class SceneViewer {
                     //shaderMaterial.setFloat("suny", 0);
                     shaderMaterial.setFloat( "suny", Math.sin( currentSunPos.altitude ));
                 }
-                shaderMaterial.setFloat( "sunx", ( currentSunPos.azimuth - ( Math.PI / 2.0 )) / Math.PI );
+                //shaderMaterial.setFloat( "sunx", ( currentSunPos.azimuth - ( Math.PI / 2.0 )) / Math.PI );
+                shaderMaterial.setFloat( "sunx", ( (19 * (Math.PI / 180.0)) - ( Math.PI / 2.0 )) / Math.PI );
             }
         }
 
@@ -2006,7 +2030,7 @@ class SceneViewer {
         //console.debug(this.scene.ambientColor);
 
         // Lamps
-        const lampMatOn = sunlightAmountNorm > 0.2;  // 0.2 is more logical, 0.1 exagerates the change
+        const lampMatOn = sunlightAmountNorm > 0.3;  // 0.2 is more logical, 0.1 exagerates the change
         if ( lampMatOn !== this._previousLampPatOn ) {
             this._previousLampPatOn = lampMatOn;
             if ( "LightLampOff" in this.catalog_materials ) {
@@ -2070,19 +2094,21 @@ class SceneViewer {
     */
     loadTextures(): void {
 
-        const texturesConfig: DDDMaterialsConfig | undefined = this.viewerState.dddConfig.sceneMaterials.find( item => item.value === this.viewerState.sceneTextureSet );
-        if ( !texturesConfig ) return;
+        const textures = this.viewerState.dddConfig.materialsTextureSet;
+        const splatmap = this.viewerState.dddConfig.materialsSplatmap;
 
-        if ( texturesConfig.textures !== null ) {
-            this.loadCatalog( "/assets/catalog_materials-" + texturesConfig.textures + ".glb", true );
+        console.debug("Loading textures: " + textures + " (splatmap: " + splatmap + ")");
+
+        if (textures !== null) {
+            this.loadCatalog(this.viewerState.dddConfig.assetsUrlbase + "/catalog_materials-" + textures + ".glb", true);
         }
 
-        if ( texturesConfig.splatmap !== null ) {
+        if (splatmap) {
             this.useSplatMap = true;
-            const atlasTextureUrl = "/assets/splatmap-textures-atlas-" + texturesConfig.splatmap + ".png";
-            const atlasNormalsTextureUrl = "/assets/splatmap-textures-atlas-normals-" + texturesConfig.splatmap + ".png";
-            this.splatmapAtlasTexture = new Texture( atlasTextureUrl, this.scene,  false, true, Texture.NEAREST_NEAREST_MIPLINEAR ); // , Texture.NEAREST_SAMPLINGMODE);
-            this.splatmapAtlasNormalsTexture = new Texture( atlasNormalsTextureUrl, this.scene, false, true, Texture.NEAREST_NEAREST_MIPLINEAR );
+            const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/splatmap-textures-atlas-" + splatmap + ".png";
+            const atlasNormalsTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/splatmap-textures-atlas-normals-" + splatmap + ".png";
+            this.splatmapAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, true, Texture.NEAREST_NEAREST_MIPLINEAR); // , Texture.NEAREST_SAMPLINGMODE);
+            this.splatmapAtlasNormalsTexture = new Texture(atlasNormalsTextureUrl, this.scene, false, true, Texture.NEAREST_NEAREST_MIPLINEAR);
         } else {
             this.useSplatMap = false;
         }
@@ -2095,7 +2121,7 @@ class SceneViewer {
      * @param textureSet 
      */
     sceneTextureSet( textureSet: string | null ): void {
-        this.viewerState.sceneTextureSet = textureSet;
+        this.viewerState.dddConfig.materialsTextureSet = textureSet;
         localStorage.setItem( "dddSceneTextureSet", JSON.stringify( textureSet ));
 
         if ( textureSet !== null ) {

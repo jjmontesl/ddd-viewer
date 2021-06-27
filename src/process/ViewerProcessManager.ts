@@ -11,7 +11,7 @@ import { ViewerProcess } from "./ViewerProcess";
 class ViewerProcessManager {
 
     sceneViewer: SceneViewer;
-    currentProcesses: any[];
+    currentProcesses: ViewerProcess[];
 
     playing = true;
     currentTasks = [];
@@ -35,7 +35,7 @@ class ViewerProcessManager {
         }
 
         // Remove finished steps
-        this.currentProcesses = this.currentProcesses.filter( ( item ) => { return ( item.finished ); } );
+        this.currentProcesses = this.currentProcesses.filter( ( item ) => { return ( ! item.finished ); } );
 
     }
 
@@ -44,7 +44,7 @@ class ViewerProcessManager {
 
         // Sanity check
         if (process.sceneViewer != this.sceneViewer) {
-            throw new Error("");
+            throw new Error("Tried to add a ViewerProcess to a ViewerProcessManager which belongs ot a different SceneViewer.");
         }
 
         this.currentProcesses.push( process );
