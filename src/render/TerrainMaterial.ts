@@ -44,18 +44,19 @@ class TerrainMaterialWrapper {
     atlasBumpTexture: Texture | null = null;
 
 
-    constructor(sceneViewer: SceneViewer, splatmapTexture: Texture, atlasTexture: Texture, atlasNormalTexture: Texture, options: any) {
+    constructor(sceneViewer: SceneViewer, splatmapTexture: Texture, atlasTexture: Texture, atlasNormalTexture: Texture, options: any = null) {
+        // TODO: Options should be merged with defaults!
         this.sceneViewer = sceneViewer;
         this.dedupDouble = false;
         this.material = this.initSplatMaterial( <Scene> this.sceneViewer.scene, splatmapTexture, atlasTexture, atlasNormalTexture, options );
         //this.testSplatMaterial(scene);
     }
 
-    initSplatMaterial(scene: Scene, splatMap: Texture, atlas: Texture, atlasnormals: Texture, options: any): PBRCustomMaterial {
-
-        //var that = this;
+    initSplatMaterial(scene: Scene, splatMap: Texture, atlas: Texture, atlasnormals: Texture, options: any = null): PBRCustomMaterial {
+        // TODO: Options should be merged with defaults!
+        
         var defScale = 100.0;
-        if (!options){
+        if (!options) {
             options = {
                 numTilesHorizontal: 4,
                 numTilesVertical: 4,

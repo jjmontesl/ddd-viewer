@@ -654,15 +654,15 @@ class SceneViewer {
     }
 
     processMesh( root: Mesh, mesh: Mesh ): Mesh | null {
-        //console.debug("Processing mesh: " + mesh.id)
+        //console.debug("Processing mesh: " + mesh.id);
 
         const rootmd = root.metadata.tileInfo;
 
         //mesh.isPickable = false;
 
         // TODO: Ground/texture override shall be done per layer settings (and passed here into processMesh as needed)
-        if (!("_splatmapMaterial" in root) && this.useSplatMap && this.viewerState.sceneGroundTextureOverrideUrl &&
-            this.viewerState.dddConfig.materialsTextureSet && this.viewerState.dddConfig.materialsTextureSet.indexOf("default") >= 0) {
+        if ( !("_splatmapMaterial" in root) && this.useSplatMap && ! this.viewerState.sceneGroundTextureOverrideUrl &&
+            this.viewerState.dddConfig.materialsSplatmap) {  // && this.viewerState.dddConfig.materialsTextureSet.indexOf("default") >= 0
 
             if (("metadata" in mesh) && ("tileCoords" in mesh.metadata)) {
                 const coords = root.metadata["tileCoords"];
@@ -673,7 +673,7 @@ class SceneViewer {
 
                 const splatmapTexture = new Texture( splatmapUrl, this.scene );
 
-                const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture, {});
+                const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture);
                 ( <any> root )._splatmapMaterial = matwrapper.material;
                 
                 
@@ -743,7 +743,7 @@ class SceneViewer {
                 */
 
                 // TODO: Indicate when to splat in metadata
-                if ( this.useSplatMap && this.viewerState.dddConfig.materialsTextureSet &&
+                if ( this.useSplatMap && this.viewerState.dddConfig.materialsSplatmap &&
                     (( "ddd:material:splatmap" in metadata ) && metadata["ddd:material:splatmap"] === true ) &&
                     ( !( "ddd:layer" in metadata ) || metadata["ddd:layer"] === "0" ) &&
                     ( metadata["ddd:material"] === "Park" || metadata["ddd:material"] === "Grass" || metadata["ddd:material"] === "Terrain" ||
@@ -2120,13 +2120,15 @@ class SceneViewer {
      * @todo this would ideally belong to layers that explicity support DDD export features (splatmaps / texture catalogs)
      * @param textureSet 
      */
-    sceneTextureSet( textureSet: string | null ): void {
-        this.viewerState.dddConfig.materialsTextureSet = textureSet;
-        localStorage.setItem( "dddSceneTextureSet", JSON.stringify( textureSet ));
+    sceneTextureSet(textureSet: string | null, splatmap: number): void {
 
-        if ( textureSet !== null ) {
-            this.loadTextures();
-        }
+        this.viewerState.dddConfig.materialsTextureSet = textureSet;
+        this.viewerState.dddConfig.materialsSplatmap = splatmap;
+        
+        //if (textureSet) {
+        this.loadTextures();
+        //}
+        
         alert( "Reload the app to apply changes." );
     }
 

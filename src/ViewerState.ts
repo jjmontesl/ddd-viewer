@@ -78,14 +78,6 @@ class ViewerState {
         const textsEnabled = localStorage.getItem( "dddSceneTextsEnabled" );
         this.sceneTextsEnabled = textsEnabled ? JSON.parse( textsEnabled ) : this.sceneTextsEnabled;
 
-        /*
-        const textureSet = localStorage.getItem( "dddSceneTextureSet" );
-        this.sceneTextureSet = textureSet ? JSON.parse( textureSet ) : this.sceneTextureSet;
-
-        if (dddConfig.materialsTextureSet) this.sceneTextureSet = dddConfig.materialsTextureSet;
-        if (dddConfig.materialsSplatmap) this.sceneTextureSet = dddConfig.materialsTextureSet;
-        */
-
         // Start time
         this.positionDate.setHours( 11 );
         this.positionDate.setMinutes( 0 );
