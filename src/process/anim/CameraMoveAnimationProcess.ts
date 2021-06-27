@@ -5,7 +5,7 @@
 */
 
 
-import { ArcRotateCamera, Scalar, Vector3 } from "@babylonjs/core";
+import { Scalar, TargetCamera, Vector3 } from "@babylonjs/core";
 import { ScenePosition } from "../../ScenePosition";
 import { SceneViewer } from "../../SceneViewer";
 import { AnimationProcess } from "./AnimationProcess";
@@ -24,21 +24,17 @@ class CameraMovementAnimationProcess extends AnimationProcess {
     }
 
     update( deltaTime: number ): void {
+        
+        super.update(deltaTime);
+
         // Update camera interpolating between last pos and current
         const move_start = this.moveStart;
         const move_end = this.moveEnd;
 
         const sceneViewer = this.sceneViewer;
-
-        AnimationProcess.prototype.update.call( this, deltaTime );
         
-        // let interp_factor = ( this.animTime > 0 ) ? (( this.time ) / this.animTime ) : 1.0;
-        // if ( interp_factor > 1.0 ) {
-        //     interp_factor = 1.0;
-        // }
-
         sceneViewer.viewerState.positionWGS84 = [ 
-            Scalar.Lerp( move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor ),
+            Scalar.Lerp(move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor),
             Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor) ];
         
         
@@ -54,17 +50,17 @@ class CameraMovementAnimationProcess extends AnimationProcess {
                 startHeading -= 360;
             }
         }
-        const newPositionHeading = Scalar.Lerp( startHeading, targetHeading, this.interpFactor );
+        const newPositionHeading = Scalar.LerpAngle( startHeading, targetHeading, this.interpFactor );
         sceneViewer.viewerState.positionHeading = (( newPositionHeading % 360 ) + 360 ) % 360;
         //sceneViewer.viewerState.positionHeading = 180 / Math.PI * Scalar.LerpAngle(move_start.positionHeading * Math.PI / 180.0, move_end.positionHeading * Math.PI / 180.0, interp_factor);
 
         const positionScene = sceneViewer.wgs84ToScene( sceneViewer.viewerState.positionWGS84 );
-        const position = new Vector3( positionScene[0], sceneViewer.viewerState.positionGroundHeight + sceneViewer.viewerState.positionTerrainElevation + 1, positionScene[2]);
+        const position = new Vector3( positionScene[0], sceneViewer.viewerState.positionGroundHeight + sceneViewer.viewerState.positionTerrainElevation, positionScene[2]);
         const rotation = new Vector3(( 90.0 - sceneViewer.viewerState.positionTilt ) * ( Math.PI / 180.0 ), sceneViewer.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
 
         sceneViewer.camera!.position = position;
-        if (sceneViewer.camera instanceof ArcRotateCamera) {
-            (<ArcRotateCamera> sceneViewer.camera!).rotation = rotation;
+        if (sceneViewer.camera instanceof TargetCamera) {
+            (<TargetCamera> sceneViewer.camera!).rotation = rotation;
         }
 
     }

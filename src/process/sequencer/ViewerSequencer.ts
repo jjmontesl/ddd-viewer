@@ -65,13 +65,14 @@ class ViewerSequencer {
         //if ( ! ((command instanceof String )) throw new Error( "No command specified." );
 
         if ( command === "m" ) {
-            const posString: string | null = this.sceneViewer.positionString();
+            const posString: string | null = this.sceneViewer.positionString(8);
 
             if ( posString ) {
                 const move_start = this.sceneViewer.parsePositionString( posString );
-                const move_end = this.sceneViewer.parsePositionString( posString );
+                const move_end = this.sceneViewer.parsePositionString( <string> step[1] );
                 const animTime = <number> step[2];
                 const moveAnimationProcess = new CameraMovementAnimationProcess( this.sceneViewer, move_start, move_end, animTime );
+                console.debug(move_start, move_end, animTime);
                 this.sceneViewer.processes.add( moveAnimationProcess );
             }
 

@@ -147,7 +147,7 @@ class SceneViewer {
         // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
         this.engine = new Engine( canvas, true ); // , null, true); // , { stencil: true });
 
-        console.warn( "Scene option 'useGeometryIdsMap' is disabled." );
+        // Note: useGeometryIdsMap=true seems to help only when there are already too many objects, but performance is (slightly) better without it if object count is low
         this.scene = new Scene( this.engine, { useGeometryIdsMap: true } as SceneOptions );
 
         //that.scene = createScene(engine, canvas);
@@ -811,7 +811,9 @@ class SceneViewer {
                 const showText = this.viewerState.sceneTextsEnabled;
                 if ( showText ) {
                     // Text should be (possibly) exported as meshes by the generator.
-                    newMesh = MeshBuilder.CreatePlane( "text_" + mesh.id, { size: 2.4, sideOrientation: Mesh.DOUBLESIDE, updatable: true }, this.scene );
+                    const textWidth = metadata["ddd:text:width"];
+                    const textHeight = metadata["ddd:text:width"];
+                    newMesh = MeshBuilder.CreatePlane( "text_" + mesh.id, { width: textWidth, height: textHeight, sideOrientation: Mesh.DOUBLESIDE, updatable: true }, this.scene );
                     newMesh.parent = null;
                     newMesh.parent = mesh.parent; // .parent;
                     newMesh.scaling = mesh.scaling.clone();
@@ -1196,7 +1198,7 @@ class SceneViewer {
             }
         }
 
-        //this.sequencer.update( deltaTime );
+        this.sequencer.update( deltaTime );
         this.processes.update( deltaTime );
         this.layerManager.update( deltaTime );
 
@@ -1298,7 +1300,7 @@ class SceneViewer {
         return result;
     }
 
-    positionString(): string | null {
+    positionString(heightPrecision: number = 0): string | null {
         // TODO: This would not be a SceneViewer method, a utility module at most
 
         // /@43.2505933,5.3736631,126a,35y,20.08h,56.42t/
@@ -1323,9 +1325,9 @@ class SceneViewer {
 
         const shortFormat = false;
         if ( shortFormat ) {
-            posString = posString + "," + groundHeight.toFixed(0) + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
+            posString = posString + "," + groundHeight.toFixed(heightPrecision) + "m";   // If heading and yaw is 0, GM uses 'm' (seem MSL m or Ground m)
         } else {
-            posString = posString + "," + groundHeight.toFixed(0) + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
+            posString = posString + "," + groundHeight.toFixed(heightPrecision) + "a";    // seems Ground M  ... (not WGS84 height (with EGM))
             posString = posString + "," + "35" + "y";    // ?
             posString = posString + "," + heading.toFixed( 1 ) + "h"; // Heading
             posString = posString + "," + tilt.toFixed( 2 ) + "t";    // Yaw (0 is vertical, 90 horizontal)

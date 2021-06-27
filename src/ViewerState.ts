@@ -48,7 +48,6 @@ class ViewerState {
     sceneTileDrawDistance = 1;
     sceneMoveSpeed = 5;
     sceneCameraWalkHeight = 2.0;
-    sceneViewportRescale = 1;
     sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
     
@@ -58,15 +57,9 @@ class ViewerState {
     sceneTitleText:string | null = null;
     
 
-    constructor( dddConfig: DDDViewerConfig, initialCoords: number[] | null = null, isMobile: boolean = false ) {
+    constructor(dddConfig: DDDViewerConfig, initialCoords: number[] | null = null) {
 
         this.dddConfig = dddConfig;
-
-        this.isMobile = isMobile;
-        if ( this.isMobile ) {
-            this.sceneViewportRescale = 2;
-            this.dddConfig.materialsTextureSet = null;  // "default256";
-        }
 
         if (dddConfig.defaultCoords) {
             this.positionWGS84 = dddConfig.defaultCoords;

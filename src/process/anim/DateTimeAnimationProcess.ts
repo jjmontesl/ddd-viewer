@@ -26,17 +26,14 @@ class DateTimeAnimationProcess extends AnimationProcess {
 
     update( deltaTime: number ): void {
 
-        const sceneViewer = this.sceneViewer;
-
-        AnimationProcess.prototype.update.call( this, deltaTime );
-
-        const interpTime = ( this.dtEnd.getTime() / 1000 - this.dtStart.getTime() / 1000 ) * this.interpFactor;
-
-        sceneViewer.viewerState.positionDate = new Date( this.dtStart.getTime() + interpTime * 1000 );
+        super.update(deltaTime);
         
-        console.debug("TODO: Restore light setup from date position.");
-        //sceneViewer.lightSetupFromDatePos();
+        const interpTime = ( this.dtEnd.getTime() / 1000 - this.dtStart.getTime() / 1000 ) * this.interpFactor;
+        this.sceneViewer.viewerState.positionDate = new Date( this.dtStart.getTime() + interpTime * 1000 );
+        
+        //console.debug("Datetime set by animation to: " + this.sceneViewer.viewerState.positionDate);
 
+        this.sceneViewer.lightSetupFromDatePos();
     }
 
 }
