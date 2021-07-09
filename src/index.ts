@@ -6,6 +6,7 @@ export * from "./DDDViewerConfig";
 export * from "./ScenePosition";
 export * from "./SceneViewer";
 export * from "./ViewerState";
+export * from "./core/DDDObjectRef";
 export * from "./layers/Base3DLayer";
 export * from "./layers/GeoTile3DLayer";
 export * from "./layers/LayerManager";

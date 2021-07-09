@@ -18,8 +18,9 @@
     },
     "scripts": {
         "dev": "tsdx watch --format esm --target web",
-        "build": "barrelsby -d src --delete && tsdx build --format esm --target web",
+        "build-esm": "barrelsby -d src --delete && tsdx build --format esm --target web",
         "build-umd": "barrelsby -d src --delete && tsdx build --max_old_space_size=8192 --format umd --target web",
+        "build": "barrelsby -d src --delete && tsdx build --max_old_space_size=8192 --format esm,umd --target web",
         "barrelsby": "barrelsby -d src --delete",
         "_build": "tsdx build",
         "test": "tsdx test",

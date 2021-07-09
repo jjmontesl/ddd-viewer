@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF"; 
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -31,7 +31,8 @@ import { ScenePosition } from "./ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
 import { DDDViewerConfig } from "./DDDViewerConfig";
-import { GeoTile3DLayer } from "layers/GeoTile3DLayer";
+import { GeoTile3DLayer } from "./layers/GeoTile3DLayer";
+import { DDDObjectRef } from "./core/DDDObjectRef";
 
 
 /**
@@ -82,6 +83,7 @@ class SceneViewer {
 
     selectedMesh: Mesh | null = null;
     sceneSelectedMeshId: string | null = null;
+    selectedObject: DDDObjectRef | null = null;
 
     materialWater: WaterMaterial | null = null;
     envReflectionProbe: ReflectionProbe | null = null;
@@ -908,6 +910,8 @@ class SceneViewer {
         return mesh;
     }
 
+    
+
     instanceAsThinInstance( key: string, root: Mesh, node: Mesh ): void {
 
         const instance = this.catalog[key];
@@ -996,7 +1000,7 @@ class SceneViewer {
 
     instanceAsThinInstanceBuffers( key: string, root: Mesh, node: Mesh ): void {
 
-        console.debug( "Creating thin instance buffers for: " + key );
+        //console.debug( "Creating thin instance buffers for: " + key );
 
         const instance = this.catalog[key];
         const meshes = instance.getChildMeshes();
@@ -1440,6 +1444,25 @@ class SceneViewer {
         }
     }
 
+    deselectObject(): void {
+        if ( this.selectedObject ) {
+            //this.viewerState.selectedMesh.showBoundingBox = false;
+
+            for ( const mesh of this.highlightMeshes ) {
+                mesh.dispose();
+            }
+            this.highlightMeshes = [];
+            this.selectedMesh = null;
+            this.selectedObject = null;
+            this.viewerState.sceneSelectedMeshId = null;
+        }
+    }
+
+    /**
+     * Finds a mesh by id. Currently this also searches combined indexed meshes by path).
+     * @param meshId
+     * @param node 
+     */
     findMeshById( meshId: string, node: Mesh | null = null ): Mesh | null {
         let children = null;
         if ( node ) {
@@ -1447,6 +1470,23 @@ class SceneViewer {
             if ( nodeUrlId === meshId ) {
                 return node;
             }
+
+            // Search in combined indexed nodes
+            let metadata = DDDObjectRef.nodeMetadata(node);
+            let combined = false;
+            if (metadata) {
+                if ('ddd:combined:indexes' in metadata)  {
+                    combined = true;
+                    const indexes = metadata['ddd:combined:indexes'];
+                    // Find triangle in indexes
+                    for (let i = 0; i < indexes.length; i++) {
+                        if ('ddd:path' in metadata && metadata['ddd:path'] == meshId) {
+                            return node;
+                        }
+                    }
+                }
+            }
+
             children = node.getChildren();
         } else {
             children = this.scene.rootNodes;
@@ -1466,6 +1506,59 @@ class SceneViewer {
         mesh = this.findMeshById( meshId );
 
         if ( mesh ) this.selectMesh( mesh, highlight );
+    }
+
+    selectObject(objectRef: DDDObjectRef, highlight: boolean = true): void {
+
+        this.deselectObject();
+
+        this.selectedObject = objectRef;
+        this.viewerState.sceneSelectedMeshId = objectRef.mesh.id;
+        //this.viewerState.selectedMesh.showBoundingBox = true;
+        //console.debug(this.viewerState.selectedMesh.metadata.gltf.extras);
+
+        if ( highlight ) {
+            // Highlight
+            //that.highlightLayer.addMesh(pickResult.pickedMesh, Color3.White()); // , true);
+            //pickResult.pickedMesh.material = that.materialHighlight;
+
+            // Prepare the wireframe mesh
+            // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
+            let highlightClone = null;
+            if (this.selectedObject.faceIndexStart > -1) {
+                highlightClone = objectRef.mesh.clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, false);
+                highlightClone.makeGeometryUnique();
+                const indices = highlightClone.getIndices(); // true, true);
+                //highlightClone.unfreezeWorldMatrix();
+                //highlightClone.unfreezeNormals();
+                const newIndices = (<IndicesArray> indices).slice(this.selectedObject.faceIndexStart * 3, this.selectedObject.faceIndexEnd * 3);
+                /*
+                let newIndices: number[] = [];
+                for (let i = this.selectedObject.faceIndexStart * 3; i < this.selectedObject.faceIndexEnd * 3; i++) {
+                    newIndices.push(indices[i]);
+                }
+                */
+                highlightClone.setIndices(newIndices);
+            } else {
+                highlightClone = objectRef.mesh.clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
+            }
+
+            /*
+            // Iterate clone recursively to set highlight material to all submeshes
+            const setHighlightRecursively = ( submesh: Mesh ) => {
+                submesh.material = this.materialHighlight;
+                for ( const mc of submesh.getChildren()) {
+                    setHighlightRecursively( <Mesh> mc );
+                }
+            };
+            setHighlightRecursively( highlightClone );
+            */
+
+            highlightClone.material = this.materialHighlight;
+            //highlightClone.parent = objectRef.mesh.parent;
+            this.highlightMeshes.push( highlightClone );
+        }
+
     }
 
     selectMesh( mesh: Mesh, highlight: boolean ): void {
@@ -2159,6 +2252,7 @@ class SceneViewer {
         alert( "Reload the app to apply changes." );
     }
 
+    
 }
 
 export { SceneViewer };

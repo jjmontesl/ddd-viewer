@@ -38,6 +38,10 @@ module.exports = {
             "error",
             "always"
         ],
+        "no-console": [
+            "warning",
+            "always"
+        ]
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-empty-function": "off",  
