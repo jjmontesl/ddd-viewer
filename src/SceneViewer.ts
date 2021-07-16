@@ -68,7 +68,7 @@ class SceneViewer {
 
     catalog: { [key: string]: Mesh }
     catalog_materials: { [key: string]: Material }
-    instanceRoots: { [key: string]: any }
+    instanceRoots: { [key: string]: Mesh }
     depends: Mesh[];
 
     ambientColorNight: Color3 = new Color3( 0, 0, 0.3 );
@@ -258,8 +258,8 @@ class SceneViewer {
         //this.selectCameraOrbit();
 
         // Render Pipeline config and Postprocessing
-        //this.initRenderPipeline();
-        //this.updateRenderPipeline();
+        this.initRenderPipeline();
+        this.updateRenderPipeline();
 
 
         // Lighting
@@ -570,6 +570,9 @@ class SceneViewer {
 
                     let uvScale = 0.25;
 
+                    if (( metadata["ddd:material"] === "Grass" )) {
+                        uvScale = 0.5;
+                    }
                     if (( metadata["ddd:material"] === "Roadline" ) ||
                         ( metadata["ddd:material"] === "Roadmarks" ) ||
                         ( metadata["ddd:material"] === "Fence" ) ||
@@ -661,6 +664,7 @@ class SceneViewer {
         const rootmd = root.metadata.tileInfo;
 
         //mesh.isPickable = false;
+        mesh.receiveShadows = true; // Fixes instances with no shadows
 
         // TODO: Ground/texture override shall be done per layer settings (and passed here into processMesh as needed)
         if ( !("_splatmapMaterial" in root) && this.useSplatMap && ! this.viewerState.sceneGroundTextureOverrideUrl &&
@@ -933,7 +937,7 @@ class SceneViewer {
             if ( !meshInstanceRoot ) {
                 //console.debug("Creating instanceroot for: " + instanceRootKey);
                 instance.setEnabled( true );
-                meshInstanceRoot = mesh.clone( instanceRootKey, null, true );
+                meshInstanceRoot = <Mesh> mesh.clone( instanceRootKey, null, true );
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
 
                 const cloneMat = meshInstanceRoot.material;
@@ -1020,7 +1024,7 @@ class SceneViewer {
             if ( !meshInstanceRoot ) {
                 //console.debug("Creating instanceroot for: " + instanceRootKey);
                 instance.setEnabled( true );
-                meshInstanceRoot = mesh.clone( instanceRootKey, null, true );
+                meshInstanceRoot = <Mesh> mesh.clone( instanceRootKey, null, true );
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
 
                 const cloneMat = meshInstanceRoot.material;
@@ -1339,23 +1343,42 @@ class SceneViewer {
         return posString;
     }
 
+    /**
+     * Calculates ground elevation (in MSL) for a given point in the scene. Receives a Vector3,
+     * and uses its X and Z coordinates.
+     */
+    elevationMSLFromSceneCoords(coords: Vector3): [number | null, Mesh | null] { 
+        const ray = new Ray( new Vector3( coords.x, -100.0, coords.z ), new Vector3( 0, 1, 0 ), 3000.0 );
+        const pickResult = this.scene.pickWithRay( ray );
+        
+        let terrainElevation: number | null = null;
+        let terrainMesh: Mesh | null = null;
+
+        if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
+            terrainElevation = ( pickResult.distance - 100.0 );
+            terrainMesh = <Mesh> pickResult.pickedMesh;
+        }
+
+        return [terrainElevation, terrainMesh];
+    }
+
+    /**
+     * This method is called by viewer by default to update altitude and position name.
+     */
     updateElevation(): void {
 
         if ( !this.camera ) return;
 
-        //const ray = new Ray(this.camera.position, new Vector3(0, -1, 0));
-        const ray = new Ray( new Vector3( this.camera.position.x, -100.0, this.camera.position.z ), new Vector3( 0, 1, 0 ), 3000.0 );
-        const pickResult = this.scene.pickWithRay( ray );
-        //const pickResult = null;
-        if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
+        let [terrainElevation, terrainMesh] = this.elevationMSLFromSceneCoords(this.camera.position);
 
-            if ( pickResult.pickedMesh.metadata && pickResult.pickedMesh.metadata.gltf && pickResult.pickedMesh.metadata.gltf.extras && pickResult.pickedMesh.metadata.gltf.extras["osm:name"]) {
-                this.viewerState.positionName = pickResult.pickedMesh.metadata.gltf.extras["osm:name"];
+        if (terrainElevation && terrainMesh) {
+
+            if ( terrainMesh.metadata && terrainMesh.metadata.gltf && terrainMesh.metadata.gltf.extras && terrainMesh.metadata.gltf.extras["osm:name"]) {
+                this.viewerState.positionName = terrainMesh.metadata.gltf.extras["osm:name"];
             } else {
                 this.viewerState.positionName = null;
             }
 
-            const terrainElevation = ( pickResult.distance - 100.0 );
             this.viewerState.positionTerrainElevation = terrainElevation;
             this.viewerState.positionGroundHeight = this.camera.position.y - terrainElevation;
         } else {
@@ -1463,6 +1486,7 @@ class SceneViewer {
      * @param meshId
      * @param node 
      */
+    /*
     findMeshById( meshId: string, node: Mesh | null = null ): Mesh | null {
         let children = null;
         if ( node ) {
@@ -1499,18 +1523,42 @@ class SceneViewer {
 
         return null;
     }
+    */
 
-    selectMeshById( meshId: string, highlight: boolean ): void {
+    /**
+     * Finds an object by id.
+     * TODO: Move to DDDObjectRef and just leave here a convenience method search the whole scene.
+     * @param meshId
+     * @param node 
+     */
+    findObjectById(objectId: string, objectRef: DDDObjectRef | null = null): DDDObjectRef | null {
+        
+        let children = null;
+        
+        if (objectRef) {
+            //console.debug(DDDObjectRef.urlId(objectId), objectRef.getUrlId());
+            if (objectRef.getUrlId() === DDDObjectRef.urlId(objectId)) {
+                return objectRef;
+            }
 
-        let mesh = null;
-        mesh = this.findMeshById( meshId );
+            children = objectRef.getChildren();
+        } else {
+            children = this.scene.rootNodes.map((o) => new DDDObjectRef(o));
+        }
 
-        if ( mesh ) this.selectMesh( mesh, highlight );
+        for (const child of children) {
+            const result = this.findObjectById(objectId, child);
+            if (result !== null) { return result; }
+        }
+
+        return null;
     }
 
     selectObject(objectRef: DDDObjectRef, highlight: boolean = true): void {
 
         this.deselectObject();
+
+        if (!objectRef) return;
 
         this.selectedObject = objectRef;
         this.viewerState.sceneSelectedMeshId = objectRef.mesh.id;
@@ -1526,7 +1574,7 @@ class SceneViewer {
             // To disable depth test check rendering groups:  https://forum.babylonjs.com/t/how-do-i-disable-depth-testing-on-a-mesh/1159
             let highlightClone = null;
             if (this.selectedObject.faceIndexStart > -1) {
-                highlightClone = objectRef.mesh.clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, false);
+                highlightClone = (<Mesh> objectRef.mesh).clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, false);
                 highlightClone.makeGeometryUnique();
                 const indices = highlightClone.getIndices(); // true, true);
                 //highlightClone.unfreezeWorldMatrix();
@@ -1540,7 +1588,7 @@ class SceneViewer {
                 */
                 highlightClone.setIndices(newIndices);
             } else {
-                highlightClone = objectRef.mesh.clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
+                highlightClone = (<Mesh> objectRef.mesh).clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
             }
 
             /*

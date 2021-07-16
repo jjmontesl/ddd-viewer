@@ -4,21 +4,21 @@
 * MIT License (see LICENSE file)
 */
 
-import { Mesh } from "@babylonjs/core";
+import { Mesh, Node } from "@babylonjs/core";
 
 
 /**
  */
 class DDDObjectRef {
 
-    mesh: Mesh;
+    mesh: Node;
 
     submeshIdx: number = -1;
 
     faceIndexStart: number = -1;
     faceIndexEnd: number = -1;
 
-    constructor(mesh: Mesh, submeshIdx: number = -1) {
+    constructor(mesh: Node, submeshIdx: number = -1) {
         this.mesh = mesh;
         this.submeshIdx = submeshIdx;
 
@@ -43,7 +43,7 @@ class DDDObjectRef {
 
     }
 
-    static nodeMetadata(node: Mesh) {
+    static nodeMetadata(node: Node) {
         if ( node && node.metadata && node.metadata.gltf && node.metadata.gltf.extras ) {
             return node.metadata.gltf.extras;
         } else {
@@ -89,9 +89,59 @@ class DDDObjectRef {
         return metadata;
     }
 
+    static urlId(value: string): string {
+        let result = value;
+        if (result) {
+            result = result.replaceAll("/", "-");
+            result = result.replaceAll("#", "_");
+            result = result.replaceAll(" ", "_");
+            result = encodeURIComponent(result);
+            result = result.replaceAll("%3A", ":");
+            //result = result.replace("/", "_");
+            //result = result.replace("#", "_");
+        }
+        return result;
+    }
+
+    getId(): string {
+        const metadata = this.getMetadata();
+        
+        let result = this.mesh.id;
+        if (metadata && ('ddd:path' in metadata)) {
+            result = metadata['ddd:path'];
+        }
+        return result;
+    }
+
+    getUrlId(): string {
+        let result = this.getId();
+        result = DDDObjectRef.urlId(result);
+        return result;
+    }
+
     getChildren(): DDDObjectRef[] { 
         const result: DDDObjectRef[] = [];
 
+        //if (this.submeshIdx < 0) {
+        for (let child of this.mesh.getChildren()) {
+            result.push(new DDDObjectRef(child));
+        }
+        //} 
+
+        const metadata = this.getMetadata();
+        if (metadata && 'ddd:combined:indexes' in metadata) {
+            for (let i = 0; i < metadata['ddd:combined:indexes'].length; i++) {
+                result.push(new DDDObjectRef(this.mesh, i));
+            }
+        }
+
+        return result;
+    }
+
+    getParent(): DDDObjectRef | null {
+        let result = null;
+        let parent = this.mesh.parent;
+        if (parent) { result = new DDDObjectRef(parent); }
         return result;
     }
 

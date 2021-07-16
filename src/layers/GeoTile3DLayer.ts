@@ -259,8 +259,8 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 let minHeight = Number.POSITIVE_INFINITY;
                 let maxHeight = Number.NEGATIVE_INFINITY;
-                newMeshes.forEach(( mesh: AbstractMesh, _i: number ) => {
-                    if ( this.layerManager!.sceneViewer.shadowGenerator ) {
+                newMeshes.forEach( (mesh: AbstractMesh, _i: number) => {
+                    if (this.layerManager!.sceneViewer.shadowGenerator) {
                         mesh.receiveShadows = true;
                         if ( mesh.metadata && mesh.metadata.gltf.extras &&
                                 (( mesh.metadata.gltf.extras["ddd:shadows"] === false ) ||
@@ -272,7 +272,7 @@ class GeoTile3DLayer extends Base3DLayer {
                         }
                         
                         // TODO: Do this at SceneViewer processMesh level
-                        this.layerManager!.sceneViewer.shadowGenerator.getShadowMap()!.renderList!.push( mesh );
+                        this.layerManager!.sceneViewer.shadowGenerator.getShadowMap()!.renderList!.push(mesh);
                     }
 
                     //console.debug(mesh.getBoundingInfo());

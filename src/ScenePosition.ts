@@ -10,10 +10,12 @@
  */
 class ScenePosition {
 
+    // Position is Lat, Lon, Altitude (currently MSL)
     positionWGS84: number[] = [ 0, 0, 0 ];
 
     positionTileZoomLevel: number = 0;
 
+    // Ground altitude
     positionGroundHeight: number = 0;
 
     positionHeading: number = 0;
