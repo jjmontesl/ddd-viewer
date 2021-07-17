@@ -25,8 +25,10 @@ class DDDObjectRef {
         if (this.submeshIdx > -1) {
             let metadata = DDDObjectRef.nodeMetadata(mesh);
             const indexes = metadata['ddd:combined:indexes'];
-            this.faceIndexStart = submeshIdx > 0 ? indexes[submeshIdx - 1][0] : 0;
-            this.faceIndexEnd = indexes[submeshIdx][0];
+            if (indexes && (submeshIdx - 1) in indexes) {
+                this.faceIndexStart = submeshIdx > 0 ? indexes[submeshIdx - 1][0] : 0;
+                this.faceIndexEnd = indexes[submeshIdx][0];
+            }
         }
       
         /*

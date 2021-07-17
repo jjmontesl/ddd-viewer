@@ -62,7 +62,7 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         this.calculateMslHeights();
 
         let heightStart = this._mslHeightStart !== null ? this._mslHeightStart : move_start.positionGroundHeight;
-        let heightEnd = this._mslHeightEnd !== null ? this._mslHeightEnd : move_end.positionGroundHeight;
+        let heightEnd = this._mslHeightEnd !== null ? this._mslHeightEnd : (move_end.positionGroundHeight + (this._mslHeightStart !== null ? this._mslHeightStart - move_start.positionGroundHeight : 0));
         
         // Add arc height offset if set
         let moveDistance = [(move_end.positionWGS84[0] - move_start.positionWGS84[0]) * 111000 , 

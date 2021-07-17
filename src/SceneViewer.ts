@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF"; 
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -1347,19 +1347,19 @@ class SceneViewer {
      * Calculates ground elevation (in MSL) for a given point in the scene. Receives a Vector3,
      * and uses its X and Z coordinates.
      */
-    elevationMSLFromSceneCoords(coords: Vector3): [number | null, Mesh | null] { 
+    elevationMSLFromSceneCoords(coords: Vector3): [number | null, PickingInfo | null] { 
         const ray = new Ray( new Vector3( coords.x, -100.0, coords.z ), new Vector3( 0, 1, 0 ), 3000.0 );
         const pickResult = this.scene.pickWithRay( ray );
         
         let terrainElevation: number | null = null;
-        let terrainMesh: Mesh | null = null;
+        //let terrainMesh: Mesh | null = null;
 
         if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
             terrainElevation = ( pickResult.distance - 100.0 );
-            terrainMesh = <Mesh> pickResult.pickedMesh;
+            //terrainMesh = <Mesh> pickResult.pickedMesh;
         }
 
-        return [terrainElevation, terrainMesh];
+        return [terrainElevation, pickResult];
     }
 
     /**
@@ -1369,12 +1369,15 @@ class SceneViewer {
 
         if ( !this.camera ) return;
 
-        let [terrainElevation, terrainMesh] = this.elevationMSLFromSceneCoords(this.camera.position);
+        let [terrainElevation, terrainPickResult] = this.elevationMSLFromSceneCoords(this.camera.position);
 
-        if (terrainElevation && terrainMesh) {
+        if (terrainElevation && terrainPickResult) {
 
-            if ( terrainMesh.metadata && terrainMesh.metadata.gltf && terrainMesh.metadata.gltf.extras && terrainMesh.metadata.gltf.extras["osm:name"]) {
-                this.viewerState.positionName = terrainMesh.metadata.gltf.extras["osm:name"];
+            // Update also position name if possible, from position metadata
+            const terrainObjectRef = DDDObjectRef.fromMeshFace(<Mesh> terrainPickResult.pickedMesh, terrainPickResult.faceId);
+            const metadata = terrainObjectRef.getMetadata();
+            if (metadata && metadata["osm:name"]) {
+                this.viewerState.positionName = metadata["osm:name"];
             } else {
                 this.viewerState.positionName = null;
             }
