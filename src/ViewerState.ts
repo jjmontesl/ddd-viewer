@@ -42,7 +42,7 @@ class ViewerState {
     sceneTriangles: number = 0;
     sceneShadowsEnabled = false;
     sceneTextsEnabled = false;
-    scenePostprocessingEnabled = true;
+    scenePostprocessingEnabled = false;
     scenePickingEnabled = true;
     sceneViewModeShow = true;
     sceneTileDrawDistance = 1;

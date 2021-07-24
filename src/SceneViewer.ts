@@ -317,7 +317,7 @@ class SceneViewer {
         //var ssao = new SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
         this.materialHighlight = new StandardMaterial( "materialHighlight", this.scene );
-        this.materialHighlight.diffuseColor = new Color3( 1, 1, 1 );
+        this.materialHighlight.diffuseColor = new Color3( 1, 0, 1 );
         //that.materialHighlight.specularColor = new Color3(1, 1, 1);
         this.materialHighlight.emissiveColor = new Color3( 1.0, 1.0, 1. );
         this.materialHighlight.wireframe = true;
@@ -1346,8 +1346,13 @@ class SceneViewer {
     /**
      * Calculates ground elevation (in MSL) for a given point in the scene. Receives a Vector3,
      * and uses its X and Z coordinates.
+     * 
+     * FIXME: This is hitting objects other than the ground, check if masks can be used or otherwise correctly resolve ground elevation.
+     *        Also the 3000m limit is arbitrary. Also fails when no ground objects are available.
+     *        Also fails sometimes hitting invisible objects below ground (seems some non visible objects are being hit)
      */
     elevationMSLFromSceneCoords(coords: Vector3): [number | null, PickingInfo | null] { 
+        
         const ray = new Ray( new Vector3( coords.x, -100.0, coords.z ), new Vector3( 0, 1, 0 ), 3000.0 );
         const pickResult = this.scene.pickWithRay( ray );
         
