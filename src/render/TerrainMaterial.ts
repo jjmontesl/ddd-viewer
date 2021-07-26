@@ -76,7 +76,7 @@ class TerrainMaterialWrapper {
                               ],
                     scales:[[defScale * 0.75, defScale * 0.75], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
                              [defScale * 0.5, defScale * 0.5], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
-                             [defScale * 1.5, defScale * 1.5], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
+                             [defScale * 1.0, defScale * 1.0], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
                              [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]], // Sand, rock, rock orange
                     displScales: [0.0, 0, 0.0, 0,
                                   0, 0, 0, 0,
@@ -159,8 +159,13 @@ class TerrainMaterialWrapper {
 
         //this.shaderinjectpoint3 += 'finalColor16 = col(vAlbedoUV, uv16, vec2(20.0, 20.0), vec2(1.0, 2.0), 0, scale, splatmap, albedoSampler);';
 
+        this.shaderinjectpoint3 += `
+            mat3 TBN = cotangent_frame(normalW, vPositionW, vAlbedoUV, vec2(-1.0, 1.0));
+        `;
+
+        this.shaderinjectpoint3 += "normalW = TBN * finalNormal" + (this.totalTiles) + ";";  // TODO: adding these vectors is incorrect
+        //this.shaderinjectpoint3 += "normalW = normalize(normalW * 0.75 + 0.25 * finalNormal" + (this.totalTiles) + ");";  // TODO: adding these vectors is incorrect
         //this.shaderinjectpoint3 += 'normalW = perturbNormal(cotangentFrame, finalNormal' + (this.totalTiles) + ', 1.0);';
-        this.shaderinjectpoint3 += "normalW = normalize(normalW * 0.75 + 0.25 * finalNormal" + (this.totalTiles) + ");";  // TODO: adding these vectors is incorrect
         //this.shaderinjectpoint3 += 'normalW = normalW;';
         //this.shaderinjectpoint3 += 'normalW.y *= -1.0;';
         //this.shaderinjectpoint3 += 'result = finalNormal' + (this.totalTiles) + ';';
@@ -197,6 +202,9 @@ class TerrainMaterialWrapper {
         this.material.AddUniform("splatmap","sampler2D", {});
         this.material.AddUniform("atlasNormalsSampler","sampler2D",  {});
 
+        this.material.Fragment_Definitions(`
+        #define TANGENT;
+        `);
 
         this.material.Fragment_Begin(
              "precision highp float;\r\n"
@@ -205,6 +213,51 @@ class TerrainMaterialWrapper {
             +this.shaderinjectpoint1
 
             +`
+
+
+            // From: https://github.com/BabylonJS/Babylon.js/blob/master/src/Shaders/ShadersInclude/bumpFragmentMainFunctions.fx
+
+            vec3 perturbNormalBase(mat3 cotangentFrame, vec3 normal, float scale)
+            {
+                #ifdef NORMALXYSCALE
+                    normal = normalize(normal * vec3(scale, scale, 1.0));
+                #endif
+        
+                return normalize(cotangentFrame * normal);
+            }
+        
+            vec3 perturbNormal(mat3 cotangentFrame, vec3 textureSample, float scale)
+            {
+                return perturbNormalBase(cotangentFrame, textureSample * 2.0 - 1.0, scale);
+            }
+        
+            // Thanks to http://www.thetenthplanet.de/archives/1180
+            mat3 cotangent_frame(vec3 normal, vec3 p, vec2 uv, vec2 tangentSpaceParams)
+            {
+                // get edge vectors of the pixel triangle
+                vec3 dp1 = dFdx(p);
+                vec3 dp2 = dFdy(p);
+                vec2 duv1 = dFdx(uv);
+                vec2 duv2 = dFdy(uv);
+        
+                // solve the linear system
+                vec3 dp2perp = cross(dp2, normal);
+                vec3 dp1perp = cross(normal, dp1);
+                vec3 tangent = dp2perp * duv1.x + dp1perp * duv2.x;
+                vec3 bitangent = dp2perp * duv1.y + dp1perp * duv2.y;
+        
+                // invert the tangent/bitangent if requested
+                tangent *= tangentSpaceParams.x;
+                bitangent *= tangentSpaceParams.y;
+        
+                // construct a scale-invariant frame
+                float invmax = inversesqrt(max(dot(tangent, tangent), dot(bitangent, bitangent)));
+                return mat3(tangent * invmax, bitangent * invmax, normal);
+            }
+
+
+
+
             // Functions
 
             float heightval(vec4 col) {
@@ -372,7 +425,7 @@ class TerrainMaterialWrapper {
 
                 //+"return diffuse1Color;"
                 +"return chanInfo;"
-            +"}"
+            +"} "
         );
 
         this.material.Fragment_MainBegin(
