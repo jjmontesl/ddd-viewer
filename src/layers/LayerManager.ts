@@ -13,15 +13,19 @@ class LayerManager {
     }
 
     update( deltaTime: number ): void {
-        for ( const key in this.layers ) {
+        for (const key in this.layers) {
             // Load tiles dynamically as needed
-            this.layers[key].update( deltaTime );
+            this.layers[key].update(deltaTime);
         }
     }
 
-    addLayer( key: string, layer: GeoTile3DLayer ): void {
+    addLayer(key: string, layer: GeoTile3DLayer): void {
         layer.layerManager = this;
         this.layers[key] = layer;
+    }
+
+    getLayer(key: string) {
+        return this.layers[key];
     }
 }
 

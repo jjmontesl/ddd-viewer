@@ -11,13 +11,20 @@ import { LayerManager } from "./LayerManager";
  */
 abstract class Base3DLayer {
 
+    visible: boolean = true;
     layerManager: LayerManager | null;
 
     constructor() {
+        this.visible = true;
         this.layerManager = null;
     }
 
     abstract update( deltaTime: number ): void;
+
+    setVisible(visible: boolean): void {
+        this.visible = visible;
+    }
+
 }
 
 export { Base3DLayer };
