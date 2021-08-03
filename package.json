@@ -17,12 +17,12 @@
         "node": ">=10"
     },
     "scripts": {
-        "dev": "tsdx watch --format esm --target web",
+        "dev": "barrelsby -d src --delete && tsdx watch --format esm --target web",
         "build-esm": "barrelsby -d src --delete && tsdx build --format esm --target web",
         "build-umd": "barrelsby -d src --delete && tsdx build --max_old_space_size=8192 --format umd --target web",
         "build": "barrelsby -d src --delete && tsdx build --max_old_space_size=8192 --format esm,umd --target web",
         "barrelsby": "barrelsby -d src --delete",
-        "_build": "tsdx build",
+        "doc": "barrelsby -d src --delete && npx typedoc --out doc/api src/index.ts",
         "test": "tsdx test",
         "lint": "tsdx lint",
         "_prepare": "tsdx build --format esm,umd --target web",
@@ -67,6 +67,7 @@
         "@babylonjs/core": "^5.0.0-alpha.17",
         "@babylonjs/loaders": "^5.0.0-alpha.25",
         "@babylonjs/materials": "^5.0.0-alpha.17",
-        "earcut": "^2.2.2"
+        "earcut": "^2.2.2",
+        "typedoc": "^0.21.5"
     }
 }

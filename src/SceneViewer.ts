@@ -439,10 +439,12 @@ class SceneViewer {
         }
     }
 
+    /*
     showDebugView(): void {
         // Show BabylonJS Inspector
         this.scene!.debugLayer.show({ overlay: true });
     }
+    */
 
     loadCatalog( filename: string, loadMaterials: boolean ): void {
         console.debug( "Loading catalog: " + filename );

@@ -63,7 +63,7 @@ class GeoJson3DLayer extends Base3DLayer {
     featuresPoints: GeoJsonPoint[] = [];
     featuresLines: GeoJsonLine[] = [];
 
-    altitudeOffset: number = 680;
+    altitudeOffset: number = 50;
 
     sceneNodes: Mesh[] = [];
 

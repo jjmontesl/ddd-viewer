@@ -48,6 +48,8 @@ class DDDObjectRef {
     static nodeMetadata(node: Node) {
         if ( node && node.metadata && node.metadata.gltf && node.metadata.gltf.extras ) {
             return node.metadata.gltf.extras;
+        } else if (node.metadata !== null) {
+            return node.metadata;
         } else {
             return null;
         }
@@ -109,7 +111,9 @@ class DDDObjectRef {
         const metadata = this.getMetadata();
         
         let result = this.mesh.id;
-        if (metadata && ('ddd:path' in metadata)) {
+        if (metadata && ('ddd:rpath' in metadata)) {
+            result = metadata['ddd:rpath'];
+        } else if (metadata && ('ddd:path' in metadata)) {
             result = metadata['ddd:path'];
         }
         return result;
