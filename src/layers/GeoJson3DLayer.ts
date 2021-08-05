@@ -64,8 +64,12 @@ class GeoJson3DLayer extends Base3DLayer {
     featuresLines: GeoJsonLine[] = [];
 
     altitudeOffset: number = 50;
+    colorHex: string = "#ff00ff";
 
-    sceneNodes: Mesh[] = [];
+    //private sceneNodes: Mesh[] = [];
+    private rootNode: TransformNode | null = null;
+
+    private featureMaterial: StandardMaterial | null = null;
 
     constructor(geojsonData: any) {
         super();
@@ -79,10 +83,33 @@ class GeoJson3DLayer extends Base3DLayer {
     update(): void { 
     }
 
+    setColor(colorHex: string) { 
+        this.colorHex = colorHex;
+
+        if (this.featureMaterial) {
+            const color = Color3.FromHexString(colorHex);
+            this.featureMaterial.unfreeze();
+            this.featureMaterial.diffuseColor = color;
+            this.featureMaterial.emissiveColor = color;
+            this.featureMaterial.disableLighting = true;
+            this.featureMaterial.freeze();
+        }
+    }
+    
     setVisible(visible: boolean) {
         super.setVisible(visible);
+        if (this.rootNode) this.rootNode.setEnabled(this.visible);
+        /*
         for (let node of this.sceneNodes) {
             node.setEnabled(this.visible);
+        }
+        */
+    }
+
+    setAltitudeOffset(altitudeOffset: number) {
+        this.altitudeOffset = altitudeOffset;
+        if (this.rootNode) {
+            this.rootNode.position.y = this.altitudeOffset;  // Apply offset
         }
     }
 
@@ -142,25 +169,35 @@ class GeoJson3DLayer extends Base3DLayer {
     updateSceneFromFeatures(): void {
         const sceneViewer = this.layerManager!.sceneViewer;
         
-        const markerMaterial = new StandardMaterial( "materialMarker", sceneViewer.scene );
-        markerMaterial.diffuseColor = new Color3( 1, 0, 1 );
-        markerMaterial.emissiveColor = new Color3( 1.0, 0.0, 1. );
-        markerMaterial.disableLighting = true;
+        // Create material only if it hasn't already been created
+        if (!this.featureMaterial) { 
+            const featureMaterial = new StandardMaterial("featureMaterial", sceneViewer.scene);
+            this.featureMaterial = featureMaterial;
+        }
+        
+        if (!this.rootNode) { 
+            this.rootNode = new TransformNode("geoJson3DLayer-root", sceneViewer.scene);
+        }
+    
+        
+        this.setColor(this.colorHex);
 
         for (let feature of this.featuresPoints) {
             let marker = MeshBuilder.CreateSphere("pointMarker", { diameter: 1.5, segments: 10 }, sceneViewer.scene);
-            marker.material = markerMaterial;
+            marker.material = this.featureMaterial;
             marker.position = feature.coordsScene;
-            marker.position.y += this.altitudeOffset;  // Apply offset
-            this.sceneNodes.push(marker);
+            marker.parent = this.rootNode;
+            //sceneNodes.push(marker);
         }
         
         for (let feature of this.featuresLines) {
             let marker = MeshBuilder.CreateLines("lineMarker", { points: feature.coordsScene }, sceneViewer.scene);
-            marker.material = markerMaterial;
-            marker.position.y += this.altitudeOffset;  // Apply offset
-            this.sceneNodes.push(marker);
+            marker.material = this.featureMaterial;
+            marker.parent = this.rootNode;
+            //this.sceneNodes.push(marker);
         }
+
+        this.setAltitudeOffset(this.altitudeOffset);
 
     }
 

@@ -3,7 +3,11 @@ import { Base3DLayer } from "./Base3DLayer";
 import { GeoTile3DLayer } from "./GeoTile3DLayer";
 
 
+/**
+ * Manages the list of layers known to DDD Viewer.
+ */
 class LayerManager {
+
     sceneViewer: SceneViewer;
     layers: { [ key: string ]: Base3DLayer };
 
@@ -19,13 +23,25 @@ class LayerManager {
         }
     }
 
+    /**
+     * Adds a layer to DDD viewer.
+     * @param key 
+     * @param layer 
+     */
     addLayer(key: string, layer: GeoTile3DLayer): void {
         layer.layerManager = this;
         this.layers[key] = layer;
     }
 
+    /**
+     * Retrieves a layer from DDD viewer managed layers. 
+     * Returns null if the layer does not exist.
+     */
     getLayer(key: string) {
-        return this.layers[key];
+        if (key in this.layers) {
+            return this.layers[key];
+        }
+        return null;
     }
 }
 

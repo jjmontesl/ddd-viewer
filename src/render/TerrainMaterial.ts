@@ -193,7 +193,6 @@ class TerrainMaterialWrapper {
         this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
 
 
-
         this.material.albedoTexture = atlas;
         if (atlasnormals !== null) {
             //this.material.bumpTexture = atlasnormals;

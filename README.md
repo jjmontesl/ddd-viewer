@@ -62,7 +62,7 @@ You need to build the library only if you wish to make changes to it
 
 Clone the `ddd-viewer` repository and install JS/TS dependencies through `npm`:
 
-    git clone https://github.com/jjmontesl/ddd-viewer.git
+    git clone -c core.autocrlf=false https://github.com/jjmontesl/ddd-viewer.git
 
 Enter the `ddd-viewer` directory (`cd ddd-viewer`) and install dependencies:
 

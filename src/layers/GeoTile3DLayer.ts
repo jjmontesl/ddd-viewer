@@ -238,7 +238,9 @@ class GeoTile3DLayer extends Base3DLayer {
 
         //console.debug("Loading: " + tileUrl);
 
-        const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        //const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        const pivot = new Mesh( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+
         //let reversePivot = new TransformNode("chunk_reverse_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
         //let rawPivot = new TransformNode("chunk_raw_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
         //reversePivot.scaling = new Vector3(1, 1, -1);  // Babylon uses a parent node with this scale to flip glTF models, redone here
