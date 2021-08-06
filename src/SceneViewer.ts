@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF"; 
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -294,7 +294,7 @@ class SceneViewer {
             this.shadowGenerator.shadowMaxZ = 500;
             //this.shadowGenerator.autoCalcDepthBounds = true;  // Enabling it causes shadow artifacts after switching cameras (?)
             this.shadowGenerator.penumbraDarkness = 0.8;
-            this.shadowGenerator.lambda = 0.5;
+            this.shadowGenerator.lambda = 1.0;
             //that.shadowGenerator.depthClamp = false;
             //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
             this.shadowGenerator.splitFrustum();
@@ -1614,9 +1614,31 @@ class SceneViewer {
 
             highlightClone.material = this.materialHighlight;
             //highlightClone.parent = objectRef.mesh.parent;
-            this.highlightMeshes.push( highlightClone );
+            this.highlightMeshes.push(highlightClone);
+
+            const normals = this.showNormals(highlightClone, 0.5);
+            normals.parent = highlightClone;
+            this.highlightMeshes.push(normals);
         }
 
+    }
+
+    // Vertex normals
+    showNormals(mesh: Mesh, size: number = 1, color: Color3 | null = null) {
+        var normals = <FloatArray> mesh.getVerticesData(VertexBuffer.NormalKind);
+        var positions = <FloatArray> mesh.getVerticesData(VertexBuffer.PositionKind);
+        color = color || Color3.Red();
+        size = size || 1;
+
+        var lines = [];
+        for (var i = 0; i < normals.length; i += 3) {
+            var v1 = Vector3.FromArray(positions, i);
+            var v2 = v1.add(Vector3.FromArray(normals, i).scaleInPlace(size));
+            lines.push([v1.add(mesh.position), v2.add(mesh.position)]);
+        }
+        var normalLines = MeshBuilder.CreateLineSystem("normalLines", {lines: lines}, this.scene);
+        normalLines.color = color;
+        return normalLines;
     }
 
     selectMesh( mesh: Mesh, highlight: boolean ): void {
