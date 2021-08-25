@@ -1,4 +1,4 @@
-/* 
+/*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
 * Copyright 2021 Jose Juan Montes and contributors
 * MIT License (see LICENSE file)
@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
-import "@babylonjs/loaders/glTF"; 
+import "@babylonjs/loaders/glTF";
 
 import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
@@ -95,15 +95,15 @@ class SceneViewer {
 
     splatmapAtlasTexture: Texture | null = null;
     splatmapAtlasNormalsTexture: Texture | null = null;
-    
+
     _previousLampPatOn: boolean | null = null;
     _geolocationWatchId: string | null = null;
 
 
     /**
      * Constructs a new DDDViewer instance, and mounts it on the given HTMLCanvasElement.
-     * @param canvas 
-     * @param viewerState 
+     * @param canvas
+     * @param viewerState
      */
     constructor( canvas: HTMLCanvasElement, dddConfig: DDDViewerConfig | null = null) {
 
@@ -119,7 +119,7 @@ class SceneViewer {
         }
 
         this.viewerState = new ViewerState(dddConfig);
-        
+
         this.layerManager = new LayerManager( this );
         this.queueLoader = new QueueLoader( this );
 
@@ -190,7 +190,7 @@ class SceneViewer {
         water.waveSpeed = 100.0;
         water.bumpHeight = 0.05;
         water.waveLength = 10.0;
-        
+
         water.alpha = 0.8;
         //water.useSpecularOverAlpha = true;
         //water.useReflectionOverAlpha = true;
@@ -398,7 +398,7 @@ class SceneViewer {
         // Set skybox
         if ( baseUrl === "@dynamic" )  {
             const skybox = Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
-            
+
             const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
             skyboxMaterial.disableDepthWrite = true;
 
@@ -450,7 +450,7 @@ class SceneViewer {
         console.debug( "Loading catalog: " + filename );
         SceneLoader.ImportMesh( null, filename, "", this.scene, //this.scene,
             // onSuccess
-            ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => { 
+            ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => {
                 //console.log("GLB loaded", newMeshes);
                 this.loadCatalogFromMesh( <Mesh>newMeshes[0], loadMaterials );
                 newMeshes[0].setParent( null );
@@ -546,7 +546,7 @@ class SceneViewer {
                     this.catalog_materials["WaterInstanced"].alpha = 0.7;
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
                     this.catalog_materials["WaterInstanced"].freeze();
-                    
+
                     //console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
                     this.catalog_materials[key] = <WaterMaterial> this.materialWater;
                     dontFreeze = true;
@@ -683,15 +683,15 @@ class SceneViewer {
 
                 const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture);
                 ( <any> root )._splatmapMaterial = matwrapper.material;
-                
-                
+
+
                 let uvScale = [ 225, 225 ]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
                 const bounds = rootmd ? rootmd["tile:bounds_m"] : null;
                 if ( bounds ) {
                     //console.debug("Bounds: ", bounds);
                     uvScale = [ bounds[2] - bounds[0], bounds[3] - bounds[1] ];
                 }
-                
+
                 // Seems to work well (+1 +1 / +1 -1)
                 ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
                 ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
@@ -916,7 +916,7 @@ class SceneViewer {
         return mesh;
     }
 
-    
+
 
     instanceAsThinInstance( key: string, root: Mesh, node: Mesh ): void {
 
@@ -1149,7 +1149,7 @@ class SceneViewer {
     /**
      * DDDViewer main update callback, this is called every frame by the engine.
      * Children object update method is called recursively from here (sequencer, processes, layers).
-     * @param deltaTime 
+     * @param deltaTime
      */
     update( deltaTime: number ): void {
 
@@ -1184,7 +1184,7 @@ class SceneViewer {
 
                     const tilt = this.camera.beta * ( 180.0 / 3.14159265359 );
                     this.viewerState.positionTilt = tilt;
-                
+
                 } else if ( this.camera instanceof TargetCamera ) {
 
                     let heading = ( this.camera.rotation.y * ( 180.0 / Math.PI ));
@@ -1348,16 +1348,16 @@ class SceneViewer {
     /**
      * Calculates ground elevation (in MSL) for a given point in the scene. Receives a Vector3,
      * and uses its X and Z coordinates.
-     * 
+     *
      * FIXME: This is hitting objects other than the ground, check if masks can be used or otherwise correctly resolve ground elevation.
      *        Also the 3000m limit is arbitrary. Also fails when no ground objects are available.
      *        Also fails sometimes hitting invisible objects below ground (seems some non visible objects are being hit)
      */
-    elevationMSLFromSceneCoords(coords: Vector3): [number | null, PickingInfo | null] { 
-        
+    elevationMSLFromSceneCoords(coords: Vector3): [number | null, PickingInfo | null] {
+
         const ray = new Ray( new Vector3( coords.x, -100.0, coords.z ), new Vector3( 0, 1, 0 ), 3000.0 );
         const pickResult = this.scene.pickWithRay( ray );
-        
+
         let terrainElevation: number | null = null;
         //let terrainMesh: Mesh | null = null;
 
@@ -1465,7 +1465,7 @@ class SceneViewer {
     }
 
     deselectMesh(): void {
-        if ( this.selectedMesh ) {
+        if ( this.sceneSelectedMeshId ) {
             //this.viewerState.selectedMesh.showBoundingBox = false;
 
             for ( const mesh of this.highlightMeshes ) {
@@ -1494,7 +1494,7 @@ class SceneViewer {
     /**
      * Finds a mesh by id. Currently this also searches combined indexed meshes by path).
      * @param meshId
-     * @param node 
+     * @param node
      */
     /*
     findMeshById( meshId: string, node: Mesh | null = null ): Mesh | null {
@@ -1539,12 +1539,12 @@ class SceneViewer {
      * Finds an object by id.
      * TODO: Move to DDDObjectRef and just leave here a convenience method search the whole scene.
      * @param meshId
-     * @param node 
+     * @param node
      */
     findObjectById(objectId: string, objectRef: DDDObjectRef | null = null): DDDObjectRef | null {
-        
+
         let children = null;
-        
+
         if (objectRef) {
             //console.debug(DDDObjectRef.urlId(objectId), objectRef.getUrlId());
             if (objectRef.getUrlId() === DDDObjectRef.urlId(objectId)) {
@@ -1597,28 +1597,51 @@ class SceneViewer {
                 }
                 */
                 highlightClone.setIndices(newIndices);
-            } else {
-                highlightClone = (<Mesh> objectRef.mesh).clone(); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
-            }
 
-            /*
-            // Iterate clone recursively to set highlight material to all submeshes
-            const setHighlightRecursively = ( submesh: Mesh ) => {
-                submesh.material = this.materialHighlight;
-                for ( const mc of submesh.getChildren()) {
-                    setHighlightRecursively( <Mesh> mc );
-                }
-            };
-            setHighlightRecursively( highlightClone );
-            */
+            } else {
+                console.debug(objectRef.mesh);
+                highlightClone = (<Mesh> objectRef.mesh).clone(objectRef.mesh.id + " Selection", objectRef.mesh.parent, true, false); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
+
+                /*
+                const newMesh = new TransformNode( highlightClone.id + "_pivot", this.scene );  // new Mesh("chunk_" + tileKey, this.scene);
+                //let newMesh = mesh;
+                //newMesh.geometry = null;
+                newMesh.parent = objectRef.mesh.parent;
+                newMesh.position = (<Mesh>objectRef.mesh).position.clone();
+                newMesh.rotationQuaternion = (<Mesh>objectRef.mesh).rotationQuaternion!.clone();
+                newMesh.scaling = (<Mesh>objectRef.mesh).scaling;
+                highlightClone.parent = newMesh;
+                highlightClone = newMesh;
+                */
+            }
 
             highlightClone.material = this.materialHighlight;
             //highlightClone.parent = objectRef.mesh.parent;
             this.highlightMeshes.push(highlightClone);
 
-            const normals = this.showNormals(highlightClone, 0.5);
-            normals.parent = highlightClone;
-            this.highlightMeshes.push(normals);
+            if (this.viewerState.sceneSelectedShowNormals) {
+                const normals = this.showNormals(highlightClone, 0.5);
+                normals.parent = highlightClone;
+                this.highlightMeshes.push(normals);
+            }
+
+            // This is currently NOT selecting children.
+            // Note, however, that combined items may be selected together if the "combined" node is selected.
+
+            /*
+            // Iterate clone recursively to set highlight material to all submeshes
+            const setHighlightRecursively = ( submesh: Mesh ) => {
+                submesh.material = this.materialHighlight;
+                let highlightNode = submesh.clone("highlight", submesh.parent, true, false);
+
+                for ( const mc of submesh.getChildren()) {
+                    setHighlightRecursively( <Mesh> mc );
+                }
+                return highlightNode;
+            };
+            highlightClone = setHighlightRecursively( (<Mesh> objectRef.mesh) );
+            */
+
         }
 
     }
@@ -2070,11 +2093,11 @@ class SceneViewer {
         camera.panningSensibility = 50.0; // 0.5;
         //camera.angularSensibility = 50.0;
         //camera.inertia = 0.10;
-        
+
         //camera.multiTouchPanning = false;
         //camera.multiTouchPanAndZoom = false;
         //camera.pinchZoom = true;
-        
+
         camera.useNaturalPinchZoom = true;
         camera.fov = 35.0 * ( Math.PI / 180.0 );
         this.camera = camera;
@@ -2172,7 +2195,7 @@ class SceneViewer {
         //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
         //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
         //Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
-        
+
         if (this.skybox) {
             this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));
         }
@@ -2265,10 +2288,10 @@ class SceneViewer {
     sceneShadowsSetEnabled( value: boolean ): void {
         this.viewerState.sceneShadowsEnabled = value;
         localStorage.setItem( "dddSceneShadowsEnabled", JSON.stringify( value ));
-        
+
         // TODO: If shadows were off, we'd still need to create the shadowgenerator and add shadow casters
         this.scene.shadowsEnabled = value;
-        
+
         // TODO: this persistent setting belongs to the app
         alert( "Reload the viewer for changes to take effect." );
     }
@@ -2276,7 +2299,7 @@ class SceneViewer {
     sceneTextsSetEnabled( value: boolean ): void {
         this.viewerState.sceneTextsEnabled = value;
         localStorage.setItem( "dddSceneTextsEnabled", JSON.stringify( value ));
-        
+
         // TODO: this persistent setting belongs to the app
         alert( "Reload the viewer for changes to take effect." );
     }
@@ -2318,21 +2341,21 @@ class SceneViewer {
     /**
      * Changes the materials set used to draw the scene.
      * @todo this would ideally belong to layers that explicity support DDD export features (splatmaps / texture catalogs)
-     * @param textureSet 
+     * @param textureSet
      */
     sceneTextureSet(textureSet: string | null, splatmap: number): void {
 
         this.viewerState.dddConfig.materialsTextureSet = textureSet;
         this.viewerState.dddConfig.materialsSplatmap = splatmap;
-        
+
         //if (textureSet) {
         this.loadTextures();
         //}
-        
+
         alert( "Reload the app to apply changes." );
     }
 
-    
+
 }
 
 export { SceneViewer };

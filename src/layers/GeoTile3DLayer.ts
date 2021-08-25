@@ -57,7 +57,7 @@ class GeoTile3DLayer extends Base3DLayer {
         });
     }
 
-    update(): void { 
+    update(): void {
         this.updateTilesDynamic();
     }
 
@@ -81,13 +81,13 @@ class GeoTile3DLayer extends Base3DLayer {
 
     updateTilesDynamic(): void {
 
-        // loading chunks each 100 frames. Bad performance 
+        // loading chunks each 100 frames. Bad performance
         this._lastLoadDynamic -= 1;
         if ( this._lastLoadDynamic > 0 ) { return; }
         this._lastLoadDynamic = 100;
 
         const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
-    
+
         const positionWGS84: number[] = <number[]> this.layerManager?.sceneViewer.positionWGS84();
         const coordsWGS84: Coordinate = [ positionWGS84[0], positionWGS84[1] ];
         const coordsUtm: Coordinate = olProj.transform(coordsWGS84 , "EPSG:4326", "EPSG:3857" );
@@ -238,8 +238,8 @@ class GeoTile3DLayer extends Base3DLayer {
 
         //console.debug("Loading: " + tileUrl);
 
-        //const pivot = new TransformNode( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
-        const pivot = new Mesh( "chunk_" + tileKey.replace( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        //const pivot = new TransformNode( "chunk_" + tileKey.replaceAll( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
+        const pivot = new Mesh( "chunk_" + tileKey.replaceAll( "/", "_" ), this.layerManager!.sceneViewer.scene );  // new Mesh("chunk_" + tileKey, this.layerManager.sceneViewer.scene);
 
         //let reversePivot = new TransformNode("chunk_reverse_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
         //let rawPivot = new TransformNode("chunk_raw_" + tileKey, this.scene);  // new Mesh("chunk_" + tileKey, this.scene);
@@ -272,7 +272,7 @@ class GeoTile3DLayer extends Base3DLayer {
                             //console.debug("No shadow");
                             return;
                         }
-                        
+
                         // TODO: Do this at SceneViewer processMesh level
                         this.layerManager!.sceneViewer.shadowGenerator.getShadowMap()!.renderList!.push(mesh);
                     }
@@ -300,7 +300,7 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 // Reparent root
                 (<Mesh> newMeshes[0]).parent = <Node> pivot;
-                newMeshes[0].id = tileKey.replace( "/", "_" );
+                newMeshes[0].id = tileKey.replaceAll( "/", "_" );
                 this.tiles[tileKey].node = pivot;
                 this.tiles[tileKey].status = "loaded";
 
@@ -327,7 +327,7 @@ class GeoTile3DLayer extends Base3DLayer {
                     //console.debug("Repositioning camera height based on terrain height: " + maxHeight);
                     //that.layerManager.sceneViewer.camera.position.y += maxHeight;
 
-                    const ray = new Ray( 
+                    const ray = new Ray(
                         new Vector3(this.layerManager!.sceneViewer.camera!.position.x,
                             -100.0, this.layerManager!.sceneViewer.camera!.position.z ),
                         new Vector3( 0, 1, 0 ), 3000.0 );
@@ -573,12 +573,12 @@ class GeoTile3DLayer extends Base3DLayer {
             }
         }
     }
-   
+
     groundTextureLayerSetUrl( url: string ): void {
         // "https://a.tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"
         //console.debug("Layer setting ground texture layer: " + url);
         this.groundTextureLayerUrl = url;
-       
+
         // Update existing tiles
         for ( const key in this.tiles ) {
             const tile = this.tiles[key];

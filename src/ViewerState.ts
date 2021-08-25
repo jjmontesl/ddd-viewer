@@ -40,11 +40,13 @@ class ViewerState {
     sceneFPS: number = 0;
     sceneDrawCalls: number = 0;
     sceneTriangles: number = 0;
+
     sceneShadowsEnabled = false;
     sceneTextsEnabled = false;
     scenePostprocessingEnabled = false;
     scenePickingEnabled = true;
     sceneViewModeShow = true;
+    sceneSelectedShowNormals = false;
     sceneTileDrawDistance = 1;
     sceneMoveSpeed = 5;
     sceneCameraWalkHeight = 2.0;

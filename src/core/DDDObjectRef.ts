@@ -1,4 +1,4 @@
-/* 
+/*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
 * Copyright 2021 Jose Juan Montes and contributors
 * MIT License (see LICENSE file)
@@ -8,6 +8,14 @@ import { Mesh, Node } from "@babylonjs/core";
 
 
 /**
+ * A reference to a "logical" object in the scene.
+ *
+ * Like real scene mesh objects, DDDObjectRefs have metadata, a path, parent and children.
+ *
+ * This allows to reference sets of triangles in larger objects (eg. if several logical objects were
+ * batched into a larger mesh at design time or elsewhere).
+ *
+ * TODO: Reference the containing layer so each layer can resolve its objects.
  */
 class DDDObjectRef {
 
@@ -25,12 +33,12 @@ class DDDObjectRef {
         if (this.submeshIdx > -1) {
             let metadata = DDDObjectRef.nodeMetadata(mesh);
             const indexes = metadata['ddd:combined:indexes'];
-            if (indexes && (submeshIdx - 1) in indexes) {
+            if (indexes && (submeshIdx) in indexes) {
                 this.faceIndexStart = submeshIdx > 0 ? indexes[submeshIdx - 1][0] : 0;
                 this.faceIndexEnd = indexes[submeshIdx][0];
             }
         }
-      
+
         /*
         metadata = indexes[i][1];
 
@@ -56,20 +64,24 @@ class DDDObjectRef {
     }
 
     static fromMeshFace(mesh: Mesh, faceIndex: number): DDDObjectRef {
-        
+
+        //console.debug("Selecting from mesh and face (mesh=" + mesh.id + ", faceIndex=" + faceIndex + ")");
+
         let metadata = DDDObjectRef.nodeMetadata(mesh);
-        
+
         let subIndex = -1;
         if (metadata) {
             if ('ddd:combined:indexes' in metadata)  {
                 const indexes = metadata['ddd:combined:indexes'];
                 // Find triangle in indexes
                 let prevIndex = -1;
+                //if (indexes.length > 0) { subIndex = 0; }
                 for (let i = 0; i < indexes.length; i++) {
                     if (faceIndex > prevIndex && faceIndex < indexes[i][0]) {
                         subIndex = i;
                         break;
                     }
+                    prevIndex = indexes[i][0];
                 }
             }
         }
@@ -82,9 +94,9 @@ class DDDObjectRef {
     findChildByName(name: string): DDDObjectRef | null {
         return null;
     }
-    */ 
+    */
 
-    getMetadata(): any { 
+    getMetadata(): any {
         let metadata = DDDObjectRef.nodeMetadata(this.mesh);
         if (metadata && this.submeshIdx >= 0) {
             const indexes = metadata['ddd:combined:indexes'];
@@ -109,7 +121,7 @@ class DDDObjectRef {
 
     getId(): string {
         const metadata = this.getMetadata();
-        
+
         let result = this.mesh.id;
         if (metadata && ('ddd:rpath' in metadata)) {
             result = metadata['ddd:rpath'];
@@ -125,14 +137,19 @@ class DDDObjectRef {
         return result;
     }
 
-    getChildren(): DDDObjectRef[] { 
+    getLabel(): string {
+        let result = this.getId();
+        return result;
+    }
+
+    getChildren(): DDDObjectRef[] {
         const result: DDDObjectRef[] = [];
 
         //if (this.submeshIdx < 0) {
         for (let child of this.mesh.getChildren()) {
             result.push(new DDDObjectRef(child));
         }
-        //} 
+        //}
 
         const metadata = this.getMetadata();
         if (metadata && 'ddd:combined:indexes' in metadata) {

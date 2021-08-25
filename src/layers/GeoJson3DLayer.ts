@@ -88,11 +88,11 @@ class GeoJson3DLayer extends Base3DLayer {
 
         if (this.featureMaterial) {
             const color = Color3.FromHexString(colorHex);
-            this.featureMaterial.unfreeze();
+            //this.featureMaterial.unfreeze();
             this.featureMaterial.diffuseColor = color;
             this.featureMaterial.emissiveColor = color;
             this.featureMaterial.disableLighting = true;
-            this.featureMaterial.freeze();
+            //this.featureMaterial.freeze();
         }
     }
     
