@@ -32,7 +32,7 @@ class DDDObjectRef {
 
         if (this.submeshIdx > -1) {
             let metadata = DDDObjectRef.nodeMetadata(mesh);
-            const indexes = metadata['ddd:combined:indexes'];
+            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
             if (indexes && (submeshIdx) in indexes) {
                 this.faceIndexStart = submeshIdx > 0 ? indexes[submeshIdx - 1][0] : 0;
                 this.faceIndexEnd = indexes[submeshIdx][0];
@@ -71,8 +71,8 @@ class DDDObjectRef {
 
         let subIndex = -1;
         if (metadata) {
-            if ('ddd:combined:indexes' in metadata)  {
-                const indexes = metadata['ddd:combined:indexes'];
+            if (('ddd:combined:indexes' in metadata) || ('ddd:batch:indexes' in metadata))  {
+                const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
                 // Find triangle in indexes
                 let prevIndex = -1;
                 //if (indexes.length > 0) { subIndex = 0; }
@@ -99,7 +99,7 @@ class DDDObjectRef {
     getMetadata(): any {
         let metadata = DDDObjectRef.nodeMetadata(this.mesh);
         if (metadata && this.submeshIdx >= 0) {
-            const indexes = metadata['ddd:combined:indexes'];
+            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
             metadata = indexes[this.submeshIdx][1];
         }
         return metadata;
@@ -152,8 +152,9 @@ class DDDObjectRef {
         //}
 
         const metadata = this.getMetadata();
-        if (metadata && 'ddd:combined:indexes' in metadata) {
-            for (let i = 0; i < metadata['ddd:combined:indexes'].length; i++) {
+        if (metadata && ('ddd:combined:indexes' in metadata || 'ddd:batch:indexes' in metadata)) {
+            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
+            for (let i = 0; i < indexes.length; i++) {
                 result.push(new DDDObjectRef(this.mesh, i));
             }
         }

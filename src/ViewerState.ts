@@ -1,4 +1,4 @@
-/* 
+/*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
 * Copyright 2021 Jose Juan Montes and contributors
 * MIT License (see LICENSE file)
@@ -46,18 +46,18 @@ class ViewerState {
     scenePostprocessingEnabled = false;
     scenePickingEnabled = true;
     sceneViewModeShow = true;
-    sceneSelectedShowNormals = false;
+    sceneSelectedShowNormals = true;
     sceneTileDrawDistance = 1;
     sceneMoveSpeed = 5;
     sceneCameraWalkHeight = 2.0;
     sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
-    
+
     // TODO: This shall be a per-layer setting
     sceneGroundTextureOverrideUrl: string | null = null;
 
     sceneTitleText:string | null = null;
-    
+
 
     constructor(dddConfig: DDDViewerConfig, initialCoords: number[] | null = null) {
 

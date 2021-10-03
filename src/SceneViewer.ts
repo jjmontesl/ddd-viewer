@@ -572,6 +572,9 @@ class SceneViewer {
 
                     let uvScale = 0.25;
 
+                    if (( metadata["ddd:material"] === "Lava" )) {
+                        uvScale = 0.125;
+                    }
                     if (( metadata["ddd:material"] === "Grass" )) {
                         uvScale = 0.5;
                     }
@@ -603,7 +606,15 @@ class SceneViewer {
                                 ( <Texture> mesh.material.bumpTexture ).uScale = uvScale;
                                 ( <Texture> mesh.material.bumpTexture ).vScale = uvScale;
                             }
+                            if ( mesh.material.emissiveTexture ) {
+                                ( <Texture> mesh.material.emissiveTexture ).uScale = uvScale;
+                                ( <Texture> mesh.material.emissiveTexture ).vScale = uvScale;
+                            }
                         }
+                    }
+
+                    if (mesh.material.emissiveTexture) {
+                        mesh.material.emissiveColor = Color3.White();
                     }
 
                     /*
@@ -905,6 +916,14 @@ class SceneViewer {
             for ( const children of mesh.getChildren()) {
                 this.processMesh( root, <Mesh> children );
             }
+
+            /*
+            // Adding shadows for ground here was done as a test, but we may incur adding them
+            // multiple times, and they should be managed. Performance impact needs testing.
+            if ( this.shadowGenerator && mesh.getBoundingInfo) {
+                this.shadowGenerator.getShadowMap()!.renderList!.push( mesh );
+            }
+            */
         }
 
         /*
@@ -1509,9 +1528,9 @@ class SceneViewer {
             let metadata = DDDObjectRef.nodeMetadata(node);
             let combined = false;
             if (metadata) {
-                if ('ddd:combined:indexes' in metadata)  {
+                if ('ddd:batch:indexes' in metadata)  {
                     combined = true;
-                    const indexes = metadata['ddd:combined:indexes'];
+                    const indexes = metadata['ddd:batch:indexes'];
                     // Find triangle in indexes
                     for (let i = 0; i < indexes.length; i++) {
                         if ('ddd:path' in metadata && metadata['ddd:path'] == meshId) {
@@ -1599,7 +1618,7 @@ class SceneViewer {
                 highlightClone.setIndices(newIndices);
 
             } else {
-                console.debug(objectRef.mesh);
+                //console.debug(objectRef.mesh);
                 highlightClone = (<Mesh> objectRef.mesh).clone(objectRef.mesh.id + " Selection", objectRef.mesh.parent, true, false); // "highlightMesh: " + objectRef.mesh.id, objectRef.mesh.parent, true, true);
 
                 /*
@@ -1616,13 +1635,16 @@ class SceneViewer {
             }
 
             highlightClone.material = this.materialHighlight;
+            highlightClone.isPickable = false;
             //highlightClone.parent = objectRef.mesh.parent;
             this.highlightMeshes.push(highlightClone);
 
             if (this.viewerState.sceneSelectedShowNormals) {
                 const normals = this.showNormals(highlightClone, 0.5);
-                normals.parent = highlightClone;
-                this.highlightMeshes.push(normals);
+                if (normals) {
+                    normals.parent = highlightClone;
+                    this.highlightMeshes.push(normals);
+                }
             }
 
             // This is currently NOT selecting children.
@@ -1648,7 +1670,10 @@ class SceneViewer {
 
     // Vertex normals
     showNormals(mesh: Mesh, size: number = 1, color: Color3 | null = null) {
+        if (!mesh.getVerticesData) return null;
         var normals = <FloatArray> mesh.getVerticesData(VertexBuffer.NormalKind);
+        if (!normals) return null;
+
         var positions = <FloatArray> mesh.getVerticesData(VertexBuffer.PositionKind);
         color = color || Color3.Red();
         size = size || 1;
