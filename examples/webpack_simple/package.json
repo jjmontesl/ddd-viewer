@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "ddd-viewer": "file:../../ddd-viewer",
-    "webpack": "^4.42.1",
+    "webpack": "^5.58.0",
     "webpack-cli": "^4.8.0"
   },
   "devDependencies": {
