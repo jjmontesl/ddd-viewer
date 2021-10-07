@@ -1,0 +1,21 @@
+{
+  "name": "webpack_simple",
+  "version": "1.0.0",
+  "description": "webpack example",
+  "main": "./src/index.js",
+  "scripts": {
+    "serve": "webpack serve",
+    "build": "webpack build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ddd-viewer": "file:../../ddd-viewer",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^4.8.0"
+  },
+  "devDependencies": {
+    "html-webpack-plugin": "^4.5.2",
+    "webpack-dev-server": "^4.3.1"
+  }
+}
