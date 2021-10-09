@@ -1,3 +1,9 @@
+/*
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+* Copyright 2021 Jose Juan Montes and contributors
+* MIT License (see LICENSE file)
+*/
+
 import { AbstractMesh, Color3, Mesh, MeshBuilder, Node, Ray, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
@@ -398,11 +404,27 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 if ( ex.request && ex.request.status === 404 ) {
                     // 404 - tile is being generated, show OSM tile as replacement
+                    //console.debug(ex.request);
+
                     marker.dispose( false, true );
                     marker = this.loadQuadTile( tileCoords );  // , Color3.Red()
                     this.tiles[tileKey].node = marker; // "notfound";
                     this.tiles[tileKey].status = "notfound";
                     this.layerManager!.sceneViewer.viewerState.serverInfoShow = true;
+
+                    // Process response, DDD server includes JSON info about tile generation status
+                    try {
+                        const dataView = new DataView(ex.request.response);
+                        // TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+                        const decoder = new TextDecoder("utf-8");
+                        const decodedString = decoder.decode(dataView);
+                        const responseData = JSON.parse(decodedString);
+                        console.debug(responseData);
+                        this.layerManager!.sceneViewer.viewerState.remoteQueueJobsStatus.push(responseData);
+                    } catch (e) {
+                        console.error("Could not add queued job to viewer state: " + e);
+                    }
+
                 } else {
                     // Error: colour marker red
                     marker.dispose( false, true );

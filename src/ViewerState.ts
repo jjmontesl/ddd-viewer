@@ -58,6 +58,12 @@ class ViewerState {
 
     sceneTitleText:string | null = null;
 
+    /**
+     * 3dsmaps DDD tile server supports on-demand generation. When a tile that's not available is enqueued, it responds
+     * with information about the job status. This array contains enqueued tiles status.
+     */
+    remoteQueueJobsStatus: any[] = [];
+
 
     constructor(dddConfig: DDDViewerConfig, initialCoords: number[] | null = null) {
 

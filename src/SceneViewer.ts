@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF";
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, NodeMaterial, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -86,6 +86,7 @@ class SceneViewer {
     selectedObject: DDDObjectRef | null = null;
 
     materialWater: WaterMaterial | null = null;
+    materialOcean: NodeMaterial | null = null;
     envReflectionProbe: ReflectionProbe | null = null;
     light: DirectionalLight | null = null;
     shadowGenerator: CascadedShadowGenerator | null = null;
@@ -202,6 +203,15 @@ class SceneViewer {
         //water.addToRenderList(ground);
         //let waterOcean = createOceanMaterial(this.scene);
         this.materialWater = water;
+
+        /*
+        NodeMaterial.ParseFromSnippetAsync("#3FU5FG#1", this.scene).then((mat) => {
+            //ground.material = mat;
+            //window.mat = mat;
+            this.materialOcean = mat;
+        });
+        */
+
 
         /*
         that.materialGrass = new StandardMaterial("bawl", that.scene);
@@ -341,7 +351,8 @@ class SceneViewer {
         // Render every frame
         this.engine.runRenderLoop(() => {
             if ( ! this.scene ) { return; }
-            this.update( this.engine!.getDeltaTime() / 1000.0 );
+            let deltaTime = this.engine!.getDeltaTime() / 1000.0;
+            this.update(deltaTime);
             this.scene.render();
         });
 
@@ -548,7 +559,7 @@ class SceneViewer {
                     this.catalog_materials["WaterInstanced"].freeze();
 
                     //console.debug("NOT ADDING WATERMATERIAL TO CATALOG");
-                    this.catalog_materials[key] = <WaterMaterial> this.materialWater;
+                    this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
                 } else if ( metadata["ddd:material"] === "Water4Advanced" ) {
@@ -671,9 +682,12 @@ class SceneViewer {
         }
     }
 
+    processMeshDummy( _root: Mesh, mesh: Mesh ): Mesh | null {
+        return mesh;
+    }
+
     processMesh( root: Mesh, mesh: Mesh ): Mesh | null {
         //console.debug("Processing mesh: " + mesh.id);
-
         const rootmd = root.metadata.tileInfo;
 
         //mesh.isPickable = false;
@@ -1079,7 +1093,8 @@ class SceneViewer {
                 }
 
                 //meshInstanceRoot.setEnabled(false);
-                //meshInstanceRoot.addLODLevel(200, null);
+                // TODO: LOD should be controlled by DDD metadata, also, some LODding may be (better?) left to DDD format/renderer
+                meshInstanceRoot.addLODLevel(300, null);
 
                 instance.setEnabled( false );
                 //instance.dispose();
@@ -1876,7 +1891,7 @@ class SceneViewer {
         this.walkMode = false;
 
         const camera = new UniversalCamera( "Camera", Vector3.Zero(), this.scene );
-        camera.minZ = 1;
+        camera.minZ = 1.0; // 0.1;
         camera.maxZ = 4500;
         camera.angularSensibility = 500.0;
         camera.touchAngularSensibility = 1000.0;
@@ -2110,7 +2125,7 @@ class SceneViewer {
 
         const camera = new ArcRotateCamera( "Camera", -( 90 + this.viewerState.positionHeading ) * Math.PI / 180.0, this.viewerState.positionTilt * Math.PI / 180.0, distance, targetCoords, this.scene );
         camera.attachControl( this.engine.getRenderingCanvas(), true );
-        camera.minZ = 1;
+        camera.minZ = 1.0; // 0.1;
         //camera.maxZ = 2500;  // Automatic? see focusOn()
         camera.lowerRadiusLimit = 15;
         camera.upperRadiusLimit = 1000;
