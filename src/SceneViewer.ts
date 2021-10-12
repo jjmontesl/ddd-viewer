@@ -688,7 +688,7 @@ class SceneViewer {
 
     processMesh( root: Mesh, mesh: Mesh ): Mesh | null {
         //console.debug("Processing mesh: " + mesh.id);
-        const rootmd = root.metadata.tileInfo;
+        const rootmd = root.metadata ? root.metadata.tileInfo : null;
 
         //mesh.isPickable = false;
         mesh.receiveShadows = true; // Fixes instances with no shadows
@@ -697,7 +697,7 @@ class SceneViewer {
         if ( !("_splatmapMaterial" in root) && this.useSplatMap && ! this.viewerState.sceneGroundTextureOverrideUrl &&
             this.viewerState.dddConfig.materialsSplatmap) {  // && this.viewerState.dddConfig.materialsTextureSet.indexOf("default") >= 0
 
-            if (("metadata" in mesh) && ("tileCoords" in mesh.metadata)) {
+            if (rootmd && ("metadata" in mesh) && ("tileCoords" in mesh.metadata)) {
                 const coords = root.metadata["tileCoords"];
                 //console.debug("Creating splat material for: ", coords);
 

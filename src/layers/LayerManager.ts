@@ -25,16 +25,21 @@ class LayerManager {
 
     /**
      * Adds a layer to DDD viewer.
-     * @param key 
-     * @param layer 
+     * @param key
+     * @param layer
      */
-    addLayer(key: string, layer: GeoTile3DLayer): void {
-        layer.layerManager = this;
-        this.layers[key] = layer;
+    addLayer(layer: Base3DLayer): void {
+        layer.setViewer(this.sceneViewer);
+        this.layers[layer.key] = layer;
+    }
+
+    removeLayer(layer: Base3DLayer) {
+        layer.setViewer(null);  // have the layer cleanup itself from the scene
+        delete this.layers[layer.key];
     }
 
     /**
-     * Retrieves a layer from DDD viewer managed layers. 
+     * Retrieves a layer from DDD viewer managed layers.
      * Returns null if the layer does not exist.
      */
     getLayer(key: string) {
@@ -43,6 +48,7 @@ class LayerManager {
         }
         return null;
     }
+
 }
 
 export { LayerManager };

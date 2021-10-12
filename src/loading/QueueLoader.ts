@@ -6,7 +6,7 @@ import { SceneViewer } from "../SceneViewer";
 
 
 class QueueLoaderTask {
-    url?: string; 
+    url?: string;
     onSuccess?: any;
     onFailure?: any;
 }
@@ -14,7 +14,7 @@ class QueueLoaderTask {
 class QueueLoader {
 
     sceneViewer: SceneViewer;
-    
+
     queue: any[];
 
     current: any[];
@@ -61,7 +61,8 @@ class QueueLoader {
             ( scene, msg, ex ) => {
                 task.onFailure( scene, msg, ex );
                 this.processNext();
-            }
+            },
+            ".glb"  // this is to force format in case a blob URL is being used
         );
     }
 

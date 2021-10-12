@@ -18,20 +18,20 @@ import { Base3DLayer } from "./Base3DLayer";
 class Tile3D {
     key: string;
     status: string | null;
+    node: Node | null;
 
     constructor( key: string ) {
         this.key = key;
         this.status = null;
+        this.node = null;
     }
 }
 
 class GeoTile3D extends Tile3D {
-    node: Node | null;
     coordsTileGrid: number[] | null;
 
     constructor( key: string ) {
         super( key );
-        this.node = null;
         this.coordsTileGrid = null;
     }
 }
@@ -51,7 +51,7 @@ class GeoTile3DLayer extends Base3DLayer {
     tileGrid: TileGrid;
 
     constructor() {
-        super();
+        super("ddd-osm-3d");  // FIXME: key is hardcoded
         this.tiles = {};
         // TODO: This makes sense here, but is also duplicated on SceneViewer
         this.tileGrid = createXYZ({
@@ -63,10 +63,17 @@ class GeoTile3DLayer extends Base3DLayer {
         });
     }
 
+    setViewer(dddViewer: SceneViewer): void {
+        super.setViewer(dddViewer);
+
+        if (dddViewer == null) {
+            this.cleanScene();
+        }
+    }
+
     update(): void {
         this.updateTilesDynamic();
     }
-
 
     /*
     * From: https://bartwronski.com/2017/04/13/cull-that-cone/
@@ -260,6 +267,14 @@ class GeoTile3DLayer extends Base3DLayer {
         this.layerManager!.sceneViewer.queueLoader.enqueueLoadModel( tileUrl,
             // onSuccess
             ( newMeshes: AbstractMesh[], _particleSystems: any, _skeletons: any ) => {
+
+                // Ensure tile still exists:
+                if (! (tileKey in this.tiles)) {
+                    newMeshes[0].parent = null;
+                    newMeshes[0].dispose();
+                    return;
+                }
+
                 //console.log("GLB loaded", newMeshes);
 
                 marker.dispose( false, true );
@@ -631,6 +646,24 @@ class GeoTile3DLayer extends Base3DLayer {
         return material;
     }
     */
+
+    disposeTile(tile: Tile3D) {
+        console.debug("Disposing tile: " + tile.key);
+        if (tile.node) {
+            //tile.node.setEnabled(false);
+            tile.node.parent = null;
+            tile.node.dispose();
+            tile.node = null;
+        }
+        delete this.tiles[tile.key];
+    }
+
+    cleanScene() {
+        for (const tileKey in this.tiles) {
+            const tile = this.tiles[tileKey];
+            this.disposeTile(tile);
+        }
+    }
 
 }
 

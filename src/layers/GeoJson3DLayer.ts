@@ -26,7 +26,7 @@ class GeoJsonPoint extends GeoJsonItem {
     /**
      * Currently receives a viewer for coordinate transformations
      */
-    transformCoords(viewer: SceneViewer) { 
+    transformCoords(viewer: SceneViewer) {
         let csa = viewer.wgs84ToScene(this.coordsWgs84.asArray());
         this.coordsScene = Vector3.FromArray(csa);
     }
@@ -71,8 +71,8 @@ class GeoJson3DLayer extends Base3DLayer {
 
     private featureMaterial: StandardMaterial | null = null;
 
-    constructor(geojsonData: any) {
-        super();
+    constructor(key: string, geojsonData: any) {
+        super(key);
         setTimeout(() => {
             this.loadFromGeoJson(geojsonData);
             this.projectFeatures();
@@ -80,10 +80,10 @@ class GeoJson3DLayer extends Base3DLayer {
         }, 0);
     }
 
-    update(): void { 
+    update(): void {
     }
 
-    setColor(colorHex: string) { 
+    setColor(colorHex: string) {
         this.colorHex = colorHex;
 
         if (this.featureMaterial) {
@@ -95,7 +95,7 @@ class GeoJson3DLayer extends Base3DLayer {
             //this.featureMaterial.freeze();
         }
     }
-    
+
     setVisible(visible: boolean) {
         super.setVisible(visible);
         if (this.rootNode) this.rootNode.setEnabled(this.visible);
@@ -125,14 +125,14 @@ class GeoJson3DLayer extends Base3DLayer {
     loadFeature(feature: any): void {
         let properties = feature['properties'];
         let geometry = feature['geometry'];
-        
+
         if (geometry['type'] == 'Point') {
             const lat = geometry['coordinates'][0];
             const lon = geometry['coordinates'][1];
             const alt = geometry['coordinates'].length > 2 ? geometry['coordinates'][2] : 0;
             let geojsonItem = new GeoJsonPoint(new Vector3(lat, lon, alt));
             geojsonItem.properties = properties;
-            
+
             this.featuresPoints.push(geojsonItem);
 
         } else if (geometry['type'] == 'LineString') {
@@ -146,7 +146,7 @@ class GeoJson3DLayer extends Base3DLayer {
             }
             let geojsonItem = new GeoJsonLine(coords);
             geojsonItem.properties = properties;
-            
+
             this.featuresLines.push(geojsonItem);
 
         } else {
@@ -168,18 +168,18 @@ class GeoJson3DLayer extends Base3DLayer {
      */
     updateSceneFromFeatures(): void {
         const sceneViewer = this.layerManager!.sceneViewer;
-        
+
         // Create material only if it hasn't already been created
-        if (!this.featureMaterial) { 
+        if (!this.featureMaterial) {
             const featureMaterial = new StandardMaterial("featureMaterial", sceneViewer.scene);
             this.featureMaterial = featureMaterial;
         }
-        
-        if (!this.rootNode) { 
+
+        if (!this.rootNode) {
             this.rootNode = new TransformNode("geoJson3DLayer-root", sceneViewer.scene);
         }
-    
-        
+
+
         this.setColor(this.colorHex);
 
         for (let feature of this.featuresPoints) {
@@ -189,7 +189,7 @@ class GeoJson3DLayer extends Base3DLayer {
             marker.parent = this.rootNode;
             //sceneNodes.push(marker);
         }
-        
+
         for (let feature of this.featuresLines) {
             let marker = MeshBuilder.CreateLines("lineMarker", { points: feature.coordsScene }, sceneViewer.scene);
             marker.material = this.featureMaterial;

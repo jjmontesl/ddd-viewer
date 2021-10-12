@@ -4,7 +4,7 @@ import { GeoTile3DLayer } from 'ddd-viewer';
 export function initViewer() {
 
     var dddviewer = window['ddd-viewer'];
-    
+
     const dddConfig = {
         "defaultCoords": [-8.723, 42.238],
         //"defaultCoords": [-8.4069793, 43.3861094],
@@ -18,11 +18,11 @@ export function initViewer() {
     const sceneViewer = new SceneViewer(canvas, dddConfig);
 
     const layerDddOsm3d = new GeoTile3DLayer();
-    sceneViewer.layerManager.addLayer("ddd-osm-3d", layerDddOsm3d);
+    sceneViewer.layerManager.addLayer(layerDddOsm3d);
 
     // Events
     //window.addEventListener('resize', this.resize);
-    
+
 }
 
 window.addEventListener("load", () => {

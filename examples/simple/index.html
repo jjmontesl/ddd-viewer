@@ -10,7 +10,7 @@
     <!-- Optional Tailwind import for CSS styling classes -->
     <!-- <link rel="stylesheet" href="https://3dsmaps.com/static/libs/tailwindcss/2.2.0-canary.16/tailwind.min.css">  -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.0-canary.16/tailwind.min.css">
-    
+
     <!-- Importing DDD-Viewer library -->
 
     <script>var exports = {};</script>
@@ -18,7 +18,7 @@
     <!-- <script src="https://preview.babylonjs.com/babylon.js"></script> -->
     <!-- <script src="../../dist/ddd-viewer.umd.development.js"></script> -->
     <script src="lib/ddd-viewer.umd.production.min.js"></script>
-    
+
 
 </head>
 
@@ -33,7 +33,7 @@
         function initViewer() {
 
             var dddviewer = window['ddd-viewer'];
-            
+
             const dddConfig = {
                 "defaultCoords": [-8.723, 42.238],
                 //"defaultCoords": [-8.4069793, 43.3861094],
@@ -47,7 +47,7 @@
             const sceneViewer = new dddviewer.SceneViewer(canvas, dddConfig);
 
             const layerDddOsm3d = new dddviewer.GeoTile3DLayer();
-            sceneViewer.layerManager.addLayer("ddd-osm-3d", layerDddOsm3d);
+            sceneViewer.layerManager.addLayer(layerDddOsm3d);
 
             // Events
             //window.addEventListener('resize', this.resize);
