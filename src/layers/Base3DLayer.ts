@@ -28,6 +28,8 @@ abstract class Base3DLayer {
 
     abstract update(deltaTime: number): void;
 
+    abstract clearScene(): void;
+
     setVisible(visible: boolean): void {
         this.visible = visible;
     }
@@ -35,6 +37,10 @@ abstract class Base3DLayer {
     setViewer(dddViewer: SceneViewer | null): void {
         this.dddViewer = dddViewer;
         this.layerManager = dddViewer ? dddViewer.layerManager : null;
+
+        if (!dddViewer) {
+            this.clearScene();
+        }
     }
 
 }

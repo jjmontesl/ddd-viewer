@@ -74,10 +74,10 @@ class SceneViewer {
     ambientColorNight: Color3 = new Color3( 0, 0, 0.3 );
     ambientColorDay: Color3 = new Color3( 0.70, 0.70, 0.7 );
 
-    colorLightLamp: Color3 = new Color3( 250 / 255, 244 / 255, 192 / 255 );
-    colorLightRed: Color3 = new Color3( 512 / 255, 0 / 255, 0 / 255 );
-    colorLightGreen: Color3 = new Color3( 50 / 255, 512 / 255, 50 / 255 );
-    colorLightOrange: Color3 = new Color3( 255 / 255, 157 / 255, 0 / 255 );
+    colorLightLamp: Color3 = new Color3(250 / 255, 244 / 255, 192 / 255);
+    colorLightRed: Color3 = new Color3(512 / 255, 0 / 255, 0 / 255);
+    colorLightGreen: Color3 = new Color3(50 / 255, 512 / 255, 50 / 255);
+    colorLightOrange: Color3 = new Color3(255 / 255, 157 / 255, 0 / 255);
 
     lastDateUpdate: number = new Date().getTime();
 
@@ -144,14 +144,14 @@ class SceneViewer {
 
         this.lastDateUpdate = new Date().getTime();
 
-        this.processes = new ViewerProcessManager( this );
-        this.sequencer = new ViewerSequencer( this );
+        this.processes = new ViewerProcessManager(this);
+        this.sequencer = new ViewerSequencer(this);
 
         // Associate a Babylon Engine to it (engine:  canvas, antialiasing, options, adaptToDeviceRatio)
-        this.engine = new Engine( canvas, true ); // , null, true); // , { stencil: true });
+        this.engine = new Engine(canvas, true); // , null, true); // , { stencil: true });
 
         // Note: useGeometryIdsMap=true seems to help only when there are already too many objects, but performance is (slightly) better without it if object count is low
-        this.scene = new Scene( this.engine, { useGeometryIdsMap: true } as SceneOptions );
+        this.scene = new Scene(this.engine, { useGeometryIdsMap: true } as SceneOptions);
 
         //that.scene = createScene(engine, canvas);
         //this.scene.freezeActiveMeshes(true);  // affects too many things, causes wrong behavior (skybox, etc)
@@ -171,7 +171,7 @@ class SceneViewer {
 
         //console.debug(that.viewerState);
         const coords = this.viewerState.positionWGS84;
-        this.registerProjectionForCoords( coords );
+        this.registerProjectionForCoords(coords);
 
 
         this.scene.pointerMovePredicate = function() { return false; };
@@ -183,12 +183,12 @@ class SceneViewer {
         //that.highlightLayer = new HighlightLayer("hl1", that.scene);
 
 
-        const water = new WaterMaterial( "water", this.scene, new Vector2( 512, 512 ));
+        const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
         //water.backFaceCulling = true;
-        //water.bumpTexture = new Texture("/textures/waterbump.png", that.scene);
-        water.windForce = 5;
+        water.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
+        water.windForce = 1;
         water.waveHeight = 0.1;
-        water.waveSpeed = 100.0;
+        water.waveSpeed = 50.0;
         water.bumpHeight = 0.05;
         water.waveLength = 10.0;
 
@@ -199,7 +199,7 @@ class SceneViewer {
         //water.renderingGroupId = 3;
 
         water.colorBlendFactor = 0.2;
-        this.scene.setRenderingAutoClearDepthStencil( 3, false, false, false );
+        //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
         //water.addToRenderList(ground);
         //let waterOcean = createOceanMaterial(this.scene);
         this.materialWater = water;
@@ -223,9 +223,9 @@ class SceneViewer {
         // Environment
         this.envReflectionProbe = null;
         if ( this.viewerState.sceneEnvironmentProbe !== null ) {
-            this.envReflectionProbe = new ReflectionProbe( "envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true );
+            this.envReflectionProbe = new ReflectionProbe("envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true);
             this.envReflectionProbe.refreshRate = 6;
-            this.envReflectionProbe.position = new Vector3( 0, 0, 0 );
+            this.envReflectionProbe.position = new Vector3(0, 0, 0);
 
             // Assign to a material to see it
             //var pbr = new PBRMaterial('envReflectionTestMaterial', this.scene);
@@ -243,12 +243,12 @@ class SceneViewer {
         } else {
             //this.scene.createDefaultEnvironment();
             //var hdrTexture = new CubeTexture.CreateFromPrefilteredData("/textures/environment.env", this.scene);
-            const hdrTexture = CubeTexture.CreateFromPrefilteredData( "/textures/country.env", this.scene );
+            const hdrTexture = CubeTexture.CreateFromPrefilteredData("/textures/country.env", this.scene);
             this.scene.environmentTexture = hdrTexture;
         }
 
         // Skybox
-        this.loadSkybox( this.viewerState.sceneSkybox );
+        this.loadSkybox(this.viewerState.sceneSkybox);
 
 
         /*
@@ -581,13 +581,14 @@ class SceneViewer {
                     //mesh.material.albedoColor = Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
                     //mesh.material.albedoColor = Color3.FromHexString(mesh.material.albedoColor).toLinearSpace();
 
-                    let uvScale = 0.25;
+                    //let uvScale = 0.25;
+                    let uvScale = 1.0;
 
                     if (( metadata["ddd:material"] === "Lava" )) {
                         uvScale = 0.125;
                     }
                     if (( metadata["ddd:material"] === "Grass" )) {
-                        uvScale = 0.5;
+                        //uvScale = 0.5;
                     }
                     if (( metadata["ddd:material"] === "Roadline" ) ||
                         ( metadata["ddd:material"] === "Roadmarks" ) ||
@@ -624,6 +625,7 @@ class SceneViewer {
                         }
                     }
 
+                    // Babylon does not enable emissive by default if an emissive texture exists. This makes eg. lava emissive.
                     if (mesh.material.emissiveTexture) {
                         mesh.material.emissiveColor = Color3.White();
                     }
@@ -721,7 +723,7 @@ class SceneViewer {
                 ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
                 ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
                 ( <Texture> matwrapper.material.albedoTexture ).uOffset = 0.5; //  + (1 / uvScale[0]);
-                ( <Texture> matwrapper.material.albedoTexture ).vOffset = 0.5 - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
+                ( <Texture> matwrapper.material.albedoTexture ).vOffset = 0.5; // - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
                 /*if (mesh.material.bumpTexture) {
                     mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
                     mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
@@ -912,9 +914,11 @@ class SceneViewer {
 
         }
 
-        //mesh.occlusionType = AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
         if ( mesh ) {  // && !replaced
+
+            // Babylon Occlusion doens't seem to work well for ddd use case
+            //mesh.occlusionType = AbstractMesh.OCCLUSION_TYPE_OPTIMISTIC;
 
             /*
             if (mesh.simplify && mesh.getTotalVertices() > 0 && !replaced) {
@@ -2393,6 +2397,8 @@ class SceneViewer {
         //}
 
         alert( "Reload the app to apply changes." );
+
+
     }
 
 

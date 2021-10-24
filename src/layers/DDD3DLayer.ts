@@ -129,6 +129,16 @@ class DDD3DLayer extends Base3DLayer {
 
     }
 
+    clearScene() {
+        console.log("Deleting DDD3DLayer: " + this.key);
+        if (this.node) {
+            //tile.node.setEnabled(false);
+            this.node.parent = null;
+            this.node.dispose();
+            this.node = null;
+        }
+    }
+
 }
 
 

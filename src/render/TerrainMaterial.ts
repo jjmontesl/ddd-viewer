@@ -54,7 +54,7 @@ class TerrainMaterialWrapper {
 
     initSplatMaterial(scene: Scene, splatMap: Texture, atlas: Texture, atlasnormals: Texture, options: any = null): PBRCustomMaterial {
         // TODO: Options should be merged with defaults!
-        
+
         var defScale = 100.0;
         if (!options) {
             options = {
@@ -77,7 +77,7 @@ class TerrainMaterialWrapper {
                     scales:[[defScale * 0.75, defScale * 0.75], [defScale,defScale], [defScale,defScale], [defScale * 0.5, defScale * 0.5],
                              [defScale * 0.5, defScale * 0.5], [defScale * 0.5, defScale * 0.5], [defScale,defScale], [defScale,defScale],
                              [defScale * 1.0, defScale * 1.0], [defScale * 1.6, defScale * 1.6], [defScale,defScale], [defScale,defScale],  // Grass
-                             [defScale,defScale], [defScale * 0.25, defScale * 0.25], [defScale * 0.25, defScale * 0.25], [defScale,defScale]], // Sand, rock, rock orange
+                             [defScale,defScale], [defScale * 0.5, defScale * 0.5], [defScale * 0.25, defScale * 0.25], [defScale,defScale]], // Sand, rock, rock orange
                     displScales: [0.0, 0, 0.0, 0,
                                   0, 0, 0, 0,
                                   0, 0, 0, 0,
@@ -85,7 +85,17 @@ class TerrainMaterialWrapper {
                     dedupScales: [1.0, 1.0, 1.0, 0.0,
                                   0.0, 0.0, 1.0, 1.0,
                                   1.5, 1.5, 1.5, 1.5,
-                                  1.5, 1.5, 0.5, 1.5]
+                                  1.5, 1.5, 0.5, 1.5],
+                    roughness: [
+                        1.0, 1.0, 0.43, 0.5,
+                        0.5, 0.9, 1.0, 1.0,
+                        0.85, 0.85, 0.85, 1.0,
+                        0.45, 0.8, 1.0, 1.0],
+                    metallic: [
+                        0.0, 0.0, 0.0, 0.5,
+                        0.5, 0.1, 0.0, 0.0,
+                        0.0, 0.0, 0.0, 0.0,
+                        0.0, 0.4, 0.0, 0.0]
                 }
             };
         }
@@ -120,6 +130,7 @@ class TerrainMaterialWrapper {
 
         this.shaderinjectpoint4 += "vec4 finalColor1 = baseColor1;\r\n";
         this.shaderinjectpoint4 += "float finalRough1 = baseRough1;\r\n";
+        this.shaderinjectpoint4 += "float finalMetallic1 = baseMetallic1;\r\n";
         //this.shaderinjectpoint4 += 'finalColor1.a = 0.05;\r\n';
 
         var v = 0.0, h = 0.0;
@@ -143,6 +154,7 @@ class TerrainMaterialWrapper {
                  this.shaderinjectpoint4 += (`
                      `+ "vec4 finalColor" + (i + 2) + " = blend(finalColor" + (i + 1) + ", " + this.options.splatInfos.displScales[i].toFixed(5) + ", baseColor" + (i + 2) + ", " + this.options.splatInfos.displScales[i + 1].toFixed(5) + "); " + `
                      float finalRough` + (i + 2) + " = finalColor" + (i + 1) + ".a >= baseColor" + (i + 2) + ".a ? finalRough" + (i + 1) + " : baseRough" + (i + 2) + `;
+                     float finalMetallic` + (i + 2) + " = finalColor" + (i + 1) + ".a >= baseColor" + (i + 2) + ".a ? finalMetallic" + (i + 1) + " : baseMetallic" + (i + 2) + `;
                  `);
 
             }
@@ -153,7 +165,11 @@ class TerrainMaterialWrapper {
             //this.shaderinjectpoint2 += 'vec4 baseColor' + (i + 1) +' = col(vAlbedoUV, uv' + (i + 1) + ', vec2('+this.options.splatInfos.scales[i][0]+','+this.options.splatInfos.scales[i][1]+'), vec2('+this.options.splatInfos.positions[i][0] + ','+this.options.splatInfos.positions[i][1]+'), ' + (i % 4) + ', scale, splatmap, albedoSampler, bumpSampler);\r\n';
             this.shaderinjectpoint2 += "vec4 baseColor" + (i + 1) +" = chanInfo" + (i + 1) + "[0];\r\n";
             this.shaderinjectpoint2 += "vec3 baseNormal" + (i + 1) +" = vec3(chanInfo" + (i + 1) + "[1].x, chanInfo" + (i + 1) + "[1].y, chanInfo" + (i + 1) + "[1].z);\r\n";
-            this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = chanInfo" + (i + 1) + "[1].a;\r\n";
+
+            this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = chanInfo" + (i + 1) + "[1].a * " + this.options.splatInfos.roughness[i].toFixed(5) + ";\r\n";
+            //this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = /*chanInfo" + (i + 1) + "[1].a * */ " + this.options.splatInfos.roughness[i].toFixed(5) + ";\r\n";
+
+            this.shaderinjectpoint2 += "float baseMetallic" + (i + 1) +" = " + this.options.splatInfos.metallic[i].toFixed(5) + ";\r\n";
 
         }
 
@@ -172,20 +188,32 @@ class TerrainMaterialWrapper {
         this.shaderinjectpoint3 += "result = finalColor" + (this.totalTiles) + ".rgb;";
 
         //this.shaderinjectpoint4 += 'normalW = normalW + finalNormal' + (this.totalTiles) + ';';  // TODO: adding these vectors is incorrect
-        this.shaderinjectpoint4 += "reflectivityOut.roughness = finalRough" + (this.totalTiles) + ";";
+
+        // MetallicRoughness.r is the computed metallicness
+        // MetallicRoughness.g is the computed roughness
+        this.shaderinjectpoint4 += "metallicRoughness.g = finalRough" + (this.totalTiles) + ";";
+        this.shaderinjectpoint4 += "metallicRoughness.r = finalMetallic" + (this.totalTiles) + ";";
+        //this.shaderinjectpoint4 += "metallicRoughness.r = 0.;";
+        //this.shaderinjectpoint4 += "metallicRoughness.r = 0.;";
+        //this.shaderinjectpoint4 += "metallicRoughness.g = 0.43;";
+        //this.shaderinjectpoint4 += "reflectivityOut.microSurface = 0.0;";
+
 
         this.splatMap = splatMap;
         //this.needsUpdating = true;
 
-        
+
         this.material = new PBRCustomMaterial("splatMaterial", scene);
-        this.material.metallic = 0.0;
-        this.material.roughness = 0.95;
+        this.material.metallic = 0.0; // 0.0;
+        this.material.roughness = 0.0; // 0.43 (asphalt); // 0.95;
+        //this.material.indexOfRefraction = 1.4;
+
         //this.material.twoSidedLighting = true;
         //this.material.disableLighting = false;
-        this.material.ambientColor = new Color3(1.0, 1.0, 1.0); // Color3.Black();
+        //this.material.ambientColor = new Color3(1.0, 1.0, 1.0); // Color3.Black();
         //this.material.disableBumpMap = true;
-        //this.material.specularColor = new Color3(0.15, 0.15, 0.15); // Color3.Black();
+        //this.material.metallicspecularColor = new Color3(0.15, 0.15, 0.15); // Color3.Black();
+        //this.material.specularIntensity = 1.0;
         //this.material.emissiveColor = new Color3(0.0, 0.0, 0.0); // Color3.Black();
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
@@ -201,8 +229,18 @@ class TerrainMaterialWrapper {
         this.material.AddUniform("splatmap","sampler2D", {});
         this.material.AddUniform("atlasNormalsSampler","sampler2D",  {});
 
+        this.material.Vertex_Before_PositionUpdated(`
+            uvUpdated = vec2(positionUpdated.x, -positionUpdated.z);
+        `);
+
+        this.material.Vertex_MainEnd(`
+            //uvUpdated = uvUpdated + 0.5;
+        `);
+
         this.material.Fragment_Definitions(`
-        #define TANGENT;
+        //#define REFLECTION
+        #define TANGENT
+        //#define METALLICWORKFLOW
         `);
 
         this.material.Fragment_Begin(
@@ -213,7 +251,6 @@ class TerrainMaterialWrapper {
 
             +`
 
-
             // From: https://github.com/BabylonJS/Babylon.js/blob/master/src/Shaders/ShadersInclude/bumpFragmentMainFunctions.fx
 
             vec3 perturbNormalBase(mat3 cotangentFrame, vec3 normal, float scale)
@@ -221,16 +258,15 @@ class TerrainMaterialWrapper {
                 #ifdef NORMALXYSCALE
                     normal = normalize(normal * vec3(scale, scale, 1.0));
                 #endif
-        
+
                 return normalize(cotangentFrame * normal);
             }
-        
+
             vec3 perturbNormal(mat3 cotangentFrame, vec3 textureSample, float scale)
             {
                 return perturbNormalBase(cotangentFrame, textureSample * 2.0 - 1.0, scale);
             }
-        
-            // Thanks to http://www.thetenthplanet.de/archives/1180
+
             mat3 cotangent_frame(vec3 normal, vec3 p, vec2 uv, vec2 tangentSpaceParams)
             {
                 // get edge vectors of the pixel triangle
@@ -238,24 +274,21 @@ class TerrainMaterialWrapper {
                 vec3 dp2 = dFdy(p);
                 vec2 duv1 = dFdx(uv);
                 vec2 duv2 = dFdy(uv);
-        
+
                 // solve the linear system
                 vec3 dp2perp = cross(dp2, normal);
                 vec3 dp1perp = cross(normal, dp1);
                 vec3 tangent = dp2perp * duv1.x + dp1perp * duv2.x;
                 vec3 bitangent = dp2perp * duv1.y + dp1perp * duv2.y;
-        
+
                 // invert the tangent/bitangent if requested
                 tangent *= tangentSpaceParams.x;
                 bitangent *= tangentSpaceParams.y;
-        
+
                 // construct a scale-invariant frame
                 float invmax = inversesqrt(max(dot(tangent, tangent), dot(bitangent, bitangent)));
                 return mat3(tangent * invmax, bitangent * invmax, normal);
             }
-
-
-
 
             // Functions
 

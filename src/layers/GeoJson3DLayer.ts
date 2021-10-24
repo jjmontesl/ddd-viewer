@@ -201,6 +201,14 @@ class GeoJson3DLayer extends Base3DLayer {
 
     }
 
+    clearScene() {
+        if (this.rootNode) {
+            this.rootNode.parent = null;
+            this.rootNode.dispose();
+            this.rootNode = null;
+        }
+    }
+
 }
 
 

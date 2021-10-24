@@ -63,14 +63,6 @@ class GeoTile3DLayer extends Base3DLayer {
         });
     }
 
-    setViewer(dddViewer: SceneViewer): void {
-        super.setViewer(dddViewer);
-
-        if (dddViewer == null) {
-            this.cleanScene();
-        }
-    }
-
     update(): void {
         this.updateTilesDynamic();
     }
@@ -97,7 +89,7 @@ class GeoTile3DLayer extends Base3DLayer {
         // loading chunks each 100 frames. Bad performance
         this._lastLoadDynamic -= 1;
         if ( this._lastLoadDynamic > 0 ) { return; }
-        this._lastLoadDynamic = 100;
+        this._lastLoadDynamic = 1;
 
         const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
 
@@ -658,7 +650,7 @@ class GeoTile3DLayer extends Base3DLayer {
         delete this.tiles[tile.key];
     }
 
-    cleanScene() {
+    clearScene() {
         for (const tileKey in this.tiles) {
             const tile = this.tiles[tileKey];
             this.disposeTile(tile);

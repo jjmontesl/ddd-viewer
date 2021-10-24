@@ -109,7 +109,7 @@ about DDD-Viewer usage.
 Please get in touch if you wish to contribute to the library. Have a look at the
 issue tracker to know about the tasks in the roadmap if you are interested.
 
-You can follow [@jjmontes](https://twitter.com/jjmontes) on Twitter to stay up to date.
+You can follow [@3dsmaps](https://twitter.com/3dsmaps) on Twitter to stay up to date.
 
 (Leave a ⭐️ if you like this project!)
 
