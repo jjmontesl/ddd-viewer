@@ -27,6 +27,7 @@ import { QueueLoader } from "./loading/QueueLoader";
 import { ViewerProcessManager } from "./process/ViewerProcessManager";
 import { SkyMaterialWrapper } from "./render/SkyboxMaterial";
 import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
+import { TextMaterialWrapper } from "./render/materials/TextMaterial";
 import { ScenePosition } from "./ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
@@ -87,6 +88,8 @@ class SceneViewer {
 
     materialWater: WaterMaterial | null = null;
     materialOcean: NodeMaterial | null = null;
+    materialText: Material | null = null;
+
     envReflectionProbe: ReflectionProbe | null = null;
     light: DirectionalLight | null = null;
     shadowGenerator: CascadedShadowGenerator | null = null;
@@ -96,6 +99,7 @@ class SceneViewer {
 
     splatmapAtlasTexture: Texture | null = null;
     splatmapAtlasNormalsTexture: Texture | null = null;
+
 
     _previousLampPatOn: boolean | null = null;
     _geolocationWatchId: string | null = null;
@@ -212,6 +216,12 @@ class SceneViewer {
         });
         */
 
+        //const fontAtlasTexture = (<PBRMaterial>mesh.material).albedoTexture;
+        const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/dddfonts_01_64.greyscale.png";
+        const fontAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, false, Texture.BILINEAR_SAMPLINGMODE);
+        const tmw = new TextMaterialWrapper(this, fontAtlasTexture, null);
+        this.materialText = tmw.material;
+        this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -5}, false);
 
         /*
         that.materialGrass = new StandardMaterial("bawl", that.scene);
@@ -515,7 +525,7 @@ class SceneViewer {
 
             if ( metadata["ddd:material"] && ( loadMaterials || ( !( metadata["ddd:material"] in this.catalog_materials )))) {
                 try {
-                    this.addMaterialToCatalog( metadata["ddd:material"], mesh, true );
+                    this.addMaterialToCatalog( metadata["ddd:material"], mesh.material!, mesh.metadata.gltf.extras, true );
                 } catch ( e ) {
                     console.debug( "Error adding material to catalog: ", mesh, e );
                 }
@@ -527,23 +537,22 @@ class SceneViewer {
         }
     }
 
-    addMaterialToCatalog( key: string, mesh: Mesh, force: boolean = false ): void {
-        if ( mesh.material ) {
+    addMaterialToCatalog(key: string, material: Material, metadata: any, force: boolean = false): void {
+        if (material) {
             //console.debug(mesh.material);
             //mesh.material.id = key;
-            mesh.material.name = key;
+            material.name = key;
 
-            if ( this.catalog_materials[key] && !force ) {
+            if (this.catalog_materials[key] && !force) {
                 console.debug( "Material already in catalog: " + key );
             } else {
 
-                //console.debug("Adding material to catalog: " + key);
-                this.catalog_materials[key] = mesh.material;
-                const metadata = mesh.metadata.gltf.extras;
+                console.debug("Adding material to catalog: " + key);
+                this.catalog_materials[key] = material;
 
                 let dontFreeze = false;
 
-                if ( metadata["ddd:material"] === "WaterBasicDaytime" ) {
+                if (metadata["ddd:material"] === "WaterBasicDaytime") {
                     /*
                     mesh.material.alpha = 0.7;
                     mesh.material.transparencyMode = 2;  // ALPHA_BLEND
@@ -553,7 +562,7 @@ class SceneViewer {
                     */
 
                     // This "WaterInstanced" is to avoid WaterMaterial from being used in instances (seems to fail, causing the material to disappear).
-                    this.catalog_materials["WaterInstanced"] = mesh.material;
+                    this.catalog_materials["WaterInstanced"] = material;
                     this.catalog_materials["WaterInstanced"].alpha = 0.7;
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
                     this.catalog_materials["WaterInstanced"].freeze();
@@ -574,7 +583,7 @@ class SceneViewer {
                     this.catalog_materials[key] = <Material> this.materialWater;
                     dontFreeze = true;
 
-                } else if ( mesh.material instanceof PBRMaterial ) {
+                } else if ( material instanceof PBRMaterial ) {
 
                     //mesh.material.specularColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.2);
                     //mesh.material.albedoColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.5);
@@ -603,31 +612,31 @@ class SceneViewer {
                     }
                     if (( metadata["ddd:material"] === "Fence" )) {
                         uvScale = 0.5;
-                        mesh.material.backFaceCulling = false;
-                        if ( mesh.material.albedoTexture && mesh.material instanceof PBRBaseMaterial ) {
-                            ( <Texture> mesh.material.albedoTexture ).vOffset = 0.0725;
+                        material.backFaceCulling = false;
+                        if ( material.albedoTexture && material instanceof PBRBaseMaterial ) {
+                            ( <Texture> material.albedoTexture ).vOffset = 0.0725;
                         }
-                        if ( mesh.material.bumpTexture ) { ( <Texture> mesh.material.bumpTexture ).vOffset = 0.0725; }
+                        if ( material.bumpTexture ) { ( <Texture> material.bumpTexture ).vOffset = 0.0725; }
                     }
 
                     if ( uvScale !== 1.0 ) {
-                        if ( mesh.material.albedoTexture && mesh.material instanceof PBRBaseMaterial ) {
-                            ( <Texture> mesh.material.albedoTexture ).uScale = uvScale;
-                            ( <Texture> mesh.material.albedoTexture ).vScale = uvScale;
-                            if ( mesh.material.bumpTexture ) {
-                                ( <Texture> mesh.material.bumpTexture ).uScale = uvScale;
-                                ( <Texture> mesh.material.bumpTexture ).vScale = uvScale;
+                        if ( material.albedoTexture && material instanceof PBRBaseMaterial ) {
+                            ( <Texture> material.albedoTexture ).uScale = uvScale;
+                            ( <Texture> material.albedoTexture ).vScale = uvScale;
+                            if ( material.bumpTexture ) {
+                                ( <Texture> material.bumpTexture ).uScale = uvScale;
+                                ( <Texture> material.bumpTexture ).vScale = uvScale;
                             }
-                            if ( mesh.material.emissiveTexture ) {
-                                ( <Texture> mesh.material.emissiveTexture ).uScale = uvScale;
-                                ( <Texture> mesh.material.emissiveTexture ).vScale = uvScale;
+                            if ( material.emissiveTexture ) {
+                                ( <Texture> material.emissiveTexture ).uScale = uvScale;
+                                ( <Texture> material.emissiveTexture ).vScale = uvScale;
                             }
                         }
                     }
 
                     // Babylon does not enable emissive by default if an emissive texture exists. This makes eg. lava emissive.
-                    if (mesh.material.emissiveTexture) {
-                        mesh.material.emissiveColor = Color3.White();
+                    if (material.emissiveTexture) {
+                        material.emissiveColor = Color3.White();
                     }
 
                     /*
@@ -647,18 +656,22 @@ class SceneViewer {
                     */
 
                     // Detail map
-                    mesh.material.detailMap.texture = this.textureDetailSurfaceImp;
-                    ( <Texture> mesh.material.detailMap.texture ).uScale = 1 / 256;
-                    ( <Texture> mesh.material.detailMap.texture ).vScale = 1 / 256;
-                    mesh.material.detailMap.isEnabled = true;
-                    mesh.material.detailMap.diffuseBlendLevel = 0.15; // 0.2
-                    //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
-                    //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
-                    //mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
-                    //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
+                    material.detailMap.texture = this.textureDetailSurfaceImp;
+                    if (material.detailMap.texture) {
+                        ( <Texture> material.detailMap.texture ).uScale = 1 / 256;
+                        ( <Texture> material.detailMap.texture ).vScale = 1 / 256;
+                        material.detailMap.isEnabled = true;
+                        material.detailMap.diffuseBlendLevel = 0.15; // 0.2
+                        //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
+                        //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
+                        //mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
+                        //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
+                    }
+
+                    (<PBRMaterial>material).useHorizonOcclusion = true;
                 }
 
-                if ( metadata["zoffset"]) {
+                if ( ('zoffset' in metadata) && metadata["zoffset"]) {
                     this.catalog_materials[key].zOffset = metadata["zoffset"];
                 }
 
@@ -669,7 +682,7 @@ class SceneViewer {
 
             }
         } else {
-            console.debug( "No material found in mesh: " + mesh.id + " (key=" + key + ")" );
+            console.debug( "No material (null) (key=" + key + ")" );
         }
     }
 
@@ -699,39 +712,54 @@ class SceneViewer {
         if ( !("_splatmapMaterial" in root) && this.useSplatMap && ! this.viewerState.sceneGroundTextureOverrideUrl &&
             this.viewerState.dddConfig.materialsSplatmap) {  // && this.viewerState.dddConfig.materialsTextureSet.indexOf("default") >= 0
 
-            if (rootmd && ("metadata" in mesh) && ("tileCoords" in mesh.metadata)) {
+            if (rootmd && ("metadata" in root) && ("tileCoords" in root.metadata)) {
                 const coords = root.metadata["tileCoords"];
                 //console.debug("Creating splat material for: ", coords);
 
                 const tileUrlBase = this.viewerState.dddConfig.tileUrlBase;
                 const splatmapUrl = tileUrlBase + "17" + "/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
 
+                //const temporaryTexture = this.textureDetailSurfaceImp;
                 const splatmapTexture = new Texture( splatmapUrl, this.scene );
-
                 const matwrapper = new TerrainMaterialWrapper( this, splatmapTexture, <Texture> this.splatmapAtlasTexture, <Texture> this.splatmapAtlasNormalsTexture);
-                ( <any> root )._splatmapMaterial = matwrapper.material;
+                (<any> root)._splatmapMaterial = matwrapper.material;
 
+                const createSplatmapMaterial = () => {
 
-                let uvScale = [ 225, 225 ]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
-                const bounds = rootmd ? rootmd["tile:bounds_m"] : null;
-                if ( bounds ) {
-                    //console.debug("Bounds: ", bounds);
-                    uvScale = [ bounds[2] - bounds[0], bounds[3] - bounds[1] ];
+                    matwrapper.splatMap = splatmapTexture;
+
+                    let uvScale = [ 225, 225 ]; //[225, 225]; // [113.36293971960356 * 2, 112.94475604662343 * 2];
+                    const bounds = rootmd ? rootmd["tile:bounds_m"] : null;
+                    if ( bounds ) {
+                        //console.debug("Bounds: ", bounds);
+                        uvScale = [ bounds[2] - bounds[0], bounds[3] - bounds[1] ];
+                    }
+
+                    // Seems to work well (+1 +1 / +1 -1)
+                    ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
+                    ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
+                    ( <Texture> matwrapper.material.albedoTexture ).uOffset = 0.5; //  + (1 / uvScale[0]);
+                    ( <Texture> matwrapper.material.albedoTexture ).vOffset = 0.5; // - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
+                    /*if (mesh.material.bumpTexture) {
+                        mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
+                        mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
+                        mesh.material.bumpTexture.uOffset = 0.5;
+                        mesh.material.bumpTexture.vOffset = 0.5;
+                    }*/
+
+                    //(<any> root)._splatmapMaterial._splatmapMaterial.freeze();
                 }
 
-                // Seems to work well (+1 +1 / +1 -1)
-                ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
-                ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
-                ( <Texture> matwrapper.material.albedoTexture ).uOffset = 0.5; //  + (1 / uvScale[0]);
-                ( <Texture> matwrapper.material.albedoTexture ).vOffset = 0.5; // - ( 0.5/128 ); // 1 / root._splatmapMaterial.albedoTexture.getSize().height);
-                /*if (mesh.material.bumpTexture) {
-                    mesh.material.bumpTexture.uScale = 1.0 / uvScale[0];
-                    mesh.material.bumpTexture.vScale = 1.0 / uvScale[1];
-                    mesh.material.bumpTexture.uOffset = 0.5;
-                    mesh.material.bumpTexture.vOffset = 0.5;
-                }*/
-
-                //root._splatmapMaterial.freeze();
+                // Wait for texture observable to create material (trying to avoid freeze time)
+                //if (splatmapTexture.isReady()) {
+                //    createSplatmapMaterial();
+                //} else {
+                //    let onLoadObservable = splatmapTexture.onLoadObservable;
+                //    onLoadObservable.addOnce(() => {
+                //        createSplatmapMaterial();
+                //    });
+                //}
+                createSplatmapMaterial();
 
             }
         }
@@ -753,12 +781,28 @@ class SceneViewer {
                     }
                 }
 
+                // Fonts
+                if ( key === "DDDFonts-01-64" ) {
+                    // Font material should be in catalog
+                    //this.catalog_materials[key] = this.materialText!;
+                } else {
+
+                    // Create font materials ad-hoc using pre-existing material albedo texture
+                    // (this allows font materials to be included in the format)
+                    if (("ddd:material:type" in metadata) && (metadata['ddd:material:type'] == 'font') && !(key in this.catalog_materials)) {
+                        const fontAtlasTexture = (<PBRMaterial> mesh.material).albedoTexture;
+                        const tmw = new TextMaterialWrapper(this, fontAtlasTexture, null);
+                        const materialTextCustom = tmw.material;
+                        this.catalog_materials[key] = materialTextCustom;
+                    }
+                }
+
                 let mat = this.catalog_materials[key];
 
                 if ( !( key in this.catalog_materials ) && mesh.material ) {
                     mesh.material.id = key + "(Auto)";
                     mesh.material.name = key;
-                    this.addMaterialToCatalog( metadata["ddd:material"], mesh );
+                    this.addMaterialToCatalog(metadata["ddd:material"], mesh.material, mesh.metadata.gltf.extras);
                     mat = this.catalog_materials[key];
 
                     if ( !( <any>root in this.depends )) {
@@ -1269,8 +1313,10 @@ class SceneViewer {
                 this.lastDateUpdate = currentDateUpdate;
 
                 if ( updateElapsed > maxUpdateElapsed ) { updateElapsed = maxUpdateElapsed; }
-                const scaledElapsed = ( updateElapsed / 1000 ) * ( 24 * 2 );  // 24 * 2 = 48x faster (1 day = 30 min)
+                let scaledElapsed = ( updateElapsed / 1000 ) * ( 24 * 2 );  // 24 * 2 = 48x faster (1 day = 30 min)
+                // FIXME: Should use sun position, not hours (also, check with other time zones)
                 //if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
+
                 this.viewerState.positionDate.setSeconds( this.viewerState.positionDate.getSeconds() + scaledElapsed );
                 this.viewerState.positionDateSeconds = this.viewerState.positionDate.getTime() / 1000;
 
@@ -2107,8 +2153,8 @@ class SceneViewer {
         this.walkMode = false;
 
         let targetCoords = Vector3.Zero();
-        if ( this.selectedMesh ) {
-            const boundingBox: BoundingInfo = this.getBoundsRecursively( this.selectedMesh );
+        if ( this.selectedObject ) {
+            const boundingBox: BoundingInfo = this.getBoundsRecursively( <Mesh> this.selectedObject!.mesh );
             //targetCoords = this.selectedMesh.absolutePosition;
             const minWorld = boundingBox.minimum;
             const maxWorld = boundingBox.maximum;
@@ -2193,7 +2239,10 @@ class SceneViewer {
         //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
 
         //console.debug(this.envReflectionProbe.cubeTexture.readPixels(0, 0));
-        const times = SunCalc.getTimes( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        const lightDate = new Date(this.viewerState.positionDate.getTime());
+        const lightSecondsOffsetTimezone = (this.viewerState.positionWGS84[0] / 180.0) * (12 * 3600);
+        lightDate.setSeconds(lightDate.getSeconds() - lightSecondsOffsetTimezone);
+        const times = SunCalc.getTimes(lightDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
 
         const sunriseStr = times.sunrise.getHours() + ":" + times.sunrise.getMinutes();
         const sunsetStr = times.sunset.getHours() + ":" + times.sunset.getMinutes();
@@ -2204,8 +2253,8 @@ class SceneViewer {
         //var sunsetSunPos = SunCalc.getPosition(times.sunset, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
         //var sunsetAzimuth = sunsetPos.azimuth * 180 / Math.PI; **
 
-        const currentSunPos = SunCalc.getPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]); // , this.viewerState.positionScene[1]
-        const currentMoonPos = SunCalc.getMoonPosition( this.viewerState.positionDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
+        const currentSunPos = SunCalc.getPosition(lightDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]); // , this.viewerState.positionScene[1]
+        const currentMoonPos = SunCalc.getMoonPosition(lightDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
         //var crrentMoonIlum = SunCalc.getMoonIllumination(this.viewerState.positionDate);
 
         //var currentPos = currentSunPos.altitude > 0 ? currentSunPos : currentMoonPos;

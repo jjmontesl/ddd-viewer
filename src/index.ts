@@ -22,3 +22,4 @@ export * from "./process/anim/TextAnimationProcess";
 export * from "./process/sequencer/ViewerSequencer";
 export * from "./render/SkyboxMaterial";
 export * from "./render/TerrainMaterial";
+export * from "./render/materials/TextMaterial";

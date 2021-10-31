@@ -84,15 +84,15 @@ class TerrainMaterialWrapper {
                                   0.0, 0.0, 0.0, 0.0,],
                     dedupScales: [1.0, 1.0, 1.0, 0.0,
                                   0.0, 0.0, 1.0, 1.0,
-                                  1.5, 1.5, 1.5, 1.5,
-                                  1.5, 1.5, 0.5, 1.5],
+                                  1.1, 1.1, 1.1, 1.2,
+                                  1.2, 1.2, 0.5, 1.1],
                     roughness: [
-                        1.0, 1.0, 0.43, 0.5,
+                        1.2, 1.3, 2.5, 0.5,
                         0.5, 0.9, 1.0, 1.0,
-                        0.85, 0.85, 0.85, 1.0,
-                        0.45, 0.8, 1.0, 1.0],
+                        1.85, 1.85, 1.15, 1.25,
+                        1.45, 0.8, 1.0, 1.0],
                     metallic: [
-                        0.0, 0.0, 0.0, 0.5,
+                        0.2, 0.1, 0.1, 0.5,
                         0.5, 0.1, 0.0, 0.0,
                         0.0, 0.0, 0.0, 0.0,
                         0.0, 0.4, 0.0, 0.0]
@@ -168,6 +168,7 @@ class TerrainMaterialWrapper {
 
             this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = chanInfo" + (i + 1) + "[1].a * " + this.options.splatInfos.roughness[i].toFixed(5) + ";\r\n";
             //this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = /*chanInfo" + (i + 1) + "[1].a * */ " + this.options.splatInfos.roughness[i].toFixed(5) + ";\r\n";
+            //this.shaderinjectpoint2 += "float baseRough" + (i + 1) +" = chanInfo" + (i + 1) + "[1].a; /* " + this.options.splatInfos.roughness[i].toFixed(5) + "; */\r\n";
 
             this.shaderinjectpoint2 += "float baseMetallic" + (i + 1) +" = " + this.options.splatInfos.metallic[i].toFixed(5) + ";\r\n";
 
