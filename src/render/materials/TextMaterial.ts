@@ -1,7 +1,9 @@
-//import * as BABYLON from "babylonjs";
-//import * as BABYLONMAT from "babylonjs-materials";
+/*
+* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
+* Copyright 2021 Jose Juan Montes and Contributors
+* MIT License (see LICENSE file)
+*/
 
-//import "babylonjs-loaders";
 import { PBRCustomMaterial } from "@babylonjs/materials";
 import { BaseTexture, Color3, Scene, Texture, Vector2 } from "@babylonjs/core";
 import { SceneViewer } from "SceneViewer";

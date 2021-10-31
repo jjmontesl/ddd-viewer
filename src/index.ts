@@ -3,10 +3,18 @@
  */
 
 export * from "./DDDViewerConfig";
-export * from "./ScenePosition";
 export * from "./SceneViewer";
 export * from "./ViewerState";
+export * from "./camera/BaseCameraController";
+export * from "./camera/FreeCameraController";
+export * from "./camera/OrbitCameraController";
+export * from "./camera/PanningCameraController";
+export * from "./camera/WalkCameraController";
+export * from "./camera/WalkCollideCameraController";
 export * from "./core/DDDObjectRef";
+export * from "./core/ScenePosition";
+export * from "./format/DDDFormat";
+export * from "./format/GeoJSON";
 export * from "./layers/Base3DLayer";
 export * from "./layers/DDD3DLayer";
 export * from "./layers/GeoJson3DLayer";
@@ -20,6 +28,10 @@ export * from "./process/anim/CameraMoveAnimationProcess";
 export * from "./process/anim/DateTimeAnimationProcess";
 export * from "./process/anim/TextAnimationProcess";
 export * from "./process/sequencer/ViewerSequencer";
-export * from "./render/SkyboxMaterial";
-export * from "./render/TerrainMaterial";
+export * from "./render/environment/DefaultEnvironment";
+export * from "./render/materials/SkyboxMaterial";
+export * from "./render/materials/TerrainMaterial";
 export * from "./render/materials/TextMaterial";
+export * from "./render/skybox/CubemapSkybox";
+export * from "./render/skybox/DynamicSkybox";
+export * from "./render/skybox/Skybox";

@@ -1,6 +1,6 @@
 /*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
-* Copyright 2021 Jose Juan Montes and contributors
+* Copyright 2021 Jose Juan Montes and Contributors
 * MIT License (see LICENSE file)
 */
 
@@ -25,15 +25,17 @@ import SunCalc from "suncalc";
 import { LayerManager } from "./layers/LayerManager";
 import { QueueLoader } from "./loading/QueueLoader";
 import { ViewerProcessManager } from "./process/ViewerProcessManager";
-import { SkyMaterialWrapper } from "./render/SkyboxMaterial";
-import { TerrainMaterialWrapper } from "./render/TerrainMaterial";
+import { SkyMaterialWrapper } from "./render/materials/SkyboxMaterial";
+import { TerrainMaterialWrapper } from "./render/materials/TerrainMaterial";
 import { TextMaterialWrapper } from "./render/materials/TextMaterial";
-import { ScenePosition } from "./ScenePosition";
+import { ScenePosition } from "./core/ScenePosition";
 import { ViewerSequencer } from "./process/sequencer/ViewerSequencer";
 import { ViewerState } from "./ViewerState";
 import { DDDViewerConfig } from "./DDDViewerConfig";
 import { GeoTile3DLayer } from "./layers/GeoTile3DLayer";
 import { DDDObjectRef } from "./core/DDDObjectRef";
+import { BaseCameraController } from "./camera/BaseCameraController";
+import { FreeCameraController } from "./camera/FreeCameraController";
 
 
 /**
@@ -41,12 +43,14 @@ import { DDDObjectRef } from "./core/DDDObjectRef";
  */
 class SceneViewer {
 
-    camera: Camera | null = null;
     viewerState: ViewerState;
 
     engine: Engine;
     scene: Scene;
+    camera: Camera;
     sceneInstru: SceneInstrumentation | null = null;
+
+    cameraController: BaseCameraController | null = null;
 
     sequencer: ViewerSequencer;
     processes: ViewerProcessManager;
@@ -55,7 +59,8 @@ class SceneViewer {
     //materialHighlight: Material | null = null;
     materialHighlight: StandardMaterial | null = null;
 
-    walkMode: boolean = false;
+    //walkMode: boolean = false;
+
     useSplatMap: boolean = false;
 
     layerManager: LayerManager;
@@ -100,7 +105,6 @@ class SceneViewer {
     splatmapAtlasTexture: Texture | null = null;
     splatmapAtlasNormalsTexture: Texture | null = null;
 
-
     _previousLampPatOn: boolean | null = null;
     _geolocationWatchId: string | null = null;
 
@@ -119,9 +123,13 @@ class SceneViewer {
         }
         */
 
+        // Resolve default properties
         if (dddConfig == null) {
             dddConfig = new DDDViewerConfig();
+        } else {
+            dddConfig = Object.assign(new DDDViewerConfig(), dddConfig);
         }
+
 
         this.viewerState = new ViewerState(dddConfig);
 
@@ -156,6 +164,7 @@ class SceneViewer {
 
         // Note: useGeometryIdsMap=true seems to help only when there are already too many objects, but performance is (slightly) better without it if object count is low
         this.scene = new Scene(this.engine, { useGeometryIdsMap: true } as SceneOptions);
+        this.camera = this.initCamera();
 
         //that.scene = createScene(engine, canvas);
         //this.scene.freezeActiveMeshes(true);  // affects too many things, causes wrong behavior (skybox, etc)
@@ -186,6 +195,7 @@ class SceneViewer {
 
         //that.highlightLayer = new HighlightLayer("hl1", that.scene);
 
+        this.cameraController = new FreeCameraController(this);
 
         const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
         //water.backFaceCulling = true;
@@ -216,23 +226,16 @@ class SceneViewer {
         });
         */
 
-        //const fontAtlasTexture = (<PBRMaterial>mesh.material).albedoTexture;
-        const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/dddfonts_01_64.greyscale.png";
-        const fontAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, false, Texture.BILINEAR_SAMPLINGMODE);
-        const tmw = new TextMaterialWrapper(this, fontAtlasTexture, null);
-        this.materialText = tmw.material;
-        this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -5}, false);
-
         /*
         that.materialGrass = new StandardMaterial("bawl", that.scene);
         that.textureGrass = new GrassProceduralTexture("textbawl", 256, that.scene);
         that.materialGrass.ambientTexture = that.textureGrass;
         */
 
-
         // Environment
         this.envReflectionProbe = null;
-        if ( this.viewerState.sceneEnvironmentProbe !== null ) {
+        if (this.viewerState.sceneEnvironmentProbe !== null) {
+            //console.debug("Creating reflection probe.");
             this.envReflectionProbe = new ReflectionProbe("envReflectionProbe", this.viewerState.sceneEnvironmentProbe, this.scene, true, true);
             this.envReflectionProbe.refreshRate = 6;
             this.envReflectionProbe.position = new Vector3(0, 0, 0);
@@ -241,13 +244,7 @@ class SceneViewer {
             //var pbr = new PBRMaterial('envReflectionTestMaterial', this.scene);
             //pbr.reflectionTexture = this.envReflectionProbe.cubeTexture;
 
-            // Force PBR material udpate and show for debugging
-            //var sphere = Mesh.CreateSphere("envReflectionTestSphere", 16, 5, this.scene);
-            //sphere.position.y = 150;
-            //sphere.material = pbr;
-
             // Note that material needs to be added to the camera custom render targets to be updated
-
             this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
 
         } else {
@@ -260,6 +257,13 @@ class SceneViewer {
         // Skybox
         this.loadSkybox(this.viewerState.sceneSkybox);
 
+        // Load fonts (after environment, or the call to add to catalog will miss PBR environment texture)
+        //const fontAtlasTexture = (<PBRMaterial>mesh.material).albedoTexture;
+        const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/dddfonts_01_64.greyscale.png";
+        const fontAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, false, Texture.BILINEAR_SAMPLINGMODE);
+        const tmw = new TextMaterialWrapper(this, fontAtlasTexture, null);
+        this.materialText = tmw.material;
+        this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -5}, false);
 
         /*
         const camera = new ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2-0.5, 500, Vector3.Zero(), that.scene);
@@ -273,13 +277,13 @@ class SceneViewer {
         */
 
         // Camera
-        this.selectCameraFree();
+        //this.selectCameraFree();
         //this.selectCameraWalk();
         //this.selectCameraOrbit();
 
         // Render Pipeline config and Postprocessing
-        this.initRenderPipeline();
-        this.updateRenderPipeline();
+        //this.initRenderPipeline();
+        //this.updateRenderPipeline();
 
 
         // Lighting
@@ -297,7 +301,7 @@ class SceneViewer {
         this.light = new DirectionalLight( "light", new Vector3( 0.3, -0.5, 0.5 ).normalizeToNew(), this.scene );
         this.light.diffuse = new Color3( 0.95, 0.95, 1.00 );
         this.light.specular = new Color3( 1, 1, 0.95 );
-        this.light.intensity = 2.5;
+        this.light.intensity = 2.8;
 
         /*
         that.light2 = new DirectionalLight("light2", new Vector3(-0.3, -0.5, -0.5).normalizeToNew(), that.scene);
@@ -363,6 +367,9 @@ class SceneViewer {
             if ( ! this.scene ) { return; }
             let deltaTime = this.engine!.getDeltaTime() / 1000.0;
             this.update(deltaTime);
+            if (this.cameraController) {
+                this.cameraController.update(deltaTime);
+            }
             this.scene.render();
         });
 
@@ -404,11 +411,12 @@ class SceneViewer {
     }
 
     loadSkybox( baseUrl: string ): void {
+
         // Remove skybox
-        if ( this.skybox ) {
+        if (this.skybox) {
 
             this.materialWater!.getRenderList()!.length = 0;
-            if ( this.viewerState.sceneEnvironmentProbe ) {
+            if (this.viewerState.sceneEnvironmentProbe) {
                 this.envReflectionProbe!.renderList!.length = 0;
             }
 
@@ -417,7 +425,7 @@ class SceneViewer {
         }
 
         // Set skybox
-        if ( baseUrl === "@dynamic" )  {
+        if (baseUrl === "@dynamic")  {
             const skybox = Mesh.CreateSphere( "skyBox", 30, 3000, <Scene> this.scene );
 
             const skyboxMaterial = new SkyMaterialWrapper( this.scene ).material;
@@ -428,7 +436,7 @@ class SceneViewer {
             skybox.applyFog = false;
             this.skybox = skybox;
 
-        } else if ( baseUrl !== null ) {
+        } else if (baseUrl !== null) {
 
             const skybox = MeshBuilder.CreateBox( "skyBox", { size:3000.0 }, this.scene );
             const skyboxMaterial = new StandardMaterial( "skyBox", <Scene> this.scene );
@@ -445,17 +453,18 @@ class SceneViewer {
             this.skybox = skybox;
         }
 
-        if ( this.skybox ) {
+        console.debug("Adding skybox env");
+        if (this.skybox) {
             this.skybox.renderingGroupId = 0;  // Seems needs to be rendered in group 0 for it to be applied to the reflections on water
             //this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
-            this.envReflectionProbe!.renderList!.push( this.skybox );
-            this.materialWater!.addToRenderList( this.skybox );
+            this.envReflectionProbe!.renderList!.push(this.skybox);
+            this.materialWater!.addToRenderList(this.skybox);
         }
 
     }
 
     showFullScreen(): void {
-        if ( this.engine ) {
+        if (this.engine) {
             this.engine.switchFullscreen( true );
         }
     }
@@ -546,8 +555,7 @@ class SceneViewer {
             if (this.catalog_materials[key] && !force) {
                 console.debug( "Material already in catalog: " + key );
             } else {
-
-                console.debug("Adding material to catalog: " + key);
+                //console.debug("Adding material to catalog: " + key);
                 this.catalog_materials[key] = material;
 
                 let dontFreeze = false;
@@ -669,6 +677,9 @@ class SceneViewer {
                     }
 
                     (<PBRMaterial>material).useHorizonOcclusion = true;
+                    if (this.envReflectionProbe) {
+                        (<PBRMaterial>material).reflectionTexture = this.envReflectionProbe!.cubeTexture;
+                    }
                 }
 
                 if ( ('zoffset' in metadata) && metadata["zoffset"]) {
@@ -1245,18 +1256,6 @@ class SceneViewer {
             }
 
             this.updateElevation();
-            const terrainElevation = this.viewerState.positionTerrainElevation;
-
-            // Fix viewer to floor
-            if ( this.walkMode ) {
-                if ( terrainElevation !== null && this.camera ) {
-                    this.camera.position.y = terrainElevation + this.viewerState.sceneCameraWalkHeight; // 3.0;
-                }
-            } else {
-                if ( terrainElevation && this.camera && this.camera.position.y < ( terrainElevation + 1.0 )) {
-                    this.camera.position.y = terrainElevation + 1.0;
-                }
-            }
 
             if ( this.camera ) {
                 if ( this.camera instanceof ArcRotateCamera ) {
@@ -1315,7 +1314,7 @@ class SceneViewer {
                 if ( updateElapsed > maxUpdateElapsed ) { updateElapsed = maxUpdateElapsed; }
                 let scaledElapsed = ( updateElapsed / 1000 ) * ( 24 * 2 );  // 24 * 2 = 48x faster (1 day = 30 min)
                 // FIXME: Should use sun position, not hours (also, check with other time zones)
-                //if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
+                if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
 
                 this.viewerState.positionDate.setSeconds( this.viewerState.positionDate.getSeconds() + scaledElapsed );
                 this.viewerState.positionDateSeconds = this.viewerState.positionDate.getTime() / 1000;
@@ -1930,7 +1929,8 @@ class SceneViewer {
         */
     }
 
-    selectCameraFree(): void {
+    initCamera(): Camera {
+
         if ( this.camera ) {
             this.camera.customRenderTargets.length = 0; //4 = [];
             this.camera.detachControl();
@@ -1938,10 +1938,10 @@ class SceneViewer {
         }
 
         //console.debug("Creating free camera.");
-        this.walkMode = false;
+        const camera = new UniversalCamera("Camera", Vector3.Zero(), this.scene);
+        camera.detachControl(); // Controls managed by DDD CameraController
 
-        const camera = new UniversalCamera( "Camera", Vector3.Zero(), this.scene );
-        camera.minZ = 1.0; // 0.1;
+        camera.minZ = 0.5; // 1.0; // 0.1;
         camera.maxZ = 4500;
         camera.angularSensibility = 500.0;
         camera.touchAngularSensibility = 1000.0;
@@ -1954,249 +1954,26 @@ class SceneViewer {
         camera.keysRight.push( 68 );
         camera.keysUpward.push( 81 );
         camera.keysDownward.push( 69 );
-        camera.attachControl( this.engine.getRenderingCanvas(), true );
-        camera.fov = 40.0 * ( Math.PI / 180.0 );  // 35.0 might be GM, 45.8... is default  // 35
-        const positionScene = this.wgs84ToScene( this.viewerState.positionWGS84 );
-        camera.position = new Vector3( positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
+        camera.attachControl(this.engine.getRenderingCanvas(), true);
+        camera.fov = 40.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default  // 35
+        const positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
+        camera.position = new Vector3(positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
         camera.rotation = new Vector3(( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 ), this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
         //camera.cameraRotation = new Vector2(/* (90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0) */ 0, this.viewerState.positionHeading * (Math.PI / 180.0));
         this.camera = camera;
-        this.setMoveSpeed( this.viewerState.sceneMoveSpeed );
+        this.setMoveSpeed(this.viewerState.sceneMoveSpeed);
 
         this.updateRenderTargets();
-
         if (this.shadowGenerator) {
             this.shadowGenerator.splitFrustum();
         }
+
+        return camera;
     }
 
-    selectCameraWalk(): void {
-        this.selectCameraFree();
-        this.walkMode = true;
-        this.camera!.inertia = 0.0;
-        this.setMoveSpeed( this.viewerState.sceneMoveSpeed );
-    }
-
-    /*
-    geolocationPosition( enabled ) {
-
-        //this.selectCameraFree();
-        //this.walkMode = true;
-        //this.camera.detachControl();
-
-        /-
-        this.app.$getLocation({enableHighAccuracy: true}).then(coordinates => {
-            console.log(coordinates);
-            let altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
-            let scenePos = this.wgs84ToScene([coordinates.lng, coordinates.lat, altitude]);
-            //console.log(scenePos);
-            this.camera.position.x = scenePos[0];
-            this.camera.position.y = altitude;
-            this.camera.position.z = scenePos[2];
-
-            let heading = coordinates.heading;
-            if (heading) {
-                this.sceneViewer.viewerState.positionHeading = heading;
-                let rotation = new Vector3((90.0 - this.sceneViewer.viewerState.positionTilt) * (Math.PI / 180.0), this.sceneViewer.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-                this.camera.rotation = rotation;
-            }
-        });
-        -/
-
-        this.viewerState.geolocationEnabled = enabled;
-
-        if ( enabled ) {
-
-            const that = this;
-
-            // Enable geolocation
-            this.selectCameraFree();
-
-            //this._geolocationWatchId = this.app.$watchLocation({enableHighAccuracy: true, maximumAge: 5}).then(coordinates => {
-            this.app.$getLocation({ enableHighAccuracy: true, maximumAge: 5 }).then(( coords ) => { that.onDeviceLocation( coords ); });
-
-            // Compass
-            this._onDeviceOrientation = function( e ) { that.onDeviceOrientation( e ); };
-            this._onDeviceOrientation.bind( that );
-            const isIOS = false;
-            if ( isIOS ) {
-                DeviceOrientationEvent.requestPermission().then(( response ) => {
-                    if ( response === "granted" ) {
-                        window.addEventListener( "deviceorientation", this._onDeviceOrientation );
-                    } else {
-                        alert( "Compass usage permission not granted." );
-                    }
-                }).catch(() => alert( "Compass not supported." ));
-            } else {
-                window.addEventListener( "deviceorientationabsolute", this._onDeviceOrientation );
-            }
-
-        } else  {
-
-            // Disable geolocation
-
-            this.viewerState.geolocationEnabled = false;
-            if ( this._geolocationWatchId !== null ) {
-                this.app.$clearLocationWatch( this._geolocationWatchId );
-                this._geolocationWatchId = null;
-            }
-            window.removeEventListener( "deviceorientationabsolute", this._onDeviceOrientation );
-            window.removeEventListener( "deviceorientation", this._onDeviceOrientation );
-            this._onDeviceOrientation = null;
-        }
-
-    }
-
-    onDeviceLocation( coordinates ) {
-        //console.log(coordinates);
-        if ( coordinates ) {
-
-            const altitude = coordinates.altitude !== null ? coordinates.altitude : 2.0;
-            if ( this.walkMode ) { altitude.y = 2.5; }
-
-            this.viewerState.positionWGS84 = [ coordinates.lng, coordinates.lat, altitude ];
-            const scenePos = this.wgs84ToScene( this.viewerState.positionWGS84 );
-            this.viewerState.positionScene = scenePos;
-
-            this.camera.position.x = scenePos[0];
-            this.camera.position.y = altitude;
-            this.camera.position.z = scenePos[2];
-
-            /-
-            let heading = coordinates.heading;
-            if (heading !== null && !isNaN(heading)) {
-                this.viewerState.positionHeading = heading;
-                let rotation = new Vector3((90.0 - this.viewerState.positionTilt) * (Math.PI / 180.0), this.viewerState.positionHeading * (Math.PI / 180.0), 0.0);
-                this.camera.rotation = rotation;
-                //console.debug(heading);
-            }
-            -/
-        }
-
-        if ( this.viewerState.geolocationEnabled ) {
-            const that = this;
-            setTimeout( function() {
-                that.app.$getLocation({ enableHighAccuracy: true, maximumAge: 5 }).then(( coords ) => { that.onDeviceLocation( coords ); });
-            }, 1000 );
-        }
-
-    }
-    */
-
-
-    /**
-    * From: https://www.w3.org/TR/orientation-event/
-    */
-    /*
-    getQuaternion( alpha, beta, gamma ) {
-
-        var degtorad = Math.PI / 180; // Degree-to-Radian conversion
-
-      var _x = beta  ? beta  * degtorad : 0; // beta value
-      var _y = gamma ? gamma * degtorad : 0; // gamma value
-      var _z = alpha ? alpha * degtorad : 0; // alpha value
-
-      var cX = Math.cos( _x/2 );
-      var cY = Math.cos( _y/2 );
-      var cZ = Math.cos( _z/2 );
-      var sX = Math.sin( _x/2 );
-      var sY = Math.sin( _y/2 );
-      var sZ = Math.sin( _z/2 );
-
-      //
-      // ZXY quaternion construction.
-      //
-
-      var w = cX * cY * cZ - sX * sY * sZ;
-      var x = sX * cY * cZ - cX * sY * sZ;
-      var y = cX * sY * cZ + sX * cY * sZ;
-      var z = cX * cY * sZ + sX * sY * cZ;
-
-      //return [ w, x, y, z ];
-      return new Quaternion(x, y, z, w);
-    }
-    */
-
-    /*
-    onDeviceOrientation( e ) {
-
-        //let rotation = Quaternion.FromEulerAngles(e.alpha * Math.PI / 180.0, e.beta * Math.PI / 180.0, e.gamma * Math.PI / 180.0);
-        //let forward = Vector3.Forward().rotateByQuaternionToRef(rotation, new Vector3());
-        //let heading = Math.atan2(forward.y, forward.x) * 180.0 / Math.PI;
-        //alert(heading);
-
-        let heading = e.webkitCompassHeading || Math.abs( e.alpha - 360 );
-
-        if ( heading !== null && !isNaN( heading )) {
-
-            heading = ( heading ) % 360.0;
-            this.viewerState.positionHeading = heading;
-
-            let tilt = e.webkitCompassTilt || Math.abs( e.beta - 360 );
-            if ( tilt !== null && !isNaN( tilt )) {
-                this.viewerState.positionTilt = ( - tilt );
-            }
-
-            const tiltRotation = ( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 );
-            if ( tiltRotation < 0 ) { tilt = Math.PI * 2 - tiltRotation; }
-            const rotation = new Vector3( tiltRotation, this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
-            //let rotation = new Vector3(Math.PI / 2 + -e.beta * Math.PI / 180.0, -e.alpha * Math.PI / 180.0, e.gamma * Math.PI / 180.0 );
-            this.camera!.rotation = rotation;
-            //console.debug(heading);
-        }
-        //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
-    }
-    */
-
-    selectCameraOrbit(): void {
-
-        this.walkMode = false;
-
-        let targetCoords = Vector3.Zero();
-        if ( this.selectedObject ) {
-            const boundingBox: BoundingInfo = this.getBoundsRecursively( <Mesh> this.selectedObject!.mesh );
-            //targetCoords = this.selectedMesh.absolutePosition;
-            const minWorld = boundingBox.minimum;
-            const maxWorld = boundingBox.maximum;
-            targetCoords = new Vector3(( minWorld.x + maxWorld.x ) / 2, ( minWorld.y + maxWorld.y ) / 2, ( minWorld.z + maxWorld.z ) / 2 );
-        }
-
-        let distance = 75.0;
-        if ( this.camera ) {
-            distance = Vector3.Distance( this.camera.position, targetCoords );
-
-            this.camera.customRenderTargets.length = 0; //  = [];
-
-            this.camera.detachControl();
-            this.camera.dispose();
-        }
-
-        console.debug( "Creating orbit camera pointing to: " + targetCoords );
-
-        const camera = new ArcRotateCamera( "Camera", -( 90 + this.viewerState.positionHeading ) * Math.PI / 180.0, this.viewerState.positionTilt * Math.PI / 180.0, distance, targetCoords, this.scene );
-        camera.attachControl( this.engine.getRenderingCanvas(), true );
-        camera.minZ = 1.0; // 0.1;
-        //camera.maxZ = 2500;  // Automatic? see focusOn()
-        camera.lowerRadiusLimit = 15;
-        camera.upperRadiusLimit = 1000;
-        camera.upperBetaLimit = Math.PI; // /2; // Math.PI / 2 = limit to flat view
-        camera.panningSensibility = 50.0; // 0.5;
-        //camera.angularSensibility = 50.0;
-        //camera.inertia = 0.10;
-
-        //camera.multiTouchPanning = false;
-        //camera.multiTouchPanAndZoom = false;
-        //camera.pinchZoom = true;
-
-        camera.useNaturalPinchZoom = true;
-        camera.fov = 35.0 * ( Math.PI / 180.0 );
-        this.camera = camera;
-
-        this.updateRenderTargets();
-
-        if (this.shadowGenerator) {
-            this.shadowGenerator.splitFrustum();
-        }
+    setCameraController(cc: BaseCameraController) {
+        this.cameraController = cc;
+        this.cameraController.activate();
     }
 
 
@@ -2222,16 +1999,6 @@ class SceneViewer {
         }
     }
 
-    cycleMoveSpeed(): void {
-        if ( this.viewerState.sceneMoveSpeed < 5.0 ) {
-            this.setMoveSpeed( 5.0 );
-        } else if ( this.viewerState.sceneMoveSpeed < 10.0 ) {
-            this.setMoveSpeed( 10.0 );
-        } else {
-            this.setMoveSpeed( 2.0 );
-        }
-    }
-
     lightSetupFromDatePos(): void {
 
         //this.envReflectionProbe.update(); // = new ReflectionProbe("envReflectionProbe", 128, this.scene, true, true, true)
@@ -2239,7 +2006,7 @@ class SceneViewer {
         //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
 
         //console.debug(this.envReflectionProbe.cubeTexture.readPixels(0, 0));
-        const lightDate = new Date(this.viewerState.positionDate.getTime());
+        let lightDate = new Date(this.viewerState.positionDate.getTime());
         const lightSecondsOffsetTimezone = (this.viewerState.positionWGS84[0] / 180.0) * (12 * 3600);
         lightDate.setSeconds(lightDate.getSeconds() - lightSecondsOffsetTimezone);
         const times = SunCalc.getTimes(lightDate, this.viewerState.positionWGS84[1], this.viewerState.positionWGS84[0]);
@@ -2295,6 +2062,7 @@ class SceneViewer {
 
         if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
             (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.1 + sunlightAmountNorm;
+            //(<StandardMaterial>this.skybox.material).reflectionTexture!.level = 1.1; // + sunlightAmountNorm;
         }
 
         if ( this.skybox ) {
@@ -2446,7 +2214,6 @@ class SceneViewer {
         //}
 
         alert( "Reload the app to apply changes." );
-
 
     }
 

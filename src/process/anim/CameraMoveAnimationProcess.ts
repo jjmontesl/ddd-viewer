@@ -1,4 +1,4 @@
-/* 
+/*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
 * Copyright 2021 Jose Juan Montes and contributors
 * MIT License (see LICENSE file)
@@ -6,7 +6,7 @@
 
 
 import { Scalar, TargetCamera, Vector3 } from "@babylonjs/core";
-import { ScenePosition } from "../../ScenePosition";
+import { ScenePosition } from "../../core/ScenePosition";
 import { SceneViewer } from "../../SceneViewer";
 import { AnimationProcess } from "./AnimationProcess";
 
@@ -14,7 +14,7 @@ class CameraMovementAnimationProcess extends AnimationProcess {
 
     moveStart: ScenePosition;
     moveEnd: ScenePosition;
-    
+
     // Move camera adding a vertical arc which height is a factor of movement distance
     moveArcHeightFactor: number = 0.0; // 0.05;
 
@@ -29,14 +29,14 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         this.moveEnd = moveEnd;
     }
 
-    calculateMslHeights() { 
-        if (!this._mslHeightStart) { 
+    calculateMslHeights() {
+        if (!this._mslHeightStart) {
             let startPositionScene = this.sceneViewer.wgs84ToScene(this.moveStart.positionWGS84);
             let startPositionSceneVec = new Vector3(startPositionScene[0], startPositionScene[1], startPositionScene[2]);
             let [terrainElevation, terrainMesh] = this.sceneViewer.elevationMSLFromSceneCoords(startPositionSceneVec);
             if (terrainElevation !== null) this._mslHeightStart = terrainElevation + this.moveStart.positionGroundHeight;
         }
-        if (!this._mslHeightEnd) { 
+        if (!this._mslHeightEnd) {
             let endPositionScene = this.sceneViewer.wgs84ToScene(this.moveEnd.positionWGS84);
             let endPositionSceneVec = new Vector3(endPositionScene[0], endPositionScene[1], endPositionScene[2]);
             let [terrainElevation, terrainMesh] = this.sceneViewer.elevationMSLFromSceneCoords(endPositionSceneVec);
@@ -46,7 +46,7 @@ class CameraMovementAnimationProcess extends AnimationProcess {
     }
 
     update( deltaTime: number ): void {
-        
+
         super.update(deltaTime);
 
         // Update camera interpolating between start and end
@@ -54,8 +54,8 @@ class CameraMovementAnimationProcess extends AnimationProcess {
         const move_end = this.moveEnd;
 
         const sceneViewer = this.sceneViewer;
-        
-        sceneViewer.viewerState.positionWGS84 = [ 
+
+        sceneViewer.viewerState.positionWGS84 = [
             Scalar.Lerp(move_start.positionWGS84[0], move_end.positionWGS84[0], this.interpFactor),
             Scalar.Lerp(move_start.positionWGS84[1], move_end.positionWGS84[1], this.interpFactor) ];
 
@@ -63,16 +63,16 @@ class CameraMovementAnimationProcess extends AnimationProcess {
 
         let heightStart = this._mslHeightStart !== null ? this._mslHeightStart : move_start.positionGroundHeight;
         let heightEnd = this._mslHeightEnd !== null ? this._mslHeightEnd : (move_end.positionGroundHeight + (this._mslHeightStart !== null ? this._mslHeightStart - move_start.positionGroundHeight : 0));
-        
+
         // Add arc height offset if set
-        let moveDistance = [(move_end.positionWGS84[0] - move_start.positionWGS84[0]) * 111000 , 
+        let moveDistance = [(move_end.positionWGS84[0] - move_start.positionWGS84[0]) * 111000 ,
                             (move_end.positionWGS84[1] - move_start.positionWGS84[1]) * 111000 ];
         let moveDistanceMag = Math.sqrt(moveDistance[0] ** 2 + moveDistance[1] ** 2);
         let moveArcHeight = moveDistanceMag * this.moveArcHeightFactor;
         let moveArcOffset = Math.sin(this.interpFactor * Math.PI) * moveArcHeight;
 
         const mslHeight = Scalar.Lerp(heightStart, heightEnd, this.interpFactor) + moveArcOffset;
-                          
+
 
         sceneViewer.viewerState.positionGroundHeight = mslHeight - sceneViewer.viewerState.positionTerrainElevation;
         sceneViewer.viewerState.positionTilt = Scalar.Lerp(move_start.positionTilt, move_end.positionTilt, this.interpFactor);

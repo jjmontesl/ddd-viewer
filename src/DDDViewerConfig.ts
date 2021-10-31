@@ -24,6 +24,8 @@ class DDDViewerConfig {
     //sceneGroundTextureOverrideUrl: string | null = null;
 
     timeScale: number = 0.0;
+
+    moveSpeeds: number[] = [2.0, 5.0, 10.0];
 }
 
 

@@ -8,7 +8,7 @@
 //import "babylonjs-loaders";
 import { PBRCustomMaterial } from "@babylonjs/materials";
 import { Color3, Scene, Texture, Vector2 } from "@babylonjs/core";
-import { SceneViewer } from "../SceneViewer";
+import { SceneViewer } from "SceneViewer";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
 

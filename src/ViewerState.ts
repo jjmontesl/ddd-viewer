@@ -49,7 +49,6 @@ class ViewerState {
     sceneSelectedShowNormals = true;
     sceneTileDrawDistance = 1;
     sceneMoveSpeed = 5;
-    sceneCameraWalkHeight = 2.0;
     sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
     sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
 
