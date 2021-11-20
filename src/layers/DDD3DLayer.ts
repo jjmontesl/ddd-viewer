@@ -14,30 +14,6 @@ import { SceneViewer } from "../SceneViewer";
 import { Base3DLayer } from "./Base3DLayer";
 
 
-
-/*
-class Tile3D {
-    key: string;
-    status: string | null;
-
-    constructor( key: string ) {
-        this.key = key;
-        this.status = null;
-    }
-}
-
-class GeoTile3D extends Tile3D {
-    node: Node | null;
-    coordsTileGrid: number[] | null;
-
-    constructor( key: string ) {
-        super( key );
-        this.node = null;
-        this.coordsTileGrid = null;
-    }
-}
-*/
-
 class DDD3DLayer extends Base3DLayer {
 
     node: Node | null = null;
@@ -50,26 +26,6 @@ class DDD3DLayer extends Base3DLayer {
 
     update(): void {
     }
-
-
-    /*
-    disableTile( tileCoords: number[] ): void {
-        const z = tileCoords[0];
-        const x = tileCoords[1];
-        const y = tileCoords[2];
-        const tileKey = z + "/" + x + "/" + y;
-
-        if ( !( tileKey in this.tiles )) {
-            return;
-        }
-
-        const tile = this.tiles[tileKey];
-        if ( tile.status !== "loading" && tile.node!.isEnabled( false )) {
-            tile.node!.setEnabled( false );
-            tile.node!.parent = null;  // TODO: this was not working before (tile.parent did not apply)
-        }
-    }
-    */
 
     // TODO: Tile coordinates should be made a type or reuse OpenLayers grid coordinates type
     loadData( data: string ): void {
@@ -137,6 +93,11 @@ class DDD3DLayer extends Base3DLayer {
             this.node.dispose();
             this.node = null;
         }
+    }
+
+    setVisible(visible: boolean) {
+        super.setVisible(visible);
+        if (this.node) this.node.setEnabled(this.visible);
     }
 
 }

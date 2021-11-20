@@ -4,7 +4,7 @@
 * MIT License (see LICENSE file)
 */
 
-import { Camera } from "@babylonjs/core";
+import { Camera, Vector3 } from "@babylonjs/core";
 import { SceneViewer } from "SceneViewer";
 import { BaseCameraController } from "./BaseCameraController";
 import { FreeCameraController } from "./FreeCameraController";

@@ -7,6 +7,7 @@ export * from "./SceneViewer";
 export * from "./ViewerState";
 export * from "./camera/BaseCameraController";
 export * from "./camera/FreeCameraController";
+export * from "./camera/GeolocationCameraController";
 export * from "./camera/OrbitCameraController";
 export * from "./camera/PanningCameraController";
 export * from "./camera/WalkCameraController";

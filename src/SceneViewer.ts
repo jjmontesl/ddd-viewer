@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF";
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BoundingInfo, Camera, CascadedShadowGenerator, Color3, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, NodeMaterial, PBRBaseMaterial, PBRMaterial, PickingInfo, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BloomEffect, BoundingInfo, Camera, CascadedShadowGenerator, Color3, ColorCurves, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, ImageProcessingPostProcess, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, NodeMaterial, PBRBaseMaterial, PBRMaterial, PickingInfo, PostProcessRenderEffect, PostProcessRenderPipeline, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ScreenSpaceReflectionPostProcess, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -49,6 +49,9 @@ class SceneViewer {
     scene: Scene;
     camera: Camera;
     sceneInstru: SceneInstrumentation | null = null;
+
+    canvas: HTMLCanvasElement;
+    element: HTMLElement;
 
     cameraController: BaseCameraController | null = null;
 
@@ -91,7 +94,7 @@ class SceneViewer {
     sceneSelectedMeshId: string | null = null;
     selectedObject: DDDObjectRef | null = null;
 
-    materialWater: WaterMaterial | null = null;
+    materialWater: Material | null = null; // WaterMaterial | null = null;
     materialOcean: NodeMaterial | null = null;
     materialText: Material | null = null;
 
@@ -132,6 +135,9 @@ class SceneViewer {
 
 
         this.viewerState = new ViewerState(dddConfig);
+
+        this.canvas = canvas;
+        this.element = canvas.parentElement!;
 
         this.layerManager = new LayerManager( this );
         this.queueLoader = new QueueLoader( this );
@@ -197,25 +203,36 @@ class SceneViewer {
 
         this.cameraController = new FreeCameraController(this);
 
+        /*
+        const water = new StandardMaterial("water", this.scene);
+        water.specularTexture = new Texture("/textures/reflectivity.png", this.scene);
+        //water.ambientColor = new Color3(0.0, 0.0, 1.0);
+        water.diffuseColor = new Color3(0.0, 0.0, 1.0);
+        water.specularColor = new Color3(0.0, 0.0, 1.0);
+        //water.alphaMode = Material.MATERIAL_ALPHABLEND;
+        //water.transparencyMode = Material.MATERIAL_ALPHABLEND;
+        //water.alpha = 0.6;
+        */
+
         const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
         //water.backFaceCulling = true;
         water.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
         water.windForce = 1;
         water.waveHeight = 0.1;
         water.waveSpeed = 50.0;
-        water.bumpHeight = 0.05;
-        water.waveLength = 10.0;
-
-        water.alpha = 0.8;
+        water.bumpHeight = 0.1;
+        water.waveLength = 7.5;
+        water.alpha = 0.4;
         //water.useSpecularOverAlpha = true;
         //water.useReflectionOverAlpha = true;
         water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
         //water.renderingGroupId = 3;
-
-        water.colorBlendFactor = 0.2;
-        //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
+        water.colorBlendFactor = 0.3;
+        this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
+        this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
         //water.addToRenderList(ground);
         //let waterOcean = createOceanMaterial(this.scene);
+
         this.materialWater = water;
 
         /*
@@ -260,10 +277,11 @@ class SceneViewer {
         // Load fonts (after environment, or the call to add to catalog will miss PBR environment texture)
         //const fontAtlasTexture = (<PBRMaterial>mesh.material).albedoTexture;
         const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/dddfonts_01_64.greyscale.png";
-        const fontAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, false, Texture.BILINEAR_SAMPLINGMODE);
+        const fontAtlasTexture = new Texture(atlasTextureUrl, this.scene, false, false);
         const tmw = new TextMaterialWrapper(this, fontAtlasTexture, null);
+        tmw.material.zOffset = -10;
         this.materialText = tmw.material;
-        this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -5}, false);
+        this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -10}, false);
 
         /*
         const camera = new ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2-0.5, 500, Vector3.Zero(), that.scene);
@@ -282,9 +300,10 @@ class SceneViewer {
         //this.selectCameraOrbit();
 
         // Render Pipeline config and Postprocessing
-        //this.initRenderPipeline();
-        //this.updateRenderPipeline();
-
+        /*
+        this.initRenderPipeline();
+        this.updateRenderPipeline();
+        */
 
         // Lighting
 
@@ -415,7 +434,7 @@ class SceneViewer {
         // Remove skybox
         if (this.skybox) {
 
-            this.materialWater!.getRenderList()!.length = 0;
+            if ("getRenderList" in this.materialWater!) {(<WaterMaterial> this.materialWater!).getRenderList()!.length = 0; }
             if (this.viewerState.sceneEnvironmentProbe) {
                 this.envReflectionProbe!.renderList!.length = 0;
             }
@@ -455,10 +474,10 @@ class SceneViewer {
 
         console.debug("Adding skybox env");
         if (this.skybox) {
-            this.skybox.renderingGroupId = 0;  // Seems needs to be rendered in group 0 for it to be applied to the reflections on water
-            //this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
+            //this.skybox.renderingGroupId = 3;  // Seems is rendered in group 0 for it to be applied to the reflections on water
+            //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
             this.envReflectionProbe!.renderList!.push(this.skybox);
-            this.materialWater!.addToRenderList(this.skybox);
+            if ("getRenderList" in this.materialWater!) {(<WaterMaterial> this.materialWater!).addToRenderList(this.skybox); }
         }
 
     }
@@ -672,7 +691,7 @@ class SceneViewer {
                         material.detailMap.diffuseBlendLevel = 0.15; // 0.2
                         //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                         //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
-                        //mesh.material.environmentIntensity = 0.2;  // This one is needed to avoid saturation due to env
+                        material.environmentIntensity = 0.5;  // This one is needed to avoid saturation due to env
                         //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
                     }
 
@@ -746,7 +765,6 @@ class SceneViewer {
                         uvScale = [ bounds[2] - bounds[0], bounds[3] - bounds[1] ];
                     }
 
-                    // Seems to work well (+1 +1 / +1 -1)
                     ( <Texture> matwrapper.material.albedoTexture ).uScale = (( 1.0 / ( uvScale[0])) * ( 127/128 )) ; // + 1
                     ( <Texture> matwrapper.material.albedoTexture ).vScale = (( 1.0 / ( uvScale[1])) * ( 127/128 )) ; // + 1
                     ( <Texture> matwrapper.material.albedoTexture ).uOffset = 0.5; //  + (1 / uvScale[0]);
@@ -790,6 +808,10 @@ class SceneViewer {
                     if ( metadata["ddd:path"].startsWith( "Catalog Group" )) {
                         key = "WaterInstanced";
                     }
+                }
+
+                if (key == 'WaterBasicDaytime' || key == 'Water4Advanced' || key == 'WaterInstanced') {
+                    mesh.renderingGroupId = 2;
                 }
 
                 // Fonts
@@ -845,13 +867,17 @@ class SceneViewer {
 
                     if (( <any>root )._splatmapMaterial ) {
                         if ( mesh.material && mesh.material !== ( <any>root )._splatmapMaterial ) {
-                            mesh.material.dispose();
+                            try {
+                                mesh.material.dispose();
+                            } catch (e) {
+                                console.debug("Could not dispose material: " + mesh.id);
+                            }
                         }
 
                         mesh.material = ( <any>root )._splatmapMaterial;
-                        ( <any>root )._splatmapMaterial.renderingGroupId = 1;
+                        //( <any>root )._splatmapMaterial.renderingGroupId = 1;
 
-                        // Expensive probe
+                        // Expensive
                         //this.envReflectionProbe.renderList.push(mesh);
                     } else {
                         //this.depends.push(root);
@@ -864,7 +890,7 @@ class SceneViewer {
                     if ( mesh.material && mesh.material !== mat && mat ) {
                         const mmat = mesh.material;
                         mesh.material = null;
-                        mmat.dispose();  // Causes white materials, but cleans all outstanding materials
+                        mmat.dispose();  // Causes white materials? but cleans all outstanding materials
                     }
                     if ( mat ) {
                         mesh.material = mat;
@@ -1862,6 +1888,7 @@ class SceneViewer {
         //defaultPipeline.cameraFov = this.camera.fov;
         defaultPipeline.imageProcessing.toneMappingEnabled = true;
 
+
         //var postProcessHighlights = new HighlightsPostProcess("highlights", 0.1, camera);
         //var postProcessTonemap = new TonemapPostProcess("tonemap", TonemappingOperator.Hable, 1.2, camera);
 
@@ -1875,10 +1902,23 @@ class SceneViewer {
         this.scene.postProcessRenderPipelineManager.addPipeline(standardPipeline);
         */
 
+        // Screen space reflections
+        /*
+        const ssr = new ScreenSpaceReflectionPostProcess(
+            "ssr", // The name of the post-process
+            this.scene, // The scene where to add the post-process
+            1.0, // The ratio of the post-process
+            this.camera // To camera to attach the post-process
+        );
+        ssr.reflectionSamples = 32; // Low quality.
+        ssr.strength = 2; // Set default strength of reflections.
+        ssr.reflectionSpecularFalloffExponent = 3; // Attenuate the reflections a little bit. (typically in interval [1, 3])
+        */
+
         const lensRenderingPipeline = new LensRenderingPipeline( "lens", {
             edge_blur: 0.25,                // 1.0 is too distorted in the borders for walk/view mode (maybe for pictures)
             chromatic_aberration: 1.0,
-            distortion: 0.5,                // (dilate effect)
+            distortion: 0.7,                // (dilate effect) 0.5 -> subtle
             dof_focus_distance: 60,
             dof_aperture: 1.0,            // 1.2 is already too blurry for OSM, 6.0 is very high
             grain_amount: 0.0, // 0.5,
@@ -1896,12 +1936,11 @@ class SceneViewer {
         }, [ this.camera ], true)
         */
 
-        /*
         var curve = new ColorCurves();
         curve.globalHue = 0;
         curve.globalDensity = 80;
         curve.globalSaturation = 5;
-        curve.highlightsHue 0;
+        curve.highlightsHue = 0;
         curve.highlightsDensity = 80;
         curve.highlightsSaturation = 40;
         curve.shadowsHue = 0;
@@ -1909,18 +1948,16 @@ class SceneViewer {
         curve.shadowsSaturation = 40;
         this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
         this.scene.imageProcessingConfiguration.colorCurves = curve;
-        var postProcess = new ImageProcessingPostProcess("processing", 1.0, camera);
-        */
+        var postProcess = new ImageProcessingPostProcess("processing", 1.0, this.camera);
 
-        /*
         // Fog
         //this.scene.fogMode = Scene.FOGMODE_EXP;
         //this.scene.fogDensity = 0.005;  // default is 0.1
         this.scene.fogMode = Scene.FOGMODE_LINEAR;
-        this.scene.fogStart = 250.0;
-        this.scene.fogEnd = 500.0;
+        this.scene.fogStart = 350.0;
+        this.scene.fogEnd = 700.0;
         this.scene.fogColor = new Color3(0.75, 0.75, 0.85);
-        */
+
         /*
         pixels = rp.cubeTexture.readPixels(0,0)
         // i take the first pixel of the reflection probe texture for fog color.
@@ -1937,7 +1974,7 @@ class SceneViewer {
             this.camera.dispose();
         }
 
-        //console.debug("Creating free camera.");
+        console.debug("Creating free camera.");
         const camera = new UniversalCamera("Camera", Vector3.Zero(), this.scene);
         camera.detachControl(); // Controls managed by DDD CameraController
 
@@ -1976,6 +2013,12 @@ class SceneViewer {
         this.cameraController.activate();
     }
 
+    setPosition(positionHeading: number, positionTilt: number, positionGroundHeight: number) {
+        console.warn("setPosition implementation is invalid, for testing purposes.");
+        const positionScene = this.wgs84ToScene( this.viewerState.positionWGS84 );
+        this.camera.position = new Vector3( positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
+        (<UniversalCamera>this.camera).rotation = new Vector3(( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 ), this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
+    }
 
     updateRenderTargets(): void {
         if ( this.camera && this.envReflectionProbe ) {
@@ -2036,8 +2079,9 @@ class SceneViewer {
         sunlightAmountNorm = 1 - Math.pow( 1 - sunlightAmountNorm, 4 );
 
         //let lightAltitude = altitudeLessHorizonAtmAprox >= 0 && altitudeLessHorizonAtmAprox < Math.PI ? altitudeLessHorizonAtmAprox : Math.PI - altitudeLessHorizonAtmAprox;
-        const lightRot = Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );  // Use moon
-        const lightSunAndFlareRot = Quaternion.FromEulerAngles( currentSunPos.altitude, currentSunPos.azimuth, 0 );
+        const sunAltitude = currentSunPos.altitude >= 0 ? currentSunPos.altitude : 0.01;
+        const lightRot = Quaternion.FromEulerAngles( sunAltitude, currentSunPos.azimuth, 0 );  // Use moon
+        const lightSunAndFlareRot = Quaternion.FromEulerAngles( sunAltitude, currentSunPos.azimuth, 0 );
 
         //this.light = new DirectionalLight("light", new Vector3(0.3, -0.5, 0.5).normalizeToNew(), this.scene);
         //this.light.diffuse = new Color3(0.95, 0.95, 1.00);
@@ -2052,9 +2096,12 @@ class SceneViewer {
         this.light!.intensity = lightIntensity;
 
 
-        //this.scene.environmentTexture.level = 0; // 0.1 + sunlightAmountNorm; // = hdrTexture;
-        //this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
-        //Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        /*
+        if (this.scene.environmentTexture) {
+            this.scene.environmentTexture.level = 0.1 + sunlightAmountNorm; // = hdrTexture;
+        }
+        Color3.LerpToRef(this.ambientColorNight, this.ambientColorDay, sunlightAmountNorm, this.scene.ambientColor);
+        */
 
         if (this.skybox) {
             this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));

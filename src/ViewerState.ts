@@ -17,7 +17,7 @@ class ViewerState {
     sceneVisible = false;
     dddConfig: DDDViewerConfig;
     isMobile = false;
-    positionTileZoomLevel = 9;
+    positionTileZoomLevel = 11;
     positionWGS84 = [ -8.726, 42.233 ]; // [0.0, 0.0];
 
     // Position in scene, in engine coordinates (elevation is Y)

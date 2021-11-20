@@ -7,7 +7,7 @@
 
 //import "babylonjs-loaders";
 import { PBRCustomMaterial } from "@babylonjs/materials";
-import { Color3, Scene, Texture, Vector2 } from "@babylonjs/core";
+import { AbstractMesh, Color3, Effect, Mesh, Scene, Texture, Vector2 } from "@babylonjs/core";
 import { SceneViewer } from "SceneViewer";
 
 /* eslint-disable no-unused-vars, no-var, no-undef, no-debugger, no-console,  */
@@ -43,13 +43,60 @@ class TerrainMaterialWrapper {
     splatMap: Texture | null = null;
     atlasBumpTexture: Texture | null = null;
 
+    static terrainMaterialShared: PBRCustomMaterial | null = null;
+    static terrainEffectShared: Effect | null = null;
+    static matIdx = 1;
+    initialized = false;
 
     constructor(sceneViewer: SceneViewer, splatmapTexture: Texture, atlasTexture: Texture, atlasNormalTexture: Texture, options: any = null) {
+
         // TODO: Options should be merged with defaults!
+
         this.sceneViewer = sceneViewer;
         this.dedupDouble = false;
-        this.material = this.initSplatMaterial( <Scene> this.sceneViewer.scene, splatmapTexture, atlasTexture, atlasNormalTexture, options );
-        //this.testSplatMaterial(scene);
+
+        // Compile shader only first time
+        if (true || TerrainMaterialWrapper.terrainMaterialShared == null) {
+            this.material = this.initSplatMaterial( <Scene> this.sceneViewer.scene, splatmapTexture, atlasTexture, atlasNormalTexture, options );
+            TerrainMaterialWrapper.terrainMaterialShared = this.material;
+        } else {
+            //this.material = TerrainMaterialWrapper.terrainMaterialShared;
+
+            this.splatMap = splatmapTexture;
+            if (atlasTexture !== null) {
+                this.atlasBumpTexture = atlasNormalTexture;
+            }
+            this.material = new PBRCustomMaterial("splatMaterial" + (TerrainMaterialWrapper.matIdx++).toString(), this.sceneViewer.scene);  // + (TerrainMaterialWrapper.matIdx++)
+            this.material.metallic = 0.0; // 0.0;
+            this.material.roughness = 0.0; // 0.43 (asphalt); // 0.95;
+            this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+            this.material.albedoTexture = atlasTexture;
+            this.material.AddUniform("splatmap","sampler2D", {});
+            this.material.AddUniform("atlasNormalsSampler","sampler2D",  {});
+            // Reuse shader
+            this.material['_prepareEffect'] = () => {
+                if (TerrainMaterialWrapper.terrainMaterialShared!['_activeEffect']) {
+                    TerrainMaterialWrapper.terrainEffectShared = TerrainMaterialWrapper.terrainMaterialShared!['_activeEffect'];
+                }
+
+                if (TerrainMaterialWrapper.terrainEffectShared) {
+                    return TerrainMaterialWrapper.terrainEffectShared;
+                }
+                return null;
+            }
+
+        }
+
+        this.material.onBindObservable.add((mesh) => {
+
+            this.bind(mesh);
+            //this.material.getEffect().setTexture("splatmap", this.splatMap);
+
+            const ubo = this.material['_uniformBuffer'];
+            ubo.update();
+
+        });
+
     }
 
     initSplatMaterial(scene: Scene, splatMap: Texture, atlas: Texture, atlasnormals: Texture, options: any = null): PBRCustomMaterial {
@@ -219,7 +266,7 @@ class TerrainMaterialWrapper {
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
 
-        this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+        this.material.environmentIntensity = 0.5;  // This one is needed to avoid saturation due to env
 
 
         this.material.albedoTexture = atlas;
@@ -473,20 +520,43 @@ class TerrainMaterialWrapper {
             this.shaderinjectpoint4
         );
 
-        this.material.onBindObservable.add(() => {
-            this.update();
-        });
-
         return this.material;
     }
 
-    update(): void {
+    bind(mesh: AbstractMesh): void {
+        //console.debug("Binding mesh for TerrainMaterial.");
+        if (!this.material.getEffect()) return;
         this.material.getEffect().setTexture( "splatmap", this.splatMap );
         this.material.getEffect().setTexture( "atlasNormalsSampler", this.atlasBumpTexture );
+
+        /*
+        this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+        //this.material.reflectionTexture = this.sceneViewer.scene.environmentTexture;
+
+        //this.material.freeze();
+
         //this.material.reflectionTexture = this.envReflectionProbe.cubeTexture;
-        //this.material.reflectionTexture = this.scene.environmentTexture;
         //this.sceneViewer.scene.environmentTexture = this.sceneViewer.envReflectionProbe.cubeTexture;
-        //this.scene.environmentTexture = this.envReflectionProbe.cubeTexture;
+        //this.sceneViewer.scene.environmentTexture = this.sceneViewer.envReflectionProbe!.cubeTexture;
+
+        //this.material.detailMap.texture = this.sceneViewer.textureDetailSurfaceImp;
+        this.material.useHorizonOcclusion = true;
+        if (this.sceneViewer.envReflectionProbe) {
+            const reflectionTexture = this.sceneViewer.envReflectionProbe.cubeTexture;
+            //this.material.reflectionTexture = reflectionTexture;
+            //this.material.getEffect().setTexture( "reflectionSampler", reflectionTexture);
+            this.material.getEffect().setTexture("reflectionSampler", reflectionTexture._lodTextureMid || reflectionTexture);
+            this.material.getEffect().setTexture("reflectionSamplerLow", reflectionTexture._lodTextureLow || reflectionTexture);
+            this.material.getEffect().setTexture("reflectionSamplerHigh", reflectionTexture._lodTextureHigh || reflectionTexture);
+            //this.material.getEffect().setTexture("environmentBrdfSampler", TerrainMaterialWrapper.terrainMaterialShared!._environmentBRDFTexture);
+        }
+        */
+
+        /*
+        const ubo = this.material['_uniformBuffer'];
+        ubo.update();
+        console.debug("Done");
+        */
     }
 
 }

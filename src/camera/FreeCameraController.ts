@@ -13,11 +13,15 @@ import { BaseCameraController } from "./BaseCameraController";
  */
 class FreeCameraController extends BaseCameraController {
 
+    fixMinHeight = false;
+
     update(deltaTime: number): void {
         // Fix viewer to floor
-        const terrainElevation = this.dddViewer.viewerState.positionTerrainElevation;
-        if (terrainElevation && this.dddViewer.camera.position.y < ( terrainElevation + 1.0 )) {
-            this.getCamera().position.y = terrainElevation + 1.0;
+        if (this.fixMinHeight) {
+            const terrainElevation = this.dddViewer.viewerState.positionTerrainElevation;
+            if (terrainElevation && this.dddViewer.camera.position.y < ( terrainElevation + 1.0 )) {
+                this.getCamera().position.y = terrainElevation + 1.0;
+            }
         }
     }
 

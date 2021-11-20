@@ -1,7 +1,7 @@
 {
   "name": "webpack_simple",
   "version": "1.0.0",
-  "description": "webpack example",
+  "description": "DDD(3Ds) Viewer Webpack Example",
   "main": "./src/index.js",
   "scripts": {
     "serve": "webpack serve",
