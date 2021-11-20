@@ -21,6 +21,7 @@ export * from "./layers/DDD3DLayer";
 export * from "./layers/GeoJson3DLayer";
 export * from "./layers/GeoTile3DLayer";
 export * from "./layers/LayerManager";
+export * from "./layers/OverlayLayer";
 export * from "./loading/QueueLoader";
 export * from "./process/ViewerProcess";
 export * from "./process/ViewerProcessManager";
