@@ -28,7 +28,11 @@ class DefaultEnvironment  {
 
     }
 
-    activate(): void {
+    initialize(): void {
+
+    }
+
+    dispose(): void {
 
     }
 

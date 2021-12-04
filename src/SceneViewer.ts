@@ -182,16 +182,9 @@ class SceneViewer {
 
     private initialize(): void {
 
-        //const that = this;
-
-        // Get the canvas element from the DOM.
-        //const canvas = that.$el.querySelector('.ddd-scene');
-        //const canvas = document.getElementById("renderCanvas");
-
-        //console.debug(that.viewerState);
+        // Initialize scene projection for WGS84 coordinates
         const coords = this.viewerState.positionWGS84;
         this.registerProjectionForCoords(coords);
-
 
         this.scene.pointerMovePredicate = function() { return false; };
         this.scene.pointerDownPredicate = function() { return false; };
@@ -201,53 +194,11 @@ class SceneViewer {
 
         //that.highlightLayer = new HighlightLayer("hl1", that.scene);
 
+        // Initialize camera controller
         this.cameraController = new FreeCameraController(this);
 
-        /*
-        const water = new StandardMaterial("water", this.scene);
-        water.specularTexture = new Texture("/textures/reflectivity.png", this.scene);
-        //water.ambientColor = new Color3(0.0, 0.0, 1.0);
-        water.diffuseColor = new Color3(0.0, 0.0, 1.0);
-        water.specularColor = new Color3(0.0, 0.0, 1.0);
-        //water.alphaMode = Material.MATERIAL_ALPHABLEND;
-        //water.transparencyMode = Material.MATERIAL_ALPHABLEND;
-        //water.alpha = 0.6;
-        */
-
-        const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
-        //water.backFaceCulling = true;
-        water.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
-        water.windForce = 1;
-        water.waveHeight = 0.1;
-        water.waveSpeed = 50.0;
-        water.bumpHeight = 0.1;
-        water.waveLength = 7.5;
-        water.alpha = 0.4;
-        //water.useSpecularOverAlpha = true;
-        //water.useReflectionOverAlpha = true;
-        water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
-        //water.renderingGroupId = 3;
-        water.colorBlendFactor = 0.3;
-        this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
-        this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
-        //water.addToRenderList(ground);
-        //let waterOcean = createOceanMaterial(this.scene);
-
-        this.materialWater = water;
-
-        /*
-        NodeMaterial.ParseFromSnippetAsync("#3FU5FG#1", this.scene).then((mat) => {
-            //ground.material = mat;
-            //window.mat = mat;
-            this.materialOcean = mat;
-        });
-        */
-
-        /*
-        that.materialGrass = new StandardMaterial("bawl", that.scene);
-        that.textureGrass = new GrassProceduralTexture("textbawl", 256, that.scene);
-        that.materialGrass.ambientTexture = that.textureGrass;
-        */
+        // Materials
+        this.initializeMaterials();
 
         // Environment
         this.envReflectionProbe = null;
@@ -282,22 +233,6 @@ class SceneViewer {
         tmw.material.zOffset = -10;
         this.materialText = tmw.material;
         this.addMaterialToCatalog("DDDFonts-01-64", this.materialText, {"zoffset": -10}, false);
-
-        /*
-        const camera = new ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2-0.5, 500, Vector3.Zero(), that.scene);
-        camera.attachControl(canvas, true);
-        camera.minZ = 1;
-        //camera.maxZ = 2500;  // Automatic? see focusOn()
-        camera.lowerRadiusLimit = 30;
-        camera.upperRadiusLimit = 1000;
-        camera.upperBetaLimit = Math.PI/2;
-        camera.panningSensibility = 2;
-        */
-
-        // Camera
-        //this.selectCameraFree();
-        //this.selectCameraWalk();
-        //this.selectCameraOrbit();
 
         // Render Pipeline config and Postprocessing
         /*
@@ -359,24 +294,6 @@ class SceneViewer {
 
         //var ssao = new SSAORenderingPipeline('ssaopipeline', that.scene, 0.75);
 
-        this.materialHighlight = new StandardMaterial( "materialHighlight", this.scene );
-        this.materialHighlight.diffuseColor = new Color3( 1, 0, 1 );
-        //that.materialHighlight.specularColor = new Color3(1, 1, 1);
-        this.materialHighlight.emissiveColor = new Color3( 1.0, 1.0, 1. );
-        this.materialHighlight.wireframe = true;
-        this.materialHighlight.disableLighting = true;
-        this.materialHighlight.backFaceCulling = true;
-
-        // The first parameter can be used to specify which mesh to import. Here we import all meshes
-        //SceneLoader.ImportMesh('', '', https://models.babylonjs.com/', 'alien.glb', that.scene, function (newMeshes) {
-        //    console.debug("Preparing model.");
-        //    that.scene.createDefaultCameraOrLight(true);
-        //    that.scene.activeCamera.attachControl(canvas, false);
-        //    that.scene.activeCamera.alpha += Math.PI; // camera +180°
-        //});
-
-        this.textureDetailSurfaceImp = new Texture( "/textures/SurfaceImperfections12_ddd.png", this.scene );
-
         this.loadCatalog( this.viewerState.dddConfig.assetsUrlbase + "/catalog.glb", false );
 
         this.loadTextures();
@@ -386,13 +303,80 @@ class SceneViewer {
             if ( ! this.scene ) { return; }
             let deltaTime = this.engine!.getDeltaTime() / 1000.0;
             this.update(deltaTime);
-            if (this.cameraController) {
-                this.cameraController.update(deltaTime);
-            }
             this.scene.render();
         });
 
-        // Shaders
+
+        // Performance
+        // Avoid clear calls, as there's always a skybox
+        this.scene.autoClear = false; // Color buffer
+        this.scene.autoClearDepthAndStencil = false; // Depth and stencil
+        this.scene.blockMaterialDirtyMechanism = true;
+
+        this.scene.setRenderingAutoClearDepthStencil( 1, false, false, false );  // For objects in front of layer 0 (buildings and instances)
+
+    }
+
+    private initializeMaterials(): void {
+        // Some hard-coded materials used by DDD
+
+        /*
+        const water = new StandardMaterial("water", this.scene);
+        water.specularTexture = new Texture("/textures/reflectivity.png", this.scene);
+        //water.ambientColor = new Color3(0.0, 0.0, 1.0);
+        water.diffuseColor = new Color3(0.0, 0.0, 1.0);
+        water.specularColor = new Color3(0.0, 0.0, 1.0);
+        //water.alphaMode = Material.MATERIAL_ALPHABLEND;
+        //water.transparencyMode = Material.MATERIAL_ALPHABLEND;
+        //water.alpha = 0.6;
+        */
+
+        const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
+        //water.backFaceCulling = true;
+        water.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
+        water.windForce = 1;
+        water.waveHeight = 0.1;
+        water.waveSpeed = 50.0;
+        water.bumpHeight = 0.1;
+        water.waveLength = 7.5;
+        water.alpha = 0.4;
+        //water.useSpecularOverAlpha = true;
+        //water.useReflectionOverAlpha = true;
+        water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
+        //water.renderingGroupId = 3;
+        water.colorBlendFactor = 0.3;
+        this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
+        this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
+        //water.addToRenderList(ground);
+        //let waterOcean = createOceanMaterial(this.scene);
+
+        this.materialWater = water;
+
+        /*
+        NodeMaterial.ParseFromSnippetAsync("#3FU5FG#1", this.scene).then((mat) => {
+            //ground.material = mat;
+            //window.mat = mat;
+            this.materialOcean = mat;
+        });
+        */
+
+        /*
+        that.materialGrass = new StandardMaterial("bawl", that.scene);
+        that.textureGrass = new GrassProceduralTexture("textbawl", 256, that.scene);
+        that.materialGrass.ambientTexture = that.textureGrass;
+        */
+
+        this.materialHighlight = new StandardMaterial( "materialHighlight", this.scene );
+        this.materialHighlight.diffuseColor = new Color3( 1, 0, 1 );
+        //that.materialHighlight.specularColor = new Color3(1, 1, 1);
+        this.materialHighlight.emissiveColor = new Color3( 1.0, 1.0, 1. );
+        this.materialHighlight.wireframe = true;
+        this.materialHighlight.disableLighting = true;
+        this.materialHighlight.backFaceCulling = true;
+
+        this.textureDetailSurfaceImp = new Texture( "/textures/SurfaceImperfections12_ddd.png", this.scene );
+
+        // Shader
         /*
         Effect.ShadersStore["customVertexShader"]= `
             precision highp float;
@@ -418,15 +402,6 @@ class SceneViewer {
                 //vUV = uv;
         }`;
         */
-
-        // Performance
-        // Avoid clear calls, as there's always a skybox
-        this.scene.autoClear = false; // Color buffer
-        this.scene.autoClearDepthAndStencil = false; // Depth and stencil
-        this.scene.blockMaterialDirtyMechanism = true;
-
-        this.scene.setRenderingAutoClearDepthStencil( 1, false, false, false );  // For objects in front of layer 0 (buildings and instances)
-
     }
 
     loadSkybox( baseUrl: string ): void {
@@ -1270,7 +1245,7 @@ class SceneViewer {
      * Children object update method is called recursively from here (sequencer, processes, layers).
      * @param deltaTime
      */
-    update( deltaTime: number ): void {
+    update(deltaTime: number): void {
 
         const positionWGS84 = this.positionWGS84();
         if ( positionWGS84 ) {
@@ -1305,6 +1280,10 @@ class SceneViewer {
             }
         }
 
+        if (this.cameraController) {
+            this.cameraController.update(deltaTime);
+        }
+
         if ( this.camera ) {
             let positionScene = this.camera.position.asArray();
             positionScene = [ positionScene[0], positionScene[1], positionScene[2] ];  // Copy array
@@ -1315,13 +1294,19 @@ class SceneViewer {
             }
         }
 
-        this.sequencer.update( deltaTime );
-        this.processes.update( deltaTime );
-        this.layerManager.update( deltaTime );
+        this.updateSceneDatetime(deltaTime);
+        this.sequencer.update(deltaTime);
+        this.processes.update(deltaTime);
+        this.layerManager.update(deltaTime);
 
+        // Update render metrics
         this.viewerState.sceneFPS = this.engine.getFps(); // this.engine.getFps().toFixed( 1 );
         this.viewerState.sceneDrawCalls = this.sceneInstru ? this.sceneInstru.drawCallsCounter.current : 0;
         this.viewerState.sceneTriangles = this.sceneInstru ? this.scene.getActiveIndices() / 3 : 0;
+
+    }
+
+    updateSceneDatetime(deltaTime: number) {
 
         // Run time
         // TODO: this currently requires a minimum elapsed time so Date.setSeconds work. This approach accumulates error.
@@ -1338,7 +1323,7 @@ class SceneViewer {
                 this.lastDateUpdate = currentDateUpdate;
 
                 if ( updateElapsed > maxUpdateElapsed ) { updateElapsed = maxUpdateElapsed; }
-                let scaledElapsed = ( updateElapsed / 1000 ) * ( 24 * 2 );  // 24 * 2 = 48x faster (1 day = 30 min)
+                let scaledElapsed = ( updateElapsed / 1000 ) * this.viewerState.timeScale;
                 // FIXME: Should use sun position, not hours (also, check with other time zones)
                 if (this.viewerState.positionDate.getHours() < 5) { scaledElapsed *= 3; }  // Faster pace at night
 
@@ -1347,11 +1332,9 @@ class SceneViewer {
 
                 this.lightSetupFromDatePos();
             }
-
         }
 
         //this.skybox.computeWorldMatrix();  // only needed if scene.freezeActiveMeshes is true
-
     }
 
     sceneToWGS84( coords: number[]): number[] {
@@ -1479,9 +1462,9 @@ class SceneViewer {
     }
 
     /**
-     * This method is called by viewer by default to update altitude and position name.
+     * This method is called internally to update altitude and position name.
      */
-    updateElevation(): void {
+    private updateElevation(): void {
 
         if ( !this.camera ) return;
 
@@ -1868,104 +1851,6 @@ class SceneViewer {
         return null;
     }
 
-    updateRenderPipeline(): void {
-
-        this.scene.postProcessesEnabled = this.viewerState.scenePostprocessingEnabled;
-
-        if ( !this.viewerState.scenePostprocessingEnabled ) {
-            return;
-        }
-    }
-
-    initRenderPipeline(): void {
-        // Postprocess
-        // The default pipeline applies other settings, we'd better off using Bloom independently if possible
-        // Also note this is tied to the camera, and thus if used, this should be updated when the camera changes
-        const defaultPipeline = new DefaultRenderingPipeline( "default", true, this.scene, [ <Camera> this.camera ]);
-        defaultPipeline.fxaaEnabled = true;
-        defaultPipeline.bloomEnabled = true;
-        defaultPipeline.bloomWeight = 1.0;  // 1.5 is exagerated but maybe usable for pics
-        //defaultPipeline.cameraFov = this.camera.fov;
-        defaultPipeline.imageProcessing.toneMappingEnabled = true;
-
-
-        //var postProcessHighlights = new HighlightsPostProcess("highlights", 0.1, camera);
-        //var postProcessTonemap = new TonemapPostProcess("tonemap", TonemappingOperator.Hable, 1.2, camera);
-
-        // See: https://doc.babylonjs.com/divingDeeper/postProcesses/postProcessRenderPipeline
-        /*
-        var standardPipeline = new PostProcessRenderPipeline(this.engine, "standardPipeline");
-        var effectBloom = new BloomEffect(this.scene, 4, 5.0, 2.0);
-        //var effectDepthOfField = new DepthOfFieldEffect(this.scene);
-        var postProcessChain = new PostProcessRenderEffect(this.engine, "postProcessChain", function() { return [effectBloom, effectDepthOfField] });
-        standardPipeline.addEffect(effectBloom);
-        this.scene.postProcessRenderPipelineManager.addPipeline(standardPipeline);
-        */
-
-        // Screen space reflections
-        /*
-        const ssr = new ScreenSpaceReflectionPostProcess(
-            "ssr", // The name of the post-process
-            this.scene, // The scene where to add the post-process
-            1.0, // The ratio of the post-process
-            this.camera // To camera to attach the post-process
-        );
-        ssr.reflectionSamples = 32; // Low quality.
-        ssr.strength = 2; // Set default strength of reflections.
-        ssr.reflectionSpecularFalloffExponent = 3; // Attenuate the reflections a little bit. (typically in interval [1, 3])
-        */
-
-        const lensRenderingPipeline = new LensRenderingPipeline( "lens", {
-            edge_blur: 0.25,                // 1.0 is too distorted in the borders for walk/view mode (maybe for pictures)
-            chromatic_aberration: 1.0,
-            distortion: 0.7,                // (dilate effect) 0.5 -> subtle
-            dof_focus_distance: 60,
-            dof_aperture: 1.0,            // 1.2 is already too blurry for OSM, 6.0 is very high
-            grain_amount: 0.0, // 0.5,
-            dof_pentagon: false, // true,
-            dof_gain: 1.0,
-            dof_threshold: 1.0,
-            dof_darken: 0.25
-        }, this.scene, 1.0, [ <Camera> this.camera ]);
-        //this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline('lensEffects', camera);
-
-        /*
-        const ssao = new SSAO2RenderingPipeline('ssao', this.scene, {
-          ssaoRatio: .5,
-          blurRatio: 1
-        }, [ this.camera ], true)
-        */
-
-        var curve = new ColorCurves();
-        curve.globalHue = 0;
-        curve.globalDensity = 80;
-        curve.globalSaturation = 5;
-        curve.highlightsHue = 0;
-        curve.highlightsDensity = 80;
-        curve.highlightsSaturation = 40;
-        curve.shadowsHue = 0;
-        curve.shadowsDensity = 80;
-        curve.shadowsSaturation = 40;
-        this.scene.imageProcessingConfiguration.colorCurvesEnabled = true;
-        this.scene.imageProcessingConfiguration.colorCurves = curve;
-        var postProcess = new ImageProcessingPostProcess("processing", 1.0, this.camera);
-
-        // Fog
-        //this.scene.fogMode = Scene.FOGMODE_EXP;
-        //this.scene.fogDensity = 0.005;  // default is 0.1
-        this.scene.fogMode = Scene.FOGMODE_LINEAR;
-        this.scene.fogStart = 350.0;
-        this.scene.fogEnd = 700.0;
-        this.scene.fogColor = new Color3(0.75, 0.75, 0.85);
-
-        /*
-        pixels = rp.cubeTexture.readPixels(0,0)
-        // i take the first pixel of the reflection probe texture for fog color.
-        // since pixels are stored as buffer array, first pixel are first 4 values of array [r,g,b,a....]
-        scene.fogColor = new Color3(pixels[0]/255, pixels[1]/255, pixels[2]/255)
-        */
-    }
-
     initCamera(): Camera {
 
         if ( this.camera ) {
@@ -2211,15 +2096,6 @@ class SceneViewer {
         // TODO: this persistent setting belongs to the app
         alert( "Reload the viewer for changes to take effect." );
     }
-
-    scenePostprocessingSetEnabled( value: boolean ): void {
-        this.viewerState.scenePostprocessingEnabled = value;
-        //localStorage.setItem('dddScenePostprocessingSetEnabled', value);
-        //alert('Reload the viewer for changes to take effect.');
-        this.updateRenderPipeline();
-    }
-
-
 
     /**
     */

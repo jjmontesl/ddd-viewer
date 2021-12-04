@@ -1,4 +1,4 @@
-/* 
+/*
 * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
 * Copyright 2021 Jose Juan Montes and contributors
 * MIT License (see LICENSE file)
@@ -16,6 +16,7 @@ import { SceneViewer } from "../../SceneViewer";
 type Step = (string | number)[];
 type Sequence = Step[];
 
+// TODO: this should be a ViewerProcess
 class ViewerSequencer {
 
     sceneViewer: SceneViewer;

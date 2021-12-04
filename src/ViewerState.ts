@@ -31,6 +31,7 @@ class ViewerState {
     positionDateSeconds: number = this.positionDate.getTime() / 1000;
     geolocationEnabled = false;
     serverInfoShow = true;
+    timeScale = 24 * 2;  // 24 * 2 = 48x faster (1 day = 30 min)
 
     // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
     // TODO: Try removing this and this.sceneViewer id still used

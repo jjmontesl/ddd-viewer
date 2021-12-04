@@ -183,7 +183,7 @@ class GeoJson3DLayer extends Base3DLayer {
         this.setColor(this.colorHex);
 
         for (let feature of this.featuresPoints) {
-            let marker = MeshBuilder.CreateSphere("pointMarker", { diameter: 1.5, segments: 10 }, sceneViewer.scene);
+            let marker = MeshBuilder.CreateSphere("pointMarker", { diameter: 1.5, segments: 3 }, sceneViewer.scene);
             marker.material = this.featureMaterial;
             marker.position = feature.coordsScene;
             marker.parent = this.rootNode;
