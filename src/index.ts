@@ -34,6 +34,7 @@ export * from "./render/environment/DefaultEnvironment";
 export * from "./render/materials/SkyboxMaterial";
 export * from "./render/materials/TerrainMaterial";
 export * from "./render/materials/TextMaterial";
+export * from "./render/pipeline/DefaultRenderPipeline";
 export * from "./render/skybox/CubemapSkybox";
 export * from "./render/skybox/DynamicSkybox";
 export * from "./render/skybox/Skybox";
