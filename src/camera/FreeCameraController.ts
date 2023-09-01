@@ -44,8 +44,8 @@ class FreeCameraController extends BaseCameraController {
         camera.keysDown.push( 83 );
         camera.keysLeft.push( 65 );
         camera.keysRight.push( 68 );
-        camera.keysUpward.push( 81 );
-        camera.keysDownward.push( 69 );
+        camera.keysUpward.push( 69 );
+        camera.keysDownward.push( 81 );
         camera.attachControl( this.dddViewer.engine.getRenderingCanvas(), true );
         camera.fov = 40.0 * ( Math.PI / 180.0 );  // 35.0 might be GM, 45.8... is default  // 35
         const positionScene = this.dddViewer.wgs84ToScene( this.dddViewer.viewerState.positionWGS84 );

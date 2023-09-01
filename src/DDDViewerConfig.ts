@@ -26,6 +26,8 @@ class DDDViewerConfig {
     timeScale: number = 0.0;
 
     moveSpeeds: number[] = [2.0, 5.0, 10.0];
+
+    sceneTileDrawDistanceDefault: number = 1;
 }
 
 

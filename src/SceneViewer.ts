@@ -492,7 +492,7 @@ class SceneViewer {
     }
 
     processDepends(): void {
-        console.debug( "Processing dependencies" );
+        //console.debug( "Processing dependencies: ", this.depends);
         const dependsCopy = [ ...this.depends ];
         for ( const dep of dependsCopy ) {
             this.depends = this.depends.filter( item => item !== dep );
@@ -707,8 +707,18 @@ class SceneViewer {
     }
 
     processMesh( root: Mesh, mesh: Mesh ): Mesh | null {
-        //console.debug("Processing mesh: " + mesh.id);
+        //console.debug("Processing mesh: " + mesh.id, mesh);
         const rootmd = root.metadata ? root.metadata.tileInfo : null;
+
+        if ('getTotalVertices' in mesh) {
+            if (mesh.getChildMeshes().length == 0) {
+                if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) {
+                    //console.log("Mesh with no vertices or indices: ", mesh);
+                    console.log("Empty mesh with no vertices or indices: " + mesh.id, mesh);
+                    return null;
+                }
+            }
+        }
 
         //mesh.isPickable = false;
         mesh.receiveShadows = true; // Fixes instances with no shadows
@@ -723,6 +733,8 @@ class SceneViewer {
 
                 const tileUrlBase = this.viewerState.dddConfig.tileUrlBase;
                 const splatmapUrl = tileUrlBase + "17" + "/" + coords[1] + "/" + coords[2] + ".splatmap-16chan-0_15-256.png";
+
+                //console.info("Splatmap texture: " + splatmapUrl);
 
                 //const temporaryTexture = this.textureDetailSurfaceImp;
                 const splatmapTexture = new Texture( splatmapUrl, this.scene );
@@ -829,7 +841,7 @@ class SceneViewer {
                 }
                 */
 
-                // TODO: Indicate when to splat in metadata
+                // TODO: Indicate when to splat in metadata (partially done)
                 if ( this.useSplatMap && this.viewerState.dddConfig.materialsSplatmap &&
                     (( "ddd:material:splatmap" in metadata ) && metadata["ddd:material:splatmap"] === true ) &&
                     ( !( "ddd:layer" in metadata ) || metadata["ddd:layer"] === "0" ) &&
@@ -951,6 +963,7 @@ class SceneViewer {
 
                 if ( this.catalog[key]) {
 
+                    
                     if ( "ddd:instance:buffer:matrices" in metadata ) {
                         this.instanceAsThinInstanceBuffers( key, root, mesh );
                     } else {
@@ -987,8 +1000,15 @@ class SceneViewer {
 
             //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
 
-            for ( const children of mesh.getChildren()) {
-                this.processMesh( root, <Mesh> children );
+            for ( const children of [...mesh.getChildren()] ) {
+                let processed = this.processMesh( root, <Mesh> children );
+                /*
+                if (processed == null) {
+                    //console.debug("Removing child: " + children.id);
+                    children.parent = null;
+                    children.dispose();
+                }
+                */
             }
 
             /*
@@ -1026,6 +1046,14 @@ class SceneViewer {
                 }
             }
 
+            if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) {
+                console.log("Mesh with no vertices or indices: ", mesh);
+                if (mesh.getChildMeshes().length == 0) {
+                    console.log("Empty mesh with no vertices or indices: ", mesh);
+                    continue;
+                }
+            }
+
             // Get root
             const instanceRootKey = root.id + "_" + key + "_" + mesh.id; // root.id + "_" +  // TODO! do not clone but keep groups!
             let meshInstanceRoot = this.instanceRoots[instanceRootKey];
@@ -1050,6 +1078,9 @@ class SceneViewer {
                 //meshInstanceRoot.position = root.computeWorldMatrix(true);  // Seems to cause problems, but should not :? (freezing may be involved)
 
                 this.processMesh( meshInstanceRoot, meshInstanceRoot );
+
+                // After postprocessing, do not add this mesh as instance if it's empty
+                if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) continue;
 
                 // Enable shadows for the instances if shadows are set
                 if ( this.shadowGenerator ) {
@@ -1082,13 +1113,12 @@ class SceneViewer {
             let matrix = scaleMatrix.multiply( nodeMatrix );
             matrix = matrix.multiply( Matrix.Invert( meshInstanceRootMatrix ));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
+            
+            // TODO: Improve performance by not updating GPU buffers here (thinInstanceAdd), only in last call for this instanceRoot.
             meshInstanceRoot.thinInstanceAdd( matrix );
+
             meshInstanceRoot.freezeWorldMatrix();
 
-            //let tmpcopy = meshInstanceRoot.clone();
-            //tmpcopy.position = localPos;
-            //tmpcopy.rotationQuaternion = localRot;
-            //tmpcopy.parent = meshInstanceRoot;
 
         }
 
@@ -1099,7 +1129,7 @@ class SceneViewer {
 
     instanceAsThinInstanceBuffers( key: string, root: Mesh, node: Mesh ): void {
 
-        //console.debug( "Creating thin instance buffers for: " + key );
+        console.debug( "Creating thin instance buffers for: " + key );
 
         const instance = this.catalog[key];
         const meshes = instance.getChildMeshes();
@@ -1129,17 +1159,25 @@ class SceneViewer {
                 }
 
                 //meshInstanceRoot.metadata.gltf.extras['ddd:instance:key'] = "_MESH_INSTANCE_ROOT";  // WARN:seems this extras are being shared among instances
-                //meshInstanceRoot.toRightHanded();
+                
+                // This section is critical. The bakeCurrentTransformIntoVertices in the middle may be too.
+                // This transform works together with the meshinstance transform below.
+                //meshInstanceRoot.toLeftHanded();
+                //meshInstanceRoot.bakeCurrentTransformIntoVertices();
                 //meshInstanceRoot.rotate(Vector3.Right(), Math.PI / 2);
-
-                // This section is critical. The bakeCurrentTransformIntoVertices in the middle is too.
-                meshInstanceRoot.scaling = new Vector3( 1, 1, -1 );
-                meshInstanceRoot.rotate( Vector3.Up(), -Math.PI / 2 );
-                meshInstanceRoot.bakeCurrentTransformIntoVertices();
-                meshInstanceRoot.rotate( Vector3.Forward(), -Math.PI / 2 );
-                meshInstanceRoot.rotate( Vector3.Right(), Math.PI );
+                //meshInstanceRoot.rotate( Vector3.Up(), -Math.PI / 2 );
+                //meshInstanceRoot.scaling = new Vector3( 1, -1, 1 );
+                meshInstanceRoot.rotate( Vector3.Right(), -Math.PI / 2 );
+                meshInstanceRoot.rotate( Vector3.Up(), Math.PI );
+                meshInstanceRoot.rotate( Vector3.Forward(), Math.PI );
                 meshInstanceRoot.bakeCurrentTransformIntoVertices();
                 //meshInstanceRoot.flipFaces(true);
+
+                // Apply tht transformation (without baking) to the meshInstanceRoot, this 
+                // (somewhat surprisingly) combined with the instance matrix.
+                meshInstanceRoot.rotate( Vector3.Up(), Math.PI);
+                meshInstanceRoot.rotate(Vector3.Right(), -Math.PI / 2);
+                meshInstanceRoot.scaling = new Vector3( 1, -1, 1 );
 
                 this.instanceRoots[instanceRootKey] = meshInstanceRoot;
                 meshInstanceRoot.parent = root;
@@ -1160,18 +1198,25 @@ class SceneViewer {
                 //instance.dispose();
             }
 
-            //var adaptMatrix = Matrix.Compose(new Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
-
+            
             const bufferMatrices = metadataNode["ddd:instance:buffer:matrices"];
 
-            //const scaleMatrix = Matrix.Compose( new Vector3( 1, 1, -1 ), new Quaternion( 0, 0, 0, 0 ), new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
-            //let nodeMatrix = node.computeWorldMatrix(true);
-            //let meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix(true);
-            //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
-            //let matrix = scaleMatrix.multiply(nodeMatrix);
-            //matrix = matrix.multiply(Matrix.Invert(meshInstanceRootMatrix));
-            //console.debug("Creating instance: " + meshInstanceRoot.id);
-            //var idx = meshInstanceRoot.thinInstanceAdd(matrix);
+            console.debug( "Thin instance buffers for: " + key + " / " + mesh.id + "  (" + (bufferMatrices.length / 16) + " matrices)" );
+            
+            // Transform each node
+            // FIXME: This is very slow, whereas directly loading the matrices is very fast, but they need preprocessing
+            /*
+            const adaptRotation = Quaternion.FromEulerAngles(-Math.PI / 2, Math.PI, 0);
+            const adaptMatrix = Matrix.Compose( new Vector3( 1, -1, 1 ), adaptRotation, new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
+            for ( let i = 0; i < bufferMatrices.length; i += 16 ) {
+                const nodeMatrix = Matrix.FromArray( bufferMatrices, i );
+                //let matrix = adaptMatrix.multiply( nodeMatrix );
+                let matrix = nodeMatrix.multiply(adaptMatrix);
+                meshInstanceRoot.thinInstanceAdd( matrix );
+            }
+            */
+
+            // Load all matrices directly into buffer
             const bufferMatricesArray = new Float32Array( bufferMatrices.length );
             bufferMatricesArray.set( bufferMatrices );
             meshInstanceRoot.thinInstanceSetBuffer( "matrix", bufferMatricesArray, 16, true );
@@ -1448,12 +1493,20 @@ class SceneViewer {
     elevationMSLFromSceneCoords(coords: Vector3): [number | null, PickingInfo | null] {
 
         const ray = new Ray( new Vector3( coords.x, -100.0, coords.z ), new Vector3( 0, 1, 0 ), 3000.0 );
-        const pickResult = this.scene.pickWithRay( ray );
+        
+        // This "pickWithRay" call sometimes fails with "Uncaught TypeError: Cannot read properties of undefined (reading 'subtractToRef') at Ray.intersectsTriangle()"
+        let pickResult : PickingInfo | null = null;
+        try {
+            pickResult = this.scene.pickWithRay( ray );
+        } catch (e) {
+            console.debug("Error picking scene with ray (in elevationMSLFromSceneCoords): " + e);
+            return [null, null];
+        }
 
         let terrainElevation: number | null = null;
         //let terrainMesh: Mesh | null = null;
 
-        if ( pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
+        if (pickResult && pickResult.pickedMesh && pickResult.pickedMesh.id !== "skyBox" ) {
             terrainElevation = ( pickResult.distance - 100.0 );
             //terrainMesh = <Mesh> pickResult.pickedMesh;
         }
@@ -2111,6 +2164,7 @@ class SceneViewer {
         }
 
         if (splatmap) {
+            console.info("Loading splatmap textures.");
             this.useSplatMap = true;
             const atlasTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/splatmap-textures-atlas-" + splatmap + ".png";
             const atlasNormalsTextureUrl = this.viewerState.dddConfig.assetsUrlbase + "/splatmap-textures-atlas-normals-" + splatmap + ".png";

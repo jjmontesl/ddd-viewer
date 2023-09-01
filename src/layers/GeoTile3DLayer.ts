@@ -185,7 +185,8 @@ class GeoTile3DLayer extends Base3DLayer {
             return node.metadata.gltf.extras;
         }*/
         for ( const child of node.getChildren()) {
-            if ( child.id.indexOf( "Metadata" ) > 0 ) {
+            // Must start with Metadata
+            if ( child.id.indexOf( "Metadata" ) == 0 ) {
                 return child.metadata.gltf.extras;
             }
         }
@@ -229,17 +230,14 @@ class GeoTile3DLayer extends Base3DLayer {
             this.tiles[tileKey].coordsTileGrid = tileCoords;
         }
 
-        //const glb = "https://www.yourcityracing.com/static/game/acoruna_hercules_500r_-8.406,43.386.glb";
-        //const tileUrl = "./scenes/ddd-model.glb";
-        //const glb = "https://www.yourcityracing.com/static/game/larochelle_150r_-1.153,46.155.glb";
-        //const glb = new File([""], "scene.glb", {type: "application/octect-stream"})
-
         //const tileUrlBase = './scenes/ddd_http_';
         //const tileUrlBase = 'http://localhost:8000/cache/ddd_http/';
         //const tileUrlBase = 'http://' + app.dddConfig.tileUrlBase + ':8000/cache/ddd_http/';
         //const tileUrlBase = 'http://' + location.hostname + '/cache/ddd_http/';
         const tileUrlBase = this.layerManager!.sceneViewer.viewerState.dddConfig.tileUrlBase;
-        const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
+        
+        //const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
+        const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".uncompressed.glb";
 
         //console.debug("Loading: " + tileUrl);
 
@@ -569,7 +567,7 @@ class GeoTile3DLayer extends Base3DLayer {
             const materialGroundTexture: Texture = new Texture( url, this.layerManager!.sceneViewer.scene );
             materialGround.diffuseTexture = materialGroundTexture;
             materialGroundTexture.uScale = 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
-            materialGroundTexture.vScale = 1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
+            materialGroundTexture.vScale = -1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
             materialGroundTexture.uOffset = -0.5;
             materialGroundTexture.vOffset = -0.5;
             materialGroundTexture.wrapU = Texture.WRAP_ADDRESSMODE;

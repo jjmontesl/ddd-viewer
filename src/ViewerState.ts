@@ -83,6 +83,8 @@ class ViewerState {
         const textsEnabled = localStorage.getItem( "dddSceneTextsEnabled" );
         this.sceneTextsEnabled = textsEnabled ? JSON.parse( textsEnabled ) : this.sceneTextsEnabled;
 
+        this.sceneTileDrawDistance = dddConfig.sceneTileDrawDistanceDefault;
+
         // Start time
         this.positionDate.setHours( 11 );
         this.positionDate.setMinutes( 0 );
