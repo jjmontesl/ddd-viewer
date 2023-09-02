@@ -339,12 +339,12 @@ class SceneViewer {
         water.waveSpeed = 50.0;
         water.bumpHeight = 0.1;
         water.waveLength = 7.5;
-        water.alpha = 0.4;
+        water.alpha = 0.6;
         //water.useSpecularOverAlpha = true;
         //water.useReflectionOverAlpha = true;
         water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
         //water.renderingGroupId = 3;
-        water.colorBlendFactor = 0.3;
+        water.colorBlendFactor = 0.2;
         this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
         this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
         //water.addToRenderList(ground);
