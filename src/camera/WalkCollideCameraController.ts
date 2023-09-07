@@ -18,18 +18,28 @@ class WalkCollideCameraController extends WalkCameraController {
 
     gravity = -9.8;
 
+    falling = false;
+
+    fallStartDistance = 0.5;
+
     update(deltaTime: number): void {
         // Fix viewer to floor
         const terrainElevation = this.dddViewer.viewerState.positionTerrainElevation;
         if ( terrainElevation !== null && this.dddViewer.camera ) {
             const currentHeight = this.getCamera().position.y;
             const baseHeight = terrainElevation + this.sceneCameraWalkHeight;
-            if (currentHeight > baseHeight + 0.1) {
+            if (currentHeight > baseHeight + this.fallStartDistance) {
+                this.falling = true;
+            }
+            if (this.falling) {
                 this.velocity.y += (this.gravity * deltaTime);
                 this.getCamera().position.addInPlace(this.velocity.scale(deltaTime));
-            } else {
+            }
+
+            if (!this.falling || this.getCamera().position.y < baseHeight) {
+                this.falling = false;
                 this.velocity.set(0, 0, 0);
-                this.getCamera().position.y = terrainElevation + this.sceneCameraWalkHeight; // 3.0;
+                this.getCamera().position.y = terrainElevation + this.sceneCameraWalkHeight;
             }
 
         }

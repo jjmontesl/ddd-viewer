@@ -26,8 +26,8 @@ class TextMaterialWrapper {
     initMaterial(scene: Scene, atlas: BaseTexture, atlasnormals: BaseTexture | null): PBRCustomMaterial {
 
         this.material = new PBRCustomMaterial("TextMaterial", scene);
-        this.material.metallic = 0.2; // 0.0;
-        this.material.roughness = 0.05; // 0.43 (asphalt); // 0.95;
+        this.material.metallic = 0.05; // 0.0;
+        this.material.roughness = 0.975; // 0.43 (asphalt); // 0.95;
         //this.material.indexOfRefraction = 1.4;
 
         //this.material.twoSidedLighting = true;
@@ -39,7 +39,7 @@ class TextMaterialWrapper {
         //this.material.emissiveColor = new Color3(0.0, 0.0, 0.0); // Color3.Black();
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
-        this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+        //this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
 
         this.material.albedoTexture = atlas;
         if (atlasnormals !== null) {
@@ -48,11 +48,14 @@ class TextMaterialWrapper {
         }
 
         this.material.Fragment_Custom_Albedo(`
-            if (result.r < 0.05) {
+            vec3 txtColor = result;
+            if (txtColor.r < 0.02) {
                 discard;
             }
-            vec3 col = vec3(0.2, 0., 0.);
             //vec3 col = vec3(1.0, 0.8, 0.8);
+            //vec3 col = vec3(1.0, 1.0, 1.0) * tmp;
+            //col = vec3(col.r * result.r, col.g * result.g, col.b * result.b);
+            vec3 col = vec3(0.0, 0.0, 0.0);
             surfaceAlbedo = col;
         `);
 

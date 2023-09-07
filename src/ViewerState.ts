@@ -30,7 +30,6 @@ class ViewerState {
     positionDate: Date = new Date();
     positionDateSeconds: number = this.positionDate.getTime() / 1000;
     geolocationEnabled = false;
-    serverInfoShow = true;
     timeScale = 24 * 2;  // 24 * 2 = 48x faster (1 day = 30 min)
 
     // TODO: These nodes are instrumented: remove selectedMesh from here and use ids.
@@ -50,8 +49,8 @@ class ViewerState {
     sceneSelectedShowNormals = true;
     sceneTileDrawDistance = 1;
     sceneMoveSpeed = 5;
-    sceneEnvironmentProbe = 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
-    sceneSkybox = "/textures/TropicalSunnyDay"; // "@dynamic"; // ""/textures/TropicalSunnyDay";
+    sceneEnvironmentProbe = 16; // 16; // null to use a static environment (should be associated to the skybox, but it's currently fixed)
+    sceneSkybox = "/textures/TropicalSunnyDay";  // /textures/skybox/clouds1/clouds1 // "@dynamic"; // ""/textures/TropicalSunnyDay";
 
     // TODO: This shall be a per-layer setting
     sceneGroundTextureOverrideUrl: string | null = null;

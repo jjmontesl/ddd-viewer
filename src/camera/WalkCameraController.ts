@@ -14,7 +14,9 @@ import { FreeCameraController } from "./FreeCameraController";
  */
 class WalkCameraController extends FreeCameraController {
 
-    sceneCameraWalkHeight = 2.0;
+    sceneCameraWalkHeight = 1.75; // 2.0;
+
+    //falling = false;
 
     update(deltaTime: number): void {
         // Fix viewer to floor
@@ -27,7 +29,7 @@ class WalkCameraController extends FreeCameraController {
     activate(): void {
         super.activate();
         //this.walkMode = true;
-        this.dddViewer.camera!.inertia = 0.0;
+        this.dddViewer.camera!.inertia = 0.2; // 0.0;
         this.dddViewer.setMoveSpeed( this.dddViewer.viewerState.sceneMoveSpeed );
     }
 

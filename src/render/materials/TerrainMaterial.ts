@@ -69,7 +69,7 @@ class TerrainMaterialWrapper {
             this.material = new PBRCustomMaterial("splatMaterial" + (TerrainMaterialWrapper.matIdx++).toString(), this.sceneViewer.scene);  // + (TerrainMaterialWrapper.matIdx++)
             this.material.metallic = 0.0; // 0.0;
             this.material.roughness = 0.0; // 0.43 (asphalt); // 0.95;
-            this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+            //this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
             this.material.albedoTexture = atlasTexture;
             this.material.AddUniform("splatmap","sampler2D", {});
             this.material.AddUniform("atlasNormalsSampler","sampler2D",  {});
@@ -86,6 +86,14 @@ class TerrainMaterialWrapper {
             }
 
         }
+
+        // TODO: Check how much this impacts performance, it has a subtle impact on terrain and roads but it's nice to have it.
+        // TODO: At least make it optional / linked to quality settings.
+        this.material.reflectionTexture = this.sceneViewer.scene.environmentTexture;
+        
+        // This one is needed to control saturation due to env, should be aligned with PBRMaterials, StandarMaterials and light intensity
+        this.material.environmentIntensity = 1.0;
+
 
         this.material.onBindObservable.add((mesh) => {
 
@@ -134,13 +142,13 @@ class TerrainMaterialWrapper {
                                   1.1, 1.1, 1.1, 1.2,
                                   1.2, 1.2, 0.5, 1.1],
                     roughness: [
-                        1.2, 1.3, 2.5, 0.5,
-                        0.5, 0.9, 1.0, 1.0,
+                        1.2, 1.3, 2.5, 0.8,
+                        0.8, 0.9, 1.0, 1.0,
                         1.85, 1.85, 1.15, 1.25,
                         1.45, 0.8, 1.0, 1.0],
                     metallic: [
-                        0.2, 0.1, 0.1, 0.5,
-                        0.5, 0.1, 0.0, 0.0,
+                        0.2, 0.1, 0.1, 0.3,
+                        0.3, 0.1, 0.0, 0.0,
                         0.0, 0.0, 0.0, 0.0,
                         0.0, 0.4, 0.0, 0.0]
                 }
@@ -265,8 +273,7 @@ class TerrainMaterialWrapper {
         //this.material.emissiveColor = new Color3(0.0, 0.0, 0.0); // Color3.Black();
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
-
-        this.material.environmentIntensity = 0.5;  // This one is needed to avoid saturation due to env
+        //this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
 
 
         this.material.albedoTexture = atlas;
@@ -530,8 +537,6 @@ class TerrainMaterialWrapper {
         this.material.getEffect().setTexture( "atlasNormalsSampler", this.atlasBumpTexture );
 
         /*
-        this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
-        //this.material.reflectionTexture = this.sceneViewer.scene.environmentTexture;
 
         //this.material.freeze();
 

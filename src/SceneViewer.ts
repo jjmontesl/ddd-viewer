@@ -9,7 +9,7 @@
 //import { GLTF2 } from "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF";
 
-import { AbstractMesh, ArcRotateCamera, BaseTexture, BloomEffect, BoundingInfo, Camera, CascadedShadowGenerator, Color3, ColorCurves, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, ImageProcessingPostProcess, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, NodeMaterial, PBRBaseMaterial, PBRMaterial, PickingInfo, PostProcessRenderEffect, PostProcessRenderPipeline, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ScreenSpaceReflectionPostProcess, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, VertexBuffer } from "@babylonjs/core";
+import { AbstractMesh, ArcRotateCamera, BaseTexture, BloomEffect, BoundingInfo, Camera, CascadedShadowGenerator, Color3, ColorCurves, CubeTexture, DefaultRenderingPipeline, DirectionalLight, DynamicTexture, Engine, FloatArray, ImageProcessingPostProcess, IndicesArray, LensFlare, LensFlareSystem, LensRenderingPipeline, Material, Matrix, Mesh, MeshBuilder, NodeMaterial, PBRBaseMaterial, PBRMaterial, PickingInfo, PointLight, PostProcessRenderEffect, PostProcessRenderPipeline, Quaternion, Ray, ReflectionProbe, Scene, SceneInstrumentation, SceneLoader, SceneOptions, ScreenSpaceReflectionPostProcess, ShaderMaterial, Space, StandardMaterial, TargetCamera, Texture, TransformNode, UniversalCamera, Vector2, Vector3, Vector4, VertexBuffer } from "@babylonjs/core";
 import { WaterMaterial } from "@babylonjs/materials";
 
 import { Coordinate } from "ol/coordinate";
@@ -97,6 +97,7 @@ class SceneViewer {
     materialWater: Material | null = null; // WaterMaterial | null = null;
     materialOcean: NodeMaterial | null = null;
     materialText: Material | null = null;
+    materialFlare: Material | null = null;
 
     envReflectionProbe: ReflectionProbe | null = null;
     light: DirectionalLight | null = null;
@@ -110,6 +111,7 @@ class SceneViewer {
 
     _previousLampPatOn: boolean | null = null;
     _geolocationWatchId: string | null = null;
+    _decimator: number = 0;
 
 
     /**
@@ -268,6 +270,7 @@ class SceneViewer {
         this.shadowGenerator = null;
         if ( this.viewerState.sceneShadowsEnabled ) {
             this.shadowGenerator = new CascadedShadowGenerator( 1024, this.light );
+            this.shadowGenerator.bias = 0.002;  // 0.002 Makes grass appear slightly floating but prevents the full scene ground to be self-shadowed  0.001 avoid the gap but already produces self-shadowing
             //that.shadowGenerator.debug = true;
             this.shadowGenerator.shadowMaxZ = 500;
             //this.shadowGenerator.autoCalcDepthBounds = true;  // Enabling it causes shadow artifacts after switching cameras (?)
@@ -332,25 +335,57 @@ class SceneViewer {
         */
 
         const water = new WaterMaterial("water", this.scene, new Vector2( 512, 512 ));
-        //water.backFaceCulling = true;
         water.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
-        water.windForce = 1;
-        water.waveHeight = 0.1;
-        water.waveSpeed = 50.0;
-        water.bumpHeight = 0.1;
-        water.waveLength = 7.5;
-        water.alpha = 0.6;
-        //water.useSpecularOverAlpha = true;
-        //water.useReflectionOverAlpha = true;
+        water.waveLength = 15.0;    // def: 0.1
+        water.waveHeight = 0.04;    // def: 0.4
+        water.waveSpeed = 50.0;     // def: 1
+        water.windForce = 1.0;      // def: 6
+        //water.waveCount = 1.0;        // def: 20
+        water.windDirection = new Vector2( 0.75, 1.3 );
+        water.bumpHeight = 0.4;       // def: 0.4
+        water.alpha = 0.5;
         water.transparencyMode = 2;  // 2  ALPHA_BLEND  3;  // ALPHA_TEST_AND_BLEND
+        water.bumpAffectsReflection = true; // true;
+        //water.bumpSuperimpose = true;
+        //water.fresnelSeparate = true;
+        //water.waterColor = new Color3( 0.0, 0.0, 0.0 );   // def: 0.1 0.1 0.6
+        //water.waterColor2 = new Color3( 0.0, 0.0, 0.0 );  // def: 0.1 0.1 0.6
+        water.colorBlendFactor = 0.7;   // def: 0.2
+        water.colorBlendFactor2 = 0.7;  // def: 0.2
+        water.backFaceCulling = false;
+        //water.specularPower = 0.05;      // def: 64
+        water.specularColor = new Color3(0.1, 0.1, 0.05);  // def: 0,0,0
+        water.diffuseColor = new Color3(0.2, 0.2, 0.2);   // def: 1,1,1
         //water.renderingGroupId = 3;
-        water.colorBlendFactor = 0.2;
         this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
         this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
         //water.addToRenderList(ground);
         //let waterOcean = createOceanMaterial(this.scene);
 
         this.materialWater = water;
+
+
+        // Load flare texture and apply it
+        /*
+        const flareMaterial = new StandardMaterial("lightFlare", this.scene);
+        //flareMaterial.specularTexture = new Texture("/textures/flare3.png", this.scene);
+        flareMaterial.diffuseTexture = new Texture("/textures/flare.png", this.scene);
+        flareMaterial.diffuseTexture.hasAlpha = true;
+        flareMaterial.useAlphaFromDiffuseTexture = true;
+        //water.ambientColor = new Color3(0.0, 0.0, 1.0);
+        flareMaterial.diffuseColor = new Color3(1.0, 1.0, 1.0);
+        //flareMaterial.specularColor = new Color3(1.0, 1.0, 1.0);
+        flareMaterial.alphaMode = 1;  // ALPHA_ADD
+        flareMaterial.alpha = 0.30;
+        flareMaterial.emissiveColor = new Color3(1.0, 1.0, 1.0);
+        flareMaterial.transparencyMode = Material.MATERIAL_ALPHABLEND;  // ALPHA_TEST
+        //flareMaterial.backFaceCulling = false;
+        flareMaterial.disableLighting = true;
+        //flareMaterial.disableDepthWrite = true;
+        
+        this.materialFlare = flareMaterial;
+        */
+
 
         /*
         NodeMaterial.ParseFromSnippetAsync("#3FU5FG#1", this.scene).then((mat) => {
@@ -447,12 +482,17 @@ class SceneViewer {
             this.skybox = skybox;
         }
 
+        
         console.debug("Adding skybox env");
         if (this.skybox) {
-            //this.skybox.renderingGroupId = 3;  // Seems is rendered in group 0 for it to be applied to the reflections on water
+            this.skybox.renderingGroupId = 0;  // Seems is rendered in group 0 for it to be applied to the reflections on water
             //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
             this.envReflectionProbe!.renderList!.push(this.skybox);
-            if ("getRenderList" in this.materialWater!) {(<WaterMaterial> this.materialWater!).addToRenderList(this.skybox); }
+            if ("getRenderList" in this.materialWater!) {
+                (<WaterMaterial> this.materialWater!).addToRenderList(this.skybox); 
+                //(<WaterMaterial> this.materialWater!).markDirty();
+            }
+
         }
 
     }
@@ -563,7 +603,7 @@ class SceneViewer {
                     mesh.material.bumpTexture = new Texture("/textures/waterbump.png", this.scene);
                     */
 
-                    // This "WaterInstanced" is to avoid WaterMaterial from being used in instances (seems to fail, causing the material to disappear).
+                    // This "WaterInstanced" is additionally created to avoid WaterMaterial from being used in instances (seems to fail, causing the material to disappear).
                     this.catalog_materials["WaterInstanced"] = material;
                     this.catalog_materials["WaterInstanced"].alpha = 0.7;
                     this.catalog_materials["WaterInstanced"].transparencyMode = 2;
@@ -586,7 +626,8 @@ class SceneViewer {
                     dontFreeze = true;
 
                 } else if ( material instanceof PBRMaterial ) {
-
+                    
+                    //dontFreeze = true;
                     //mesh.material.specularColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.2);
                     //mesh.material.albedoColor = Color3.Lerp(mesh.material.albedoColor, Color3.White(), 0.5);
                     //mesh.material.albedoColor = Color3.FromHexString(mesh.metadata.gltf.extras['ddd:material:color']).toLinearSpace();
@@ -611,7 +652,23 @@ class SceneViewer {
                         ( metadata["ddd:material"] === "Grass Blade" ) ||
                         ( metadata["ddd:material"] === "Grass Blade Dry" )) {
                         uvScale = 1.0;
+                        
+                        // TODO: add this as metadata (should not apply to all of these)
+                        material.twoSidedLighting = true;
                     }
+
+                    if (( metadata["ddd:material"] === "Flowers Blue" ) ||
+                        ( metadata["ddd:material"] === "Flowers Roses" ) ||
+                        ( metadata["ddd:material"] === "Grass Blade" ) ||
+                        ( metadata["ddd:material"] === "Grass Blade Dry" )) {
+                        uvScale = 1.0;
+                        
+                        // TODO: add this as metadata (should not apply to all of these)
+                        material.twoSidedLighting = true;
+                        material.backFaceCulling = false;
+                    }
+
+
                     if (( metadata["ddd:material"] === "Fence" )) {
                         uvScale = 0.5;
                         material.backFaceCulling = false;
@@ -658,6 +715,8 @@ class SceneViewer {
                     */
 
                     // Detail map
+                    // TODO: Disabled as didn't seem to be working (10-2023)
+                    /*
                     material.detailMap.texture = this.textureDetailSurfaceImp;
                     if (material.detailMap.texture) {
                         ( <Texture> material.detailMap.texture ).uScale = 1 / 256;
@@ -666,14 +725,18 @@ class SceneViewer {
                         material.detailMap.diffuseBlendLevel = 0.15; // 0.2
                         //mesh.material.detailMap.bumpLevel = 1; // between 0 and 1
                         //mesh.material.detailMap.roughnessBlendLevel = 0.05; // between 0 and 1
-                        material.environmentIntensity = 0.5;  // This one is needed to avoid saturation due to env
                         //mesh.material.freeze();  // Careful: may prevent environment texture change (?)
                     }
+                    */
+
+                    (<PBRMaterial>material).environmentIntensity = 1.0;
+                    //(<PBRMaterial>material).ambientColor = new Color3(0, 0, 0);
 
                     (<PBRMaterial>material).useHorizonOcclusion = true;
                     if (this.envReflectionProbe) {
                         (<PBRMaterial>material).reflectionTexture = this.envReflectionProbe!.cubeTexture;
                     }
+
                 }
 
                 if ( ('zoffset' in metadata) && metadata["zoffset"]) {
@@ -713,8 +776,7 @@ class SceneViewer {
         if ('getTotalVertices' in mesh) {
             if (mesh.getChildMeshes().length == 0) {
                 if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) {
-                    //console.log("Mesh with no vertices or indices: ", mesh);
-                    console.log("Empty mesh with no vertices or indices: " + mesh.id, mesh);
+                    //console.log("Empty mesh with no vertices or indices: " + mesh.id, mesh);
                     return null;
                 }
             }
@@ -791,8 +853,10 @@ class SceneViewer {
                 let key = metadata["ddd:material"];
 
                 if ( key === "WaterBasicDaytime" ) {
-                    //console.debug(mesh);
-                    if ( metadata["ddd:path"].startsWith( "Catalog Group" )) {
+                    //console.debug(metadata["ddd:path"]);
+                    // FIXME: Weak condition to identify the water mesh inside an instance
+                    //if ( metadata["ddd:path"].startsWith( "Catalog Group" )) {
+                    if ( metadata["ddd:path"].indexOf( "/DDDInstance" ) >= 0) {
                         key = "WaterInstanced";
                     }
                 }
@@ -864,7 +928,7 @@ class SceneViewer {
                         mesh.material = ( <any>root )._splatmapMaterial;
                         //( <any>root )._splatmapMaterial.renderingGroupId = 1;
 
-                        // Expensive
+                        // Add meshes to the reflection probe (Expensive!)
                         //this.envReflectionProbe.renderList.push(mesh);
                     } else {
                         //this.depends.push(root);
@@ -894,6 +958,8 @@ class SceneViewer {
 
             if ( metadata["ddd:light:color"]) {
                 replaced = true;
+
+                //lightFlare.billboardMode = 7;
                 /*
                 var light = new PointLight("light_" + mesh.id, mesh.position, this.scene);
                 light.parent = mesh.parent;
@@ -950,8 +1016,44 @@ class SceneViewer {
                 mesh = <Mesh> newMesh;
 
             } else if ( metadata["ddd:instance:key"]) {
+                
                 replaced = true;
                 const key = metadata["ddd:instance:key"];
+
+                if (key == "lamppost-default-1") {
+                    
+                    //console.debug("TEST: lamppost-default-1");
+
+                    // Create a flare quad
+                    /*
+                    const quad = MeshBuilder.CreatePlane( "quad_" + mesh.id, { width: 4.5, height: 4.5, sideOrientation: Mesh.DOUBLESIDE, updatable: true, frontUVs: new Vector4(0, 0, 1, 1) }, this.scene );
+                    quad.material = this.materialFlare;
+                    quad.billboardMode = 7;
+                    quad.receiveShadows = false;
+                    
+                    const scaleMatrix = Matrix.Compose( new Vector3( 1, 1, -1 ), new Quaternion( 0, 0, 0, 0 ), new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
+                    const nodeMatrix = mesh.parent!.computeWorldMatrix( true );
+                    let pos = Vector3.TransformCoordinates(mesh.position.add(new Vector3(0, 5.75, 0)), nodeMatrix);
+                    quad.position = pos;
+                    */
+
+
+                    /*
+                    if (this._decimator++ % 40 == 0) {
+                        //lightFlare.billboardMode = 7;
+                        const light = new PointLight("light_" + mesh.id, mesh.position.add(new Vector3(0, 4.0, 0)), this.scene);
+                        light.parent = mesh.parent;
+                        //light.position = mesh.position;
+                        //light.position.y = light.position.y + 1;
+                        light.intensity = 50.0;
+                        light.radius = 0.15;
+                        light.range = 12.0;
+                        light.shadowEnabled = false;
+                        light.diffuse = new Color3(240.0/255.0, 234.0/255.0, 129.0/255.0);
+                        light.specular = new Color3(255.0/255.0, 250.0/255.0, 99.0/255.0);
+                    }
+                    */
+                }
 
                 // Ignored objects (devel purpose)
                 const ignored_keys: string[] = [];  // ["building-window"]
@@ -1047,9 +1149,9 @@ class SceneViewer {
             }
 
             if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) {
-                console.log("Mesh with no vertices or indices: ", mesh);
+                //console.log("Mesh with no vertices or indices: ", mesh);
                 if (mesh.getChildMeshes().length == 0) {
-                    console.log("Empty mesh with no vertices or indices: ", mesh);
+                    //console.log("Empty mesh with no vertices or indices: ", mesh);
                     continue;
                 }
             }
@@ -1129,7 +1231,7 @@ class SceneViewer {
 
     instanceAsThinInstanceBuffers( key: string, root: Mesh, node: Mesh ): void {
 
-        console.debug( "Creating thin instance buffers for: " + key );
+        //console.debug( "Creating thin instance buffers for: " + key );
 
         const instance = this.catalog[key];
         const meshes = instance.getChildMeshes();
@@ -1201,10 +1303,10 @@ class SceneViewer {
             
             const bufferMatrices = metadataNode["ddd:instance:buffer:matrices"];
 
-            console.debug( "Thin instance buffers for: " + key + " / " + mesh.id + "  (" + (bufferMatrices.length / 16) + " matrices)" );
+            //console.debug("Thin instance buffers for: " + key + " / " + mesh.id + "  (" + (bufferMatrices.length / 16) + " matrices)" );
             
-            // Transform each node
-            // FIXME: This is very slow, whereas directly loading the matrices is very fast, but they need preprocessing
+            // Transform each node (test only)
+            // DEPRECATED: This is very slow, whereas directly loading the matrices is very fast.
             /*
             const adaptRotation = Quaternion.FromEulerAngles(-Math.PI / 2, Math.PI, 0);
             const adaptMatrix = Matrix.Compose( new Vector3( 1, -1, 1 ), adaptRotation, new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
@@ -1222,11 +1324,6 @@ class SceneViewer {
             meshInstanceRoot.thinInstanceSetBuffer( "matrix", bufferMatricesArray, 16, true );
 
             meshInstanceRoot.freezeWorldMatrix();
-
-            //let tmpcopy = meshInstanceRoot.clone();
-            //tmpcopy.position = localPos;
-            //tmpcopy.rotationQuaternion = localRot;
-            //tmpcopy.parent = meshInstanceRoot;
 
         }
 
@@ -1921,16 +2018,15 @@ class SceneViewer {
         camera.angularSensibility = 500.0;
         camera.touchAngularSensibility = 1000.0;
         //camera.touchMoveSensibility = 1.0;
-        //camera.inertia = 0.10;
-        camera.inertia = 0.5;
+        camera.inertia = 0.25;
         camera.keysUp.push( 87 );
         camera.keysDown.push( 83 );
         camera.keysLeft.push( 65 );
         camera.keysRight.push( 68 );
-        camera.keysUpward.push( 81 );
-        camera.keysDownward.push( 69 );
+        camera.keysUpward.push( 69 );
+        camera.keysDownward.push( 81 );
         camera.attachControl(this.engine.getRenderingCanvas(), true);
-        camera.fov = 40.0 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default  // 35
+        camera.fov = 45.8 * (Math.PI / 180.0);  // 35.0 might be GM, 45.8... is default  // 35 // 40 used for a long time
         const positionScene = this.wgs84ToScene(this.viewerState.positionWGS84);
         camera.position = new Vector3(positionScene[0], this.viewerState.positionGroundHeight + this.viewerState.positionTerrainElevation + 1, positionScene[2]);
         camera.rotation = new Vector3(( 90.0 - this.viewerState.positionTilt ) * ( Math.PI / 180.0 ), this.viewerState.positionHeading * ( Math.PI / 180.0 ), 0.0 );
@@ -2046,7 +2142,7 @@ class SceneViewer {
         }
 
         if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
-            (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.1 + sunlightAmountNorm;
+            (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.075 + sunlightAmountNorm;
             //(<StandardMaterial>this.skybox.material).reflectionTexture!.level = 1.1; // + sunlightAmountNorm;
         }
 
@@ -2092,16 +2188,16 @@ class SceneViewer {
         //console.debug(this.scene.ambientColor);
 
         // Lamps
-        const lampMatOn = sunlightAmountNorm > 0.3;  // 0.2 is more logical, 0.1 exagerates the change
+        const lampMatOn = sunlightAmountNorm < 0.35;  // 0.3 fits, but turn off too quick
         if ( lampMatOn !== this._previousLampPatOn ) {
             this._previousLampPatOn = lampMatOn;
             if ( "LightLampOff" in this.catalog_materials ) {
                 const lampMat : StandardMaterial = <StandardMaterial> this.catalog_materials["LightLampOff"];
                 lampMat.unfreeze();
                 if ( lampMatOn ) {
-                    lampMat.emissiveColor = Color3.Black();
-                } else {
                     lampMat.emissiveColor = this.colorLightLamp;
+                } else {
+                    lampMat.emissiveColor = Color3.Black();
                 }
                 //lampMat.freeze();
             }

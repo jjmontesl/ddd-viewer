@@ -405,9 +405,12 @@ class GeoTile3DLayer extends Base3DLayer {
             // onError
             ( _scene: any, _msg: string, ex: any ) => {
                 // eslint-disable-next-line no-console
-                console.log( "Tile model (.glb) loading error: ", ex );
+                
+                //console.debug( "Tile model (.glb) loading error: ", ex );
 
-                if ( ex.request && ex.request.status === 404 ) {
+                let request = ex.innerError.request;
+
+                if ( request != null && request.status === 404 ) {
                     // 404 - tile is being generated, show OSM tile as replacement
                     //console.debug(ex.request);
 
@@ -415,11 +418,10 @@ class GeoTile3DLayer extends Base3DLayer {
                     marker = this.loadQuadTile( tileCoords );  // , Color3.Red()
                     this.tiles[tileKey].node = marker; // "notfound";
                     this.tiles[tileKey].status = "notfound";
-                    this.layerManager!.sceneViewer.viewerState.serverInfoShow = true;
 
                     // Process response, DDD server includes JSON info about tile generation status
                     try {
-                        const dataView = new DataView(ex.request.response);
+                        const dataView = new DataView(request.response);
                         // TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
                         const decoder = new TextDecoder("utf-8");
                         const decodedString = decoder.decode(dataView);
@@ -432,10 +434,13 @@ class GeoTile3DLayer extends Base3DLayer {
 
                 } else {
                     // Error: colour marker red
+                    console.debug( "Tile model (.glb) loading error (not 404): ", ex );
+
                     marker.dispose( false, true );
                     marker = this.loadQuadTile( tileCoords );  // , Color3.Red()
                     this.tiles[tileKey].node = marker; // "notfound";
                     this.tiles[tileKey].status = "error";
+
 
                     const color = Color3.Red();
                     (<StandardMaterial>(<Mesh>marker).material).emissiveColor = color;
@@ -558,20 +563,31 @@ class GeoTile3DLayer extends Base3DLayer {
             const tileKey = tileCoords[0] + "/" + tileCoords[1] + "/" + tileCoords[2];
             const url = this.replaceTileCoordsUrl( tileCoords, this.groundTextureLayerUrl );
             materialGround = new StandardMaterial( "materialGround_" + tileKey, this.layerManager!.sceneViewer.scene );
-            materialGround.roughness = 0.95;
-            materialGround.specularColor = new Color3( 0.15, 0.15, 0.15 ); // Color3.Black();
-            //materialGround.specularColor = new Color3(0.2, 0.2, 0.2); // Color3.Black();
-            //materialGround.emissiveColor = Color3.White();  // new Color3(1.0, 1.0, 1.);
+            materialGround.roughness = 1.0;
+            //materialGround.reflectionFresnelParameters = new FresnelParameters();
+            materialGround.specularPower = 0.0;           
+            materialGround.diffuseColor = new Color3( 0.2, 0.2, 0.2 ); // Color3.Black();   
+            materialGround.ambientColor = new Color3( 0.07, 0.07, 0.07 ); // Color3.Black();   
+            materialGround.specularColor = new Color3(0.05, 0.05, 0.05); // Color3.Black();
+            materialGround.emissiveColor = new Color3(0.05, 0.05, 0.05); // Color3.White();  // new Color3(1.0, 1.0, 1.);
             //materialGround.disableLighting = true;
             //materialGround.backFaceCulling = false;
             const materialGroundTexture: Texture = new Texture( url, this.layerManager!.sceneViewer.scene );
             materialGround.diffuseTexture = materialGroundTexture;
-            materialGroundTexture.uScale = 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
-            materialGroundTexture.vScale = -1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
+            materialGround.ambientTexture = materialGroundTexture;
+            //materialGround.specularTexture = materialGroundTexture;
+            materialGround.emissiveTexture = materialGroundTexture;
+            materialGround.linkEmissiveWithDiffuse = true;
+
+            //materialGroundTexture.uScale = 4 * 1.0 / ( sizeWidth + 0 );  // Force small texture overlap to avoid texture repeating
+            //materialGroundTexture.vScale = 4 * -1.0 / ( sizeHeight + 1 );  // Force small texture overlap to avoid texture repeating
+            materialGroundTexture.uScale = 4 * 1.0 / sizeWidth * ( 127/128 );  // Force small texture overlap to avoid texture repeating
+            materialGroundTexture.vScale = 4 * -1.0 / sizeHeight * ( 127/128 );  // Force small texture overlap to avoid texture repeating
             materialGroundTexture.uOffset = -0.5;
             materialGroundTexture.vOffset = -0.5;
             materialGroundTexture.wrapU = Texture.WRAP_ADDRESSMODE;
             materialGroundTexture.wrapV = Texture.WRAP_ADDRESSMODE;
+
             //materialGround.bumpTexture = materialGround.diffuseTexture;
             //materialGround.bumpTexture.uScale = 1.0 / sizeWidth;
             //materialGround.bumpTexture.vScale = 1.0 / sizeHeight;
