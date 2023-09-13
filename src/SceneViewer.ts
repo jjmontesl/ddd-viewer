@@ -80,7 +80,7 @@ class SceneViewer {
     instanceRoots: { [key: string]: Mesh }
     depends: Mesh[];
 
-    ambientColorNight: Color3 = new Color3( 0, 0, 0.3 );
+    ambientColorNight: Color3 = new Color3( 0, 0, 0.1 );
     ambientColorDay: Color3 = new Color3( 0.70, 0.70, 0.7 );
 
     colorLightLamp: Color3 = new Color3(250 / 255, 244 / 255, 192 / 255);
@@ -98,6 +98,8 @@ class SceneViewer {
     materialOcean: NodeMaterial | null = null;
     materialText: Material | null = null;
     materialFlare: Material | null = null;
+
+    baseEnvironmentIntensity: number = 1.0;
 
     envReflectionProbe: ReflectionProbe | null = null;
     light: DirectionalLight | null = null;
@@ -356,9 +358,9 @@ class SceneViewer {
         //water.specularPower = 0.05;      // def: 64
         water.specularColor = new Color3(0.1, 0.1, 0.05);  // def: 0,0,0
         water.diffuseColor = new Color3(0.2, 0.2, 0.2);   // def: 1,1,1
-        //water.renderingGroupId = 3;
         this.scene.setRenderingAutoClearDepthStencil(1, false, false, false);
         this.scene.setRenderingAutoClearDepthStencil(2, false, false, false);
+        //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
         //water.addToRenderList(ground);
         //let waterOcean = createOceanMaterial(this.scene);
 
@@ -475,7 +477,7 @@ class SceneViewer {
             skyboxMaterial.diffuseColor = new Color3( 0, 0, 0 );
             skyboxMaterial.specularColor = new Color3( 0, 0, 0 );
             skyboxMaterial.disableDepthWrite = true;
-
+            
             skybox.material = skyboxMaterial;
             skybox.infiniteDistance = true;
             skybox.applyFog = false;
@@ -485,12 +487,37 @@ class SceneViewer {
         
         console.debug("Adding skybox env");
         if (this.skybox) {
-            this.skybox.renderingGroupId = 0;  // Seems is rendered in group 0 for it to be applied to the reflections on water
+            this.skybox.renderingGroupId = 1;  //Ideally in group 1, after meshes (to avoid overdraw), but... Seems is rendered in group 0 for it to be applied to the reflections on water and objects, but it hsould be the enviornment :??
+            //this.skybox.renderingGroupId = 3;  // 
             //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
+            
+            //let skyboxReflection = this.skybox; // .clone();
+            //skyboxReflection.renderingGroupId = 0;
             this.envReflectionProbe!.renderList!.push(this.skybox);
+
             if ("getRenderList" in this.materialWater!) {
-                (<WaterMaterial> this.materialWater!).addToRenderList(this.skybox); 
-                //(<WaterMaterial> this.materialWater!).markDirty();
+                //let skyboxWater = this.skybox.clone();
+                
+                /*
+                const skyboxWater = MeshBuilder.CreateBox( "skyBox", { size: 3000.0 }, this.scene );
+                const skyboxProbeMaterial = new StandardMaterial( "skyBox", <Scene> this.scene );
+                skyboxProbeMaterial.backFaceCulling = false;
+                if (this.envReflectionProbe != null) {
+                    skyboxProbeMaterial.reflectionTexture = this.envReflectionProbe?.cubeTexture; //
+                    skyboxProbeMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+                }
+                skyboxProbeMaterial.diffuseColor = new Color3( 0, 0, 0 );
+                skyboxProbeMaterial.specularColor = new Color3( 0, 0, 0 );
+                skyboxProbeMaterial.disableDepthWrite = true;
+                skyboxWater.material = skyboxProbeMaterial;
+                
+                skyboxWater.renderingGroupId = 2;
+
+                (<WaterMaterial> this.materialWater!).addToRenderList(skyboxWater); 
+                */
+                //(<WaterMaterial> this.materialWater!).addToRenderList(this.skybox); 
+
+                (<WaterMaterial> this.materialWater!).markDirty();
             }
 
         }
@@ -729,13 +756,17 @@ class SceneViewer {
                     }
                     */
 
-                    (<PBRMaterial>material).environmentIntensity = 1.0;
+                    (<PBRMaterial>material).environmentIntensity = this.baseEnvironmentIntensity * 0.75; // * 0.25;
                     //(<PBRMaterial>material).ambientColor = new Color3(0, 0, 0);
 
                     (<PBRMaterial>material).useHorizonOcclusion = true;
                     if (this.envReflectionProbe) {
+                        // Seems this is applied even if not done explicitly here?
                         (<PBRMaterial>material).reflectionTexture = this.envReflectionProbe!.cubeTexture;
                     }
+
+                    // Freezing PBR materials causes them to not respond to environment intensity or reflection texture changes
+                    dontFreeze = true;
 
                 }
 
@@ -851,6 +882,8 @@ class SceneViewer {
 
             if ( metadata["ddd:material"] && !( "ddd:text" in metadata )) {
                 let key = metadata["ddd:material"];
+
+                //mesh.renderingGroupId = 1;
 
                 if ( key === "WaterBasicDaytime" ) {
                     //console.debug(metadata["ddd:path"]);
@@ -2121,7 +2154,7 @@ class SceneViewer {
         //this.light.diffuse = new Color3(0.95, 0.95, 1.00);
         //this.light.specular = new Color3(1, 1, 0.95);
         const minLightDay = 0.0;
-        const maxLightDay = 3.0;
+        const maxLightDay = 1.0; // 3.0;
 
         // Set light dir and intensity
         Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light!.direction );
@@ -2141,10 +2174,14 @@ class SceneViewer {
             this.skybox.rotation.y = currentSunPos.azimuth - ( 19 * ( Math.PI / 180.0 ));
         }
 
+        const skyboxMinReflectionLevel = 0.05;
+
         if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
-            (<StandardMaterial>this.skybox.material).reflectionTexture!.level = 0.075 + sunlightAmountNorm;
+            (<StandardMaterial>this.skybox.material).reflectionTexture!.level = skyboxMinReflectionLevel + sunlightAmountNorm;
             //(<StandardMaterial>this.skybox.material).reflectionTexture!.level = 1.1; // + sunlightAmountNorm;
         }
+        
+        this.scene.environmentIntensity = skyboxMinReflectionLevel + sunlightAmountNorm;
 
         if ( this.skybox ) {
             const shaderMaterial: ShaderMaterial | null = <ShaderMaterial | null> this.scene.getMaterialByName( "skyShader" );

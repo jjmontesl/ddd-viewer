@@ -92,7 +92,7 @@ class TerrainMaterialWrapper {
         this.material.reflectionTexture = this.sceneViewer.scene.environmentTexture;
         
         // This one is needed to control saturation due to env, should be aligned with PBRMaterials, StandarMaterials and light intensity
-        this.material.environmentIntensity = 1.0;
+        this.material.environmentIntensity = this.sceneViewer.baseEnvironmentIntensity;
 
 
         this.material.onBindObservable.add((mesh) => {

@@ -39,7 +39,7 @@ class TextMaterialWrapper {
         //this.material.emissiveColor = new Color3(0.0, 0.0, 0.0); // Color3.Black();
         //this.material.emissiveIntensity = 0.0;
         //this.material.usePhysicalLightFalloff= false;
-        //this.material.environmentIntensity = 1.0;  // This one is needed to avoid saturation due to env
+        //this.material.environmentIntensity = sceneViewer.baseEnvironmentIntensity;  // This one is needed to avoid saturation due to env
 
         this.material.albedoTexture = atlas;
         if (atlasnormals !== null) {
