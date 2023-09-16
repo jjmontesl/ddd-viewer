@@ -280,6 +280,12 @@ class SceneViewer {
             this.shadowGenerator.lambda = 1.0;
             //that.shadowGenerator.depthClamp = false;
             //that.shadowGenerator.freezeShadowCastersBoundingInfo = true;
+            
+            // Rendering backfaces for shadows for under-terrain shadows, and reduces the need for bias
+            // TODO: Shall be needed only for terrain if possible 
+            // TODO: Make a setting
+            this.shadowGenerator.forceBackFacesOnly = true; 
+            
             this.shadowGenerator.splitFrustum();
         }
 
@@ -1195,7 +1201,7 @@ class SceneViewer {
             if ( !meshInstanceRoot ) {
                 //console.debug("Creating instanceroot for: " + instanceRootKey);
                 instance.setEnabled( true );
-                meshInstanceRoot = <Mesh> mesh.clone( instanceRootKey, null, true );
+                meshInstanceRoot = <Mesh> mesh.clone( instanceRootKey, null, true );  // (do not clone children = true)
                 meshInstanceRoot = meshInstanceRoot.makeGeometryUnique();  // Can we do this without cloning geometry? do thin instances work that way?
 
                 const cloneMat = meshInstanceRoot.material;
@@ -1210,9 +1216,9 @@ class SceneViewer {
                 //meshInstanceRoot.scaling = new Vector3(1, 1, -1);
                 this.instanceRoots[instanceRootKey] = meshInstanceRoot;
                 meshInstanceRoot.parent = root;
-                //meshInstanceRoot.position = root.computeWorldMatrix(true);  // Seems to cause problems, but should not :? (freezing may be involved)
+                //meshInstanceRoot.setPivotMatrix(meshInstanceRoot.computeWorldMatrix(true));  // Seems to cause problems, but should not :? (freezing may be involved)
 
-                this.processMesh( meshInstanceRoot, meshInstanceRoot );
+                this.processMesh( root, meshInstanceRoot );
 
                 // After postprocessing, do not add this mesh as instance if it's empty
                 if (mesh.getTotalVertices() == 0 || mesh.getTotalIndices() == 0) continue;
@@ -1238,15 +1244,26 @@ class SceneViewer {
             var meshMatrix = Matrix.Compose(localScaling, localRot, localPos);
             */
 
-            //var adaptMatrix = Matrix.Compose(new Vector3(1, 1, -1), [0, 1, 0, 0], [0, 0, 0]);
-
             const scaleMatrix = Matrix.Compose( new Vector3( 1, 1, -1 ), new Quaternion( 0, 0, 0, 0 ), new Vector3( 0, 0, 0 )); //Matrix.Scaling(-1, 1, 1);
 
+            //const meshInstanceMatrix = meshMatrix.multiply( Matrix.Invert(meshInstanceRootMatrix));
+            //const meshMatrix = mesh.matrix
+            
             const nodeMatrix = node.computeWorldMatrix( true );
+            
+            let matrix = nodeMatrix;
+            matrix = scaleMatrix.multiply(matrix);
+            
             const meshInstanceRootMatrix = meshInstanceRoot.computeWorldMatrix( true );
-            //let matrix = adaptMatrix.multiply(nodeMatrix); // meshMatrix.multiply(nodeMatrix);
-            let matrix = scaleMatrix.multiply( nodeMatrix );
-            matrix = matrix.multiply( Matrix.Invert( meshInstanceRootMatrix ));
+
+            const meshMatrix = mesh.computeWorldMatrix( true );
+            let meshMatrixRelInstanceRoot = meshMatrix.multiply( Matrix.Invert(instance.computeWorldMatrix(true)));
+            meshMatrixRelInstanceRoot = meshMatrixRelInstanceRoot;
+
+            matrix = meshMatrixRelInstanceRoot.multiply( matrix );
+            
+            //let meshInstanceMatrix = scaleMatrix.multiply(meshInstanceRootMatrix);  // meshInstanceMatrix.multiply(meshMatrix);
+            matrix = matrix.multiply(Matrix.Invert(meshInstanceRootMatrix));
             //console.debug("Creating instance: " + meshInstanceRoot.id);
             
             // TODO: Improve performance by not updating GPU buffers here (thinInstanceAdd), only in last call for this instanceRoot.
@@ -2154,7 +2171,7 @@ class SceneViewer {
         //this.light.diffuse = new Color3(0.95, 0.95, 1.00);
         //this.light.specular = new Color3(1, 1, 0.95);
         const minLightDay = 0.0;
-        const maxLightDay = 1.0; // 3.0;
+        const maxLightDay = 1.1; // 3.0;
 
         // Set light dir and intensity
         Vector3.Forward().rotateByQuaternionToRef( lightRot, this.light!.direction );
@@ -2175,13 +2192,13 @@ class SceneViewer {
         }
 
         const skyboxMinReflectionLevel = 0.05;
+        const environmentIntensityMax = 1.2;
 
         if ( this.skybox && this.skybox.material && this.skybox.material instanceof StandardMaterial ) {
             (<StandardMaterial>this.skybox.material).reflectionTexture!.level = skyboxMinReflectionLevel + sunlightAmountNorm;
-            //(<StandardMaterial>this.skybox.material).reflectionTexture!.level = 1.1; // + sunlightAmountNorm;
         }
         
-        this.scene.environmentIntensity = skyboxMinReflectionLevel + sunlightAmountNorm;
+        this.scene.environmentIntensity = skyboxMinReflectionLevel + (sunlightAmountNorm * environmentIntensityMax);
 
         if ( this.skybox ) {
             const shaderMaterial: ShaderMaterial | null = <ShaderMaterial | null> this.scene.getMaterialByName( "skyShader" );
