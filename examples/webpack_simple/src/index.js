@@ -9,6 +9,7 @@ export function initViewer() {
         "defaultCoords": [-8.723, 42.238],
         //"defaultCoords": [-8.4069793, 43.3861094],
         "tileUrlBase": "https://3dsmaps.com/cache/ddd_http/",
+        "tileUrlSuffix": "",
         "assetsUrlbase": "https://3dsmaps.com/assets/",
         "materialsTextureSet": "default256",
         "geolocation": false

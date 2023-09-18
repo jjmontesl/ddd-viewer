@@ -1141,8 +1141,8 @@ class SceneViewer {
 
             //if (mesh.material) { mesh.material.needDepthPrePass = true; }  // causes some objects with textures to show black
 
-            for ( const children of [...mesh.getChildren()] ) {
-                let processed = this.processMesh( root, <Mesh> children );
+            for ( const child of [...mesh.getChildren()] ) {
+                let processed = this.processMesh( root, <Mesh> child );
                 /*
                 if (processed == null) {
                     //console.debug("Removing child: " + children.id);

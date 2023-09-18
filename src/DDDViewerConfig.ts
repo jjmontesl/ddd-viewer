@@ -15,6 +15,7 @@ class DDDViewerConfig {
 
     // TODO: Move this to layer configuration (?)
     tileUrlBase: string = "/cache/ddd_http/";
+    tileUrlSuffix: string = "";
 
     assetsUrlbase: string = "/assets/";
 

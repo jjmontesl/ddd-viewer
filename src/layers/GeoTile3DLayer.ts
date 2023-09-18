@@ -235,9 +235,10 @@ class GeoTile3DLayer extends Base3DLayer {
         //const tileUrlBase = 'http://' + app.dddConfig.tileUrlBase + ':8000/cache/ddd_http/';
         //const tileUrlBase = 'http://' + location.hostname + '/cache/ddd_http/';
         const tileUrlBase = this.layerManager!.sceneViewer.viewerState.dddConfig.tileUrlBase;
+        const tileUrlSuffix = this.layerManager!.sceneViewer.viewerState.dddConfig.tileUrlSuffix;  // e.g. ".uncompressed"
         
         //const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".glb";
-        const tileUrl = tileUrlBase + z + "/" + x + "/" + y + ".uncompressed.glb";
+        const tileUrl = tileUrlBase + z + "/" + x + "/" + y + tileUrlSuffix + ".glb";
 
         //console.debug("Loading: " + tileUrl);
 
@@ -468,7 +469,9 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeWidth = Math.abs( tileExtentMaxScene[0] - tileExtentMinScene[0]);
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
+        const markerName = "Tile " + tileKey;  // "placeholder_" + tileKey 
         const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
+        marker.metadata = {"ddd:title": markerName}
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
@@ -511,7 +514,9 @@ class GeoTile3DLayer extends Base3DLayer {
         const sizeHeight = Math.abs( tileExtentMaxScene[1] - tileExtentMinScene[1]);
 
         //console.debug(sizeWidth, sizeHeight);
+        const markerName = "Tile " + tileKey;  // "placeholder_" + tileKey 
         const marker = MeshBuilder.CreatePlane( "placeholder_" + tileKey, { width: sizeWidth, height: sizeHeight, sideOrientation: Mesh.DOUBLESIDE }, this.layerManager!.sceneViewer.scene );
+        marker.metadata = {"ddd:title": markerName}
 
         marker.position = new Vector3( tileCenterScene[0], this._lastHeight, tileCenterScene[1]);
         marker.rotation = new Vector3( Math.PI * 0.5, 0, 0 );
