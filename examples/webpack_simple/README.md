@@ -1,14 +1,14 @@
-> Webpack Simple is a incorporated ddd-viewer in one page with webpack
-
 ## Overview
 
-The example of Webpack Simple is perfect if you are thinking of incorporating the library into a project with webpack
+Webpack Simple is an incorporated ddd-viewer in one page with webpack.
+
+The example of Webpack Simple is perfect if you are thinking of incorporating the library into a project with webpack.
 
 ## Building the example
 
 **Installation**
 
-1. Go to webpack simple with the terminal
+1. Go to webpack simple with the terminal.
 
 2. First you can init the draft with:
 
@@ -34,7 +34,7 @@ You have to make a local npm to be able to use the library then run this line fr
 
 ## How do we use the library?
 
-You import the scene and the tiles
+You import the scene and the tiles:
 
 ```js
 import { SceneViewer } from 'ddd-viewer';
@@ -42,7 +42,7 @@ import { SceneViewer } from 'ddd-viewer';
 `import { GeoTile3DLayer } from 'ddd-viewer';
 ```
 
-And after you init the viewer
+And after you init the viewer:
 
 ```js
 export function initViewer() {
@@ -67,7 +67,7 @@ export function initViewer() {
 }
 ```
 
-Finally you have to call the library when the page loads
+Finally you have to call the library when the page loads:
 
 ```js
 window.addEventListener("load", () => {

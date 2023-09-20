@@ -8,7 +8,7 @@
     "build": "webpack build"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "ddd-viewer": "file:../../ddd-viewer",
     "webpack": "^5.58.0",

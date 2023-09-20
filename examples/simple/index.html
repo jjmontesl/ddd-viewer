@@ -7,27 +7,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DDD-Viewer Simple Example</title>
 
-    <!-- Optional Tailwind import for CSS styling classes -->
+    <!-- We used Tailwind CSS library for presentation, but it`s not necessary for the viewer. -->
     <!-- <link rel="stylesheet" href="https://3dsmaps.com/static/libs/tailwindcss/2.2.0-canary.16/tailwind.min.css">  -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.0-canary.16/tailwind.min.css">
 
     <!-- Importing DDD-Viewer library -->
-
-    <script>var exports = {};</script>
-
     <!-- <script src="https://preview.babylonjs.com/babylon.js"></script> -->
     <!-- <script src="../../dist/ddd-viewer.umd.development.js"></script> -->
     <script src="lib/ddd-viewer.umd.production.min.js"></script>
-
-
 </head>
 
-<body id="testbody" class="text-6xl font-sans text-center text-gray-500">
+<body class="text-6xl font-sans text-center text-gray-500">
 
     <div class="flex justify-center items-center w-full h-screen flex-wrap">
         <h1 class="w-full">Simple Example DDD-Viewer</h1>
         <canvas id="ddd-scene" style="width: 500px; height: 400px;"></canvas>
     </div>
+
     <script>
 
         function initViewer() {
