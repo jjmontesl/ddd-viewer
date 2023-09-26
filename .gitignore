@@ -32,4 +32,4 @@ yarn-error.log*
 *.log
 
 package-lock.json
-
+yarn.lock

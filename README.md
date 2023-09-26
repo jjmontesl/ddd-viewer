@@ -1,3 +1,5 @@
+[![ddd-viewer build](https://github.com/blackyale/ddd-viewer/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/blackyale/ddd-viewer/actions/workflows/build.yml)
+
 # DDD-Viewer
 
 <p align="center">
