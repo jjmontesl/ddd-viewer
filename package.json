@@ -23,7 +23,7 @@
 		"barrelsby": "barrelsby -d src --delete",
 		"doc": "barrelsby -d src --delete && npx typedoc --out doc/api src/index.ts",
 		"test": "tsdx test --passWithNoTests",
-		"lint": "eslint . --ext .ts",
+		"lint": "eslint . --ext .ts --fix",
 		"_prepare": "tsdx build --format esm,umd --target web",
 		"size": "size-limit",
 		"analyze": "size-limit --why"

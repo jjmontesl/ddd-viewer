@@ -1,8 +1,8 @@
 /*
-* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
-* Copyright 2021 Jose Juan Montes and Contributors
-* MIT License (see LICENSE file)
-*/
+ * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes
+ * Copyright 2021 Jose Juan Montes and Contributors
+ * MIT License (see LICENSE file)
+ */
 
 import { Camera } from "@babylonjs/core";
 import { SceneViewer } from "SceneViewer";
@@ -12,15 +12,11 @@ import { BaseCameraController } from "./BaseCameraController";
  * DDD Viewer base layer class.
  */
 class GeolocationCameraController extends BaseCameraController {
+    update(deltaTime: number): void {}
 
-    update(deltaTime: number): void {
+    activate(): void {}
 
-    }
-
-    activate(): void {
-    }
-
-   /*
+    /*
     geolocationPosition( enabled ) {
 
         //this.selectCameraFree();
@@ -126,10 +122,9 @@ class GeolocationCameraController extends BaseCameraController {
     }
     */
 
-
     /**
-    * From: https://www.w3.org/TR/orientation-event/
-    */
+   * From: https://www.w3.org/TR/orientation-event/
+   */
     /*
     getQuaternion( alpha, beta, gamma ) {
 
@@ -190,8 +185,6 @@ class GeolocationCameraController extends BaseCameraController {
         //compassCircle.style.transform = `translate(-50%, -50%) rotate(${-compass}deg)`;
     }
     */
-
-
 }
 
 export { GeolocationCameraController };

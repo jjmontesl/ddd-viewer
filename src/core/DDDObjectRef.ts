@@ -1,11 +1,10 @@
 /*
-* DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
-* Copyright 2021 Jose Juan Montes and contributors
-* MIT License (see LICENSE file)
-*/
+ * DDDViewer - DDD(3Ds) Viewer library for DDD-generated GIS 3D models
+ * Copyright 2021 Jose Juan Montes and contributors
+ * MIT License (see LICENSE file)
+ */
 
 import { Mesh, Node } from "@babylonjs/core";
-
 
 /**
  * A reference to a "logical" object in the scene.
@@ -18,7 +17,6 @@ import { Mesh, Node } from "@babylonjs/core";
  * TODO: Reference the containing layer so each layer can resolve its objects.
  */
 class DDDObjectRef {
-
     mesh: Node;
 
     submeshIdx: number = -1;
@@ -31,15 +29,18 @@ class DDDObjectRef {
         this.submeshIdx = submeshIdx;
 
         if (this.submeshIdx > -1) {
-            let metadata = DDDObjectRef.nodeMetadata(mesh);
-            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
-            if (indexes && (submeshIdx) in indexes) {
+            const metadata = DDDObjectRef.nodeMetadata(mesh);
+            const indexes =
+        "ddd:combined:indexes" in metadata
+            ? metadata["ddd:combined:indexes"]
+            : metadata["ddd:batch:indexes"];
+            if (indexes && submeshIdx in indexes) {
                 this.faceIndexStart = submeshIdx > 0 ? indexes[submeshIdx - 1][0] : 0;
                 this.faceIndexEnd = indexes[submeshIdx][0];
             }
         }
 
-        /*
+    /*
         metadata = indexes[i][1];
 
         // WARN: TODO: this transformation is done in other places
@@ -50,11 +51,15 @@ class DDDObjectRef {
             meshName = metadata['ddd:path'].split("/").pop().replaceAll('#', '_'); // .replaceAll("_", " ");
         }
         */
-
     }
 
     static nodeMetadata(node: Node) {
-        if ( node && node.metadata && node.metadata.gltf && node.metadata.gltf.extras ) {
+        if (
+            node &&
+      node.metadata &&
+      node.metadata.gltf &&
+      node.metadata.gltf.extras
+        ) {
             return node.metadata.gltf.extras;
         } else if (node.metadata !== null) {
             return node.metadata;
@@ -64,15 +69,20 @@ class DDDObjectRef {
     }
 
     static fromMeshFace(mesh: Mesh, faceIndex: number): DDDObjectRef {
+    //console.debug("Selecting from mesh and face (mesh=" + mesh.id + ", faceIndex=" + faceIndex + ")");
 
-        //console.debug("Selecting from mesh and face (mesh=" + mesh.id + ", faceIndex=" + faceIndex + ")");
-
-        let metadata = DDDObjectRef.nodeMetadata(mesh);
+        const metadata = DDDObjectRef.nodeMetadata(mesh);
 
         let subIndex = -1;
         if (metadata) {
-            if (('ddd:combined:indexes' in metadata) || ('ddd:batch:indexes' in metadata))  {
-                const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
+            if (
+                "ddd:combined:indexes" in metadata ||
+        "ddd:batch:indexes" in metadata
+            ) {
+                const indexes =
+          "ddd:combined:indexes" in metadata
+              ? metadata["ddd:combined:indexes"]
+              : metadata["ddd:batch:indexes"];
                 // Find triangle in indexes
                 let prevIndex = -1;
                 //if (indexes.length > 0) { subIndex = 0; }
@@ -99,7 +109,10 @@ class DDDObjectRef {
     getMetadata(): any {
         let metadata = DDDObjectRef.nodeMetadata(this.mesh);
         if (metadata && this.submeshIdx >= 0) {
-            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
+            const indexes =
+        "ddd:combined:indexes" in metadata
+            ? metadata["ddd:combined:indexes"]
+            : metadata["ddd:batch:indexes"];
             metadata = indexes[this.submeshIdx][1];
         }
         return metadata;
@@ -123,10 +136,10 @@ class DDDObjectRef {
         const metadata = this.getMetadata();
 
         let result = this.mesh.id;
-        if (metadata && ('ddd:rpath' in metadata)) {
-            result = metadata['ddd:rpath'];
-        } else if (metadata && ('ddd:path' in metadata)) {
-            result = metadata['ddd:path'];
+        if (metadata && "ddd:rpath" in metadata) {
+            result = metadata["ddd:rpath"];
+        } else if (metadata && "ddd:path" in metadata) {
+            result = metadata["ddd:path"];
         }
         return result;
     }
@@ -138,7 +151,7 @@ class DDDObjectRef {
     }
 
     getLabel(): string {
-        let result = this.getId();
+        const result = this.getId();
         return result;
     }
 
@@ -146,14 +159,20 @@ class DDDObjectRef {
         const result: DDDObjectRef[] = [];
 
         //if (this.submeshIdx < 0) {
-        for (let child of this.mesh.getChildren()) {
+        for (const child of this.mesh.getChildren()) {
             result.push(new DDDObjectRef(child));
         }
         //}
 
         const metadata = this.getMetadata();
-        if (metadata && ('ddd:combined:indexes' in metadata || 'ddd:batch:indexes' in metadata)) {
-            const indexes = 'ddd:combined:indexes' in metadata ? metadata['ddd:combined:indexes'] : metadata['ddd:batch:indexes'];
+        if (
+            metadata &&
+      ("ddd:combined:indexes" in metadata || "ddd:batch:indexes" in metadata)
+        ) {
+            const indexes =
+        "ddd:combined:indexes" in metadata
+            ? metadata["ddd:combined:indexes"]
+            : metadata["ddd:batch:indexes"];
             for (let i = 0; i < indexes.length; i++) {
                 result.push(new DDDObjectRef(this.mesh, i));
             }
@@ -164,11 +183,12 @@ class DDDObjectRef {
 
     getParent(): DDDObjectRef | null {
         let result = null;
-        let parent = this.mesh.parent;
-        if (parent) { result = new DDDObjectRef(parent); }
+        const parent = this.mesh.parent;
+        if (parent) {
+            result = new DDDObjectRef(parent);
+        }
         return result;
     }
-
 }
 
 export { DDDObjectRef };

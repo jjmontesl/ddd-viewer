@@ -1,4 +1,15 @@
-import { AbstractMesh, Color3, Mesh, MeshBuilder, Node, Ray, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
+import {
+    AbstractMesh,
+    Color3,
+    Mesh,
+    MeshBuilder,
+    Node,
+    Ray,
+    StandardMaterial,
+    Texture,
+    TransformNode,
+    Vector3,
+} from "@babylonjs/core";
 import { Coordinate } from "ol/coordinate";
 import * as extent from "ol/extent";
 import * as olProj from "ol/proj";
@@ -8,10 +19,7 @@ import { SceneViewer } from "../SceneViewer";
 import { Base3DLayer } from "./Base3DLayer";
 import { GeoJson3DLayer } from "./GeoJson3DLayer";
 
-
-
 class OverlayLayer extends Base3DLayer {
-
     sourceLayerKey: string;
 
     items: HTMLElement[] = [];
@@ -36,8 +44,8 @@ class OverlayLayer extends Base3DLayer {
     }
 
     createOverlayDiv(): void {
-        // Add an overlay DIV over the 3D canvas
-        // FIXME: This should be created by the scene viewer, and other divs
+    // Add an overlay DIV over the 3D canvas
+    // FIXME: This should be created by the scene viewer, and other divs
         const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
         this.div = document.createElement("div");
         sceneViewer.element.appendChild(this.div);
@@ -52,42 +60,44 @@ class OverlayLayer extends Base3DLayer {
         this.div.style.right = "0";
         this.div.style.bottom = "0";
         this.div.style.pointerEvents = "none";
-
     }
 
     resizeOverlayDiv() {
         const sceneViewer: SceneViewer = this.layerManager!.sceneViewer;
-        this.div!.style.width = sceneViewer.canvas.style.width;
-        this.div!.style.height = sceneViewer.canvas.style.height;
+    this.div!.style.width = sceneViewer.canvas.style.width;
+    this.div!.style.height = sceneViewer.canvas.style.height;
     }
 
-    update(): void {
-    }
+    update(): void {}
 
     setVisible(visible: boolean) {
         super.setVisible(visible);
-        if (this.div) this.div.style.display = "visible" ? "block" : "none";
-        /*
+        if (this.div) this.div.style.display == "visible" ? "block" : "none";
+    /*
         for (let node of this.sceneNodes) {
             node.setEnabled(this.visible);
         }
         */
     }
 
-
     /**
-     * Update scene generating a DIV for each feature in the source layer.
-     */
+   * Update scene generating a DIV for each feature in the source layer.
+   */
     updateSceneFromFeatures() {
-        let sourceLayer = <GeoJson3DLayer> this.layerManager!.getLayer(this.sourceLayerKey)!;
-        for (let feature of sourceLayer.featuresPoints) {
-            let html = '<div style="background: white; display: inline-block;">Feature: ' + feature + '</div>';
-            let featureDiv = document.createElement("div");
-            this.div!.appendChild(featureDiv);
-            featureDiv.outerHTML = html;
+        const sourceLayer = <GeoJson3DLayer>(
+      this.layerManager!.getLayer(this.sourceLayerKey)!
+    );
+        for (const feature of sourceLayer.featuresPoints) {
+            const html =
+        "<div style=\"background: white; display: inline-block;\">Feature: " +
+        feature +
+        "</div>";
+            const featureDiv = document.createElement("div");
+      this.div!.appendChild(featureDiv);
+      featureDiv.outerHTML = html;
         }
 
-        /*
+    /*
         for (let feature of this.featuresLines) {
             let marker = MeshBuilder.CreateLines("lineMarker", { points: feature.coordsScene }, sceneViewer.scene);
             marker.material = this.featureMaterial;
@@ -97,9 +107,8 @@ class OverlayLayer extends Base3DLayer {
         */
     }
 
-
     clearScene() {
-        /*
+    /*
         if (this.rootNode) {
             this.rootNode.parent = null;
             this.rootNode.dispose();
@@ -107,9 +116,6 @@ class OverlayLayer extends Base3DLayer {
         }
         */
     }
-
 }
 
-
 export { OverlayLayer };
-
