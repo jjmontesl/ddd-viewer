@@ -1,4 +1,4 @@
-[![ddd-viewer build](https://github.com/blackyale/ddd-viewer/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/blackyale/ddd-viewer/actions/workflows/build.yml)
+[![ddd-viewer build](https://github.com/jjmontesl/ddd-viewer/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/jjmontesl/ddd-viewer/actions/workflows/build.yml)
 
 # DDD-Viewer
 

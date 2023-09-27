@@ -2,8 +2,10 @@ name: ddd-viewer build
 run-name:  Full build has been triggered by (${{ github.actor }})
 on:
   push:
-    tags:
-    - 'v*'
+    branches:
+      - master
+    #tags:
+    #  - 'v*'
 jobs:
   build:
     name: Build job on Node ${{ matrix.node }} and ${{ matrix.os }}
@@ -12,7 +14,7 @@ jobs:
     strategy:
       matrix:
         node: [ '18.0', '20.0']
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
