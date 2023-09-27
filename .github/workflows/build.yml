@@ -51,9 +51,9 @@ jobs:
           NODE_OPTIONS: '--max_old_space_size=8192'
         run: yarn build
 
-      - name: Deploy GitHub pages
-        run: |
-          mkdir -p ./examples/simple/lib/
-          cp dist/ddd-viewer.umd.production.min.js examples/simple/lib/ddd-viewer.umd.production.min.js
-          node ci/publish-gh-pages.js
-        if: matrix.os != 'ubuntu-latest' && matrix.node == '20.0'
+      #- name: Deploy GitHub pages
+      #  run: |
+      #    mkdir -p ./examples/simple/lib/
+      #    cp dist/ddd-viewer.umd.production.min.js examples/simple/lib/ddd-viewer.umd.production.min.js
+      #    node ci/publish-gh-pages.js
+      #  if: matrix.os == 'ubuntu-latest' && matrix.node == '20.0'
