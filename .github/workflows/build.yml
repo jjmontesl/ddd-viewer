@@ -49,6 +49,7 @@ jobs:
         run: yarn test --ci --coverage --maxWorkers=2
 
       - name: Build
+        # This should build all versions (umd, esm)
         env:
           NODE_OPTIONS: '--max_old_space_size=8192'
         run: yarn build

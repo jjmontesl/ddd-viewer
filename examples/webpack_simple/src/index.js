@@ -19,7 +19,7 @@ export function initViewer() {
     const sceneViewer = new SceneViewer(canvas, dddConfig);
 
     const layerDddOsm3d = new GeoTile3DLayer();
-    sceneViewer.layerManager.addLayer(layerDddOsm3d);
+    sceneViewer.layerManager.addLayer("ddd-osm-3d", layerDddOsm3d);
 
     // Events
     //window.addEventListener('resize', this.resize);

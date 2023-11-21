@@ -1,10 +1,11 @@
 {
 	"name": "ddd-viewer",
-	"version": "0.1.0",
+	"version": "0.7.1",
 	"license": "MIT",
 	"author": "Jose Juan Montes",
 	"contributors": [
-		"Farvell"
+		"Farvell",
+		"blckl"
 	],
 	"description": "DDD(3Ds) Viewer library for DDD-generated GIS 3D scenes",
 	"main": "dist/ddd-viewer.esm.js",

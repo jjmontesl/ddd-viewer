@@ -348,7 +348,7 @@ class SceneViewer {
         this.shadowGenerator = null;
         if (this.viewerState.sceneShadowsEnabled) {
             this.shadowGenerator = new CascadedShadowGenerator(1024, this.light);
-            this.shadowGenerator.bias = 0.002; // 0.002 Makes grass appear slightly floating but prevents the full scene ground to be self-shadowed  0.001 avoid the gap but already produces self-shadowing
+            this.shadowGenerator.bias = 0.0015; // 0.002 Makes grass appear slightly floating but prevents the full scene ground to be self-shadowed  0.001 avoid the gap but already produces self-shadowing
             //that.shadowGenerator.debug = true;
             this.shadowGenerator.shadowMaxZ = 500;
             //this.shadowGenerator.autoCalcDepthBounds = true;  // Enabling it causes shadow artifacts after switching cameras (?)
@@ -570,13 +570,13 @@ class SceneViewer {
     }
 
     loadSkybox(baseUrl: string): void {
-    // Remove skybox
+        // Remove skybox
         if (this.skybox) {
             if ("getRenderList" in this.materialWater!) {
-        (<WaterMaterial>this.materialWater!).getRenderList()!.length = 0;
+                (<WaterMaterial>this.materialWater!).getRenderList()!.length = 0;
             }
             if (this.viewerState.sceneEnvironmentProbe) {
-        this.envReflectionProbe!.renderList!.length = 0;
+                this.envReflectionProbe!.renderList!.length = 0;
             }
 
             this.skybox.dispose();
@@ -604,7 +604,7 @@ class SceneViewer {
             skyboxMaterial.backFaceCulling = false;
             skyboxMaterial.reflectionTexture = new CubeTexture(
                 baseUrl,
-        <Scene>this.scene,
+                <Scene>this.scene,
             );
             skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
             skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
@@ -623,34 +623,34 @@ class SceneViewer {
             //this.skybox.renderingGroupId = 3;  //
             //this.scene.setRenderingAutoClearDepthStencil(3, false, false, false);
 
-      //let skyboxReflection = this.skybox; // .clone();
-      //skyboxReflection.renderingGroupId = 0;
-      this.envReflectionProbe!.renderList!.push(this.skybox);
+            //let skyboxReflection = this.skybox; // .clone();
+            //skyboxReflection.renderingGroupId = 0;
+            this.envReflectionProbe!.renderList!.push(this.skybox);
 
-      if ("getRenderList" in this.materialWater!) {
-          //let skyboxWater = this.skybox.clone();
+            if ("getRenderList" in this.materialWater!) {
+                //let skyboxWater = this.skybox.clone();
 
-          /*
-                const skyboxWater = MeshBuilder.CreateBox( "skyBox", { size: 3000.0 }, this.scene );
-                const skyboxProbeMaterial = new StandardMaterial( "skyBox", <Scene> this.scene );
-                skyboxProbeMaterial.backFaceCulling = false;
-                if (this.envReflectionProbe != null) {
-                    skyboxProbeMaterial.reflectionTexture = this.envReflectionProbe?.cubeTexture; //
-                    skyboxProbeMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
-                }
-                skyboxProbeMaterial.diffuseColor = new Color3( 0, 0, 0 );
-                skyboxProbeMaterial.specularColor = new Color3( 0, 0, 0 );
-                skyboxProbeMaterial.disableDepthWrite = true;
-                skyboxWater.material = skyboxProbeMaterial;
-                
-                skyboxWater.renderingGroupId = 2;
+                /*
+                        const skyboxWater = MeshBuilder.CreateBox( "skyBox", { size: 3000.0 }, this.scene );
+                        const skyboxProbeMaterial = new StandardMaterial( "skyBox", <Scene> this.scene );
+                        skyboxProbeMaterial.backFaceCulling = false;
+                        if (this.envReflectionProbe != null) {
+                            skyboxProbeMaterial.reflectionTexture = this.envReflectionProbe?.cubeTexture; //
+                            skyboxProbeMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+                        }
+                        skyboxProbeMaterial.diffuseColor = new Color3( 0, 0, 0 );
+                        skyboxProbeMaterial.specularColor = new Color3( 0, 0, 0 );
+                        skyboxProbeMaterial.disableDepthWrite = true;
+                        skyboxWater.material = skyboxProbeMaterial;
+                        
+                        skyboxWater.renderingGroupId = 2;
 
-                (<WaterMaterial> this.materialWater!).addToRenderList(skyboxWater); 
-                */
-          //(<WaterMaterial> this.materialWater!).addToRenderList(this.skybox);
+                        (<WaterMaterial> this.materialWater!).addToRenderList(skyboxWater); 
+                        */
+                //(<WaterMaterial> this.materialWater!).addToRenderList(this.skybox);
 
-          (<WaterMaterial>this.materialWater!).markDirty();
-      }
+                (<WaterMaterial>this.materialWater!).markDirty();
+            }
         }
     }
 
@@ -909,15 +909,13 @@ class SceneViewer {
                     }
                     */
 
-                    (<PBRMaterial>material).environmentIntensity =
-            this.baseEnvironmentIntensity * 0.75; // * 0.25;
+                    (<PBRMaterial>material).environmentIntensity = this.baseEnvironmentIntensity * 0.75; // * 0.25;
                     //(<PBRMaterial>material).ambientColor = new Color3(0, 0, 0);
 
                     (<PBRMaterial>material).useHorizonOcclusion = true;
                     if (this.envReflectionProbe) {
                         // Seems this is applied even if not done explicitly here?
-                        (<PBRMaterial>material).reflectionTexture =
-              this.envReflectionProbe!.cubeTexture;
+                        (<PBRMaterial>material).reflectionTexture = this.envReflectionProbe!.cubeTexture;
                     }
 
                     // Freezing PBR materials causes them to not respond to environment intensity or reflection texture changes
@@ -1659,10 +1657,7 @@ class SceneViewer {
             this.viewerState.positionWGS84 = positionWGS84;
 
             this.viewerState.positionTileZoomLevel = 17;
-            if (
-                this.viewerState.positionGroundHeight !== null &&
-        this.viewerState.positionGroundHeight < 50
-            ) {
+            if (this.viewerState.positionGroundHeight !== null && this.viewerState.positionGroundHeight < 50) {
                 this.viewerState.positionTileZoomLevel = 18;
             }
 
@@ -1785,8 +1780,7 @@ class SceneViewer {
             // Parse at location
             //http://localhost:8080/maps/@42.1354407,-0.4126472,17.0z
             const href = posString;
-            const regexp =
-        /.*@([0-9.\\-]+),([0-9.\\-]+)((,(([0-9.\\-]+)[ayhtz]))*).*/;
+            const regexp = /.*@([0-9.\\-]+),([0-9.\\-]+)((,(([0-9.\\-]+)[ayhtz]))*).*/;
             const matches = href.match(regexp);
             //console.debug(matches);
 
@@ -1904,14 +1898,13 @@ class SceneViewer {
     private updateElevation(): void {
         if (!this.camera) return;
 
-        const [ terrainElevation, terrainPickResult ] =
-      this.elevationMSLFromSceneCoords(this.camera.position);
+        const [ terrainElevation, terrainPickResult ] = this.elevationMSLFromSceneCoords(this.camera.position);
 
         if (terrainElevation && terrainPickResult) {
             // Update also position name if possible, from position metadata
             const terrainObjectRef = DDDObjectRef.fromMeshFace(
-        <Mesh>terrainPickResult.pickedMesh,
-        terrainPickResult.faceId,
+                <Mesh>terrainPickResult.pickedMesh,
+                terrainPickResult.faceId,
             );
             const metadata = terrainObjectRef.getMetadata();
             if (metadata && metadata["osm:name"]) {
@@ -1921,8 +1914,7 @@ class SceneViewer {
             }
 
             this.viewerState.positionTerrainElevation = terrainElevation;
-            this.viewerState.positionGroundHeight =
-        this.camera.position.y - terrainElevation;
+            this.viewerState.positionGroundHeight = this.camera.position.y - terrainElevation;
         } else {
             //this.viewerState.positionTerrainElevation = null;
         }
@@ -1988,13 +1980,11 @@ class SceneViewer {
 
         // Using coords of tile center for custom projection as DDD does
         this.projection = proj4.default(
-            "+proj=tmerc +lat_0=" +
-        tileCenterWGS84[1] +
-        " +lon_0=" +
-        tileCenterWGS84[0] +
-        " +k_0=1 " +
-        "+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 " +
-        "+towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+            "+proj=tmerc +lat_0=" + tileCenterWGS84[1] +
+            " +lon_0=" + tileCenterWGS84[0] +
+            " +k_0=1 " +
+            "+x_0=0. +y_0=0. +datum=WGS84 +ellps=WGS84 " +
+            "+towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
         );
     }
 
@@ -2079,6 +2069,7 @@ class SceneViewer {
         objectId: string,
         objectRef: DDDObjectRef | null = null,
     ): DDDObjectRef | null {
+        
         let children = null;
 
         if (objectRef) {
